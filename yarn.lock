@@ -2685,8 +2685,9 @@ mute-stream@0.0.7:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
 
-"mymonero-core-js@file:../mymonero-core-js":
+"mymonero-core-js@git://github.com/Airbitz/mymonero-core-js.git":
   version "0.9.0"
+  resolved "git://github.com/Airbitz/mymonero-core-js.git#95f87b4d42f76927d847ba18f4e8c080107ef336"
   dependencies:
     async "^2.6.0"
 
