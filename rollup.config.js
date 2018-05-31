@@ -6,7 +6,7 @@ const babelConf = {
 }
 
 export default {
-  entry: 'src/indexEthereum.js',
+  entry: 'src/indexMonero.js',
   external: [
     ...Object.keys(packageJson.dependencies),
     ...Object.keys(packageJson.devDependencies)
