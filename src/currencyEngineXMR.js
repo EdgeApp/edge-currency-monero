@@ -44,6 +44,7 @@ class MoneroEngine {
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
   walletLocalFolder: any
   engineOn: boolean
+  loggedIn: boolean
   addressesChecked: boolean
   walletLocalData: WalletLocalData
   walletLocalDataDirty: boolean
@@ -62,6 +63,7 @@ class MoneroEngine {
 
     this.io = io_
     this.engineOn = false
+    this.loggedIn = false
     this.addressesChecked = false
     this.walletLocalDataDirty = false
     this.transactionsChangedArray = []
@@ -167,7 +169,8 @@ class MoneroEngine {
   async loginInnerLoop () {
     try {
       const result = await this.fetchPostMyMonero('login')
-      if (result.hasOwnProperty('new_address')) {
+      if (result.hasOwnProperty('new_address') && !this.loggedIn) {
+        this.loggedIn = true
         clearTimeout(this.timers.loginInnerLoop)
         delete this.timers.loginInnerLoop
         this.addToLoop('checkAddressInnerLoop', ADDRESS_POLL_MILLISECONDS)
@@ -545,6 +548,7 @@ class MoneroEngine {
   async killEngine () {
     // Set status flag to false
     this.engineOn = false
+    this.loggedIn = false
     // Clear Inner loops timers
     for (const timer in this.timers) {
       clearTimeout(this.timers[timer])
