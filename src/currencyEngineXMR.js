@@ -21,7 +21,8 @@ import { bns } from 'biggystring'
 import {
   DATA_STORE_FILE,
   DATA_STORE_FOLDER,
-  WalletLocalData
+  WalletLocalData,
+  type SendFundsOptions
 } from './xmrTypes.js'
 import { normalizeAddress, validateObject } from './utils.js'
 import moneroResponseParserUtils from 'mymonero-core-js/monero_utils/mymonero_response_parser_utils.js'
@@ -466,71 +467,43 @@ class MoneroEngine {
     console.log(...text)
   }
 
-  async SendFundsWithOptionsAsync (
-    isRingCT: boolean,
-    targetAddress: string, // currency-ready wallet address, but not an OA address (resolve before calling)
-    nettype: string,
-    amount: number, // number
-    keyImageCache: Object,
-    publicAddress: string,
-    privateKeys: Object,
-    publicKeys: Object,
-    hostedMoneroAPIClient: Object,
-    moneroOpenAliasUtils: Object,
-    paymentId: string | null,
-    mixin: number,
-    simplePriority: number,
-    options: any
-  ) {
+  async SendFundsWithOptionsAsync (options: SendFundsOptions) {
     return new Promise((resolve, reject) => {
       moneroSendingFundsUtils.SendFundsWithOptions(
-        isRingCT,
-        targetAddress,
-        nettype,
-        amount,
-        keyImageCache,
-        publicAddress,
-        privateKeys,
-        publicKeys,
-        hostedMoneroAPIClient,
-        moneroOpenAliasUtils,
-        paymentId,
-        mixin,
-        simplePriority,
         options,
         (code) => {
-          console.log(`SendFunds doNotBroadcast code:${code}`)
+          console.log(`SendFundsWithOptionsAsync code:${code}`)
         },
         (result) => {
-          console.log(`SendFunds doNotBroadcast result:${result}`)
+          console.log(`SendFundsWithOptionsAsync result:${JSON.stringify(result)}`)
           resolve(result)
         },
         (err) => {
-          console.log(`SendFunds doNotBroadcast error:${err}`)
+          console.log(`SendFundsWithOptionsAsync error:${err}`)
           reject(err)
         }
       )
     })
   }
-
-  async SubmitSerializedSignedTransactionAsync (signedTx: string, destinationAddress: string, moneroViewKeyPrivate: string) {
-    // Broadcast the transaction
-    return new Promise((resolve, reject) => {
-      this.hostedMoneroAPIClient.SubmitSerializedSignedTransaction(
-        destinationAddress,
-        moneroViewKeyPrivate,
-        signedTx,
-        (err) => {
-          if (err) {
-            console.log('Something unexpected occurred when submitting your transaction:', err)
-            reject(err)
-          }
-          console.log('*** Success Sending Transaction *** ')
-          resolve(true)
-        }
-      )
-    })
-  }
+  //
+  // async SubmitSerializedSignedTransactionAsync (signedTx: string, destinationAddress: string, moneroViewKeyPrivate: string) {
+  //   // Broadcast the transaction
+  //   return new Promise((resolve, reject) => {
+  //     this.hostedMoneroAPIClient.SubmitSerializedSignedTransaction(
+  //       destinationAddress,
+  //       moneroViewKeyPrivate,
+  //       signedTx,
+  //       (err) => {
+  //         if (err) {
+  //           console.log('Something unexpected occurred when submitting your transaction:', err)
+  //           reject(err)
+  //         }
+  //         console.log('*** Success Sending Transaction *** ')
+  //         resolve(true)
+  //       }
+  //     )
+  //   })
+  // }
   // *************************************
   // Public methods
   // *************************************
@@ -791,33 +764,34 @@ class MoneroEngine {
     }
 
     let result
+    let options: SendFundsOptions
     try {
       const amountFloatString: string = bns.div(nativeAmount, '1000000000000', 8)
       // Todo: Yikes. Why does mymonero-core-js take a float, not a string? -paulvp
       const amountFloat = parseFloat(amountFloatString)
-      result = await this.SendFundsWithOptionsAsync(
-        true,
-        publicAddress,
-        MAINNET,
-        amountFloat,
-        this.keyImageCache,
-        this.walletLocalData.moneroAddress,
-        { view: this.walletLocalData.moneroViewKeyPrivate, spend: this.walletInfo.keys.moneroSpendKeyPrivate },
-        { view: this.walletLocalData.moneroViewKeyPublic, spend: this.walletInfo.keys.moneroSpendKeyPublic },
-        this.hostedMoneroAPIClient,
-        MoneroOpenAliasUtils,
-        null,
-        6,
-        1,
-        { doNotBroadcast: true }
-      )
+      options = {
+        isRingCT: true,
+        target_address: publicAddress, // currency-ready wallet address, but not an OA address (resolve before calling)
+        nettype: MAINNET,
+        amount: amountFloat, // number
+        wallet__keyImage_cache: this.keyImageCache,
+        wallet__public_address: this.walletLocalData.moneroAddress,
+        wallet__private_keys: { view: this.walletLocalData.moneroViewKeyPrivate, spend: this.walletInfo.keys.moneroSpendKeyPrivate },
+        wallet__public_keys: { view: this.walletLocalData.moneroViewKeyPublic, spend: this.walletInfo.keys.moneroSpendKeyPublic },
+        hostedMoneroAPIClient: this.hostedMoneroAPIClient,
+        monero_openalias_utils: MoneroOpenAliasUtils,
+        payment_id: null,
+        mixin: 6,
+        simple_priority: 1,
+        doNotBroadcast: true
+      }
+      result = await this.SendFundsWithOptionsAsync(options)
     } catch (e) {
       console.log(`makeSpend error: ${e}`)
       throw e
     }
 
-    const nativeNetworkFee = result.tx_fee.toString()
-    const signedTx = result.signedTx
+    const nativeNetworkFee = result.tx_fee
 
     const date = Date.now() / 1000
     nativeAmount = '-' + nativeAmount
@@ -830,9 +804,9 @@ class MoneroEngine {
       nativeAmount, // nativeAmount
       networkFee: nativeNetworkFee,
       ourReceiveAddresses: [], // ourReceiveAddresses
-      signedTx, // signedTx
+      signedTx: '', // signedTx
       otherParams: {
-        destinationAddress: publicAddress
+        options
       }
     }
 
@@ -841,22 +815,21 @@ class MoneroEngine {
 
   // asynchronous
   async signTx (edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
-    // Monero transactions are signed at makeSpend
-    if (edgeTransaction.signedTx) {
+    // Monero transactions are signed at broadcast
+    if (edgeTransaction.otherParams.options) {
       return edgeTransaction
     } else {
-      throw new Error('Invalid EdgeTransaction. No signedTx')
+      throw new Error('Invalid EdgeTransaction. No otherParams.options')
     }
   }
 
   // asynchronous
   async broadcastTx (edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
     try {
-      await this.SubmitSerializedSignedTransactionAsync(
-        edgeTransaction.signedTx,
-        edgeTransaction.otherParams.destinationAddress,
-        this.walletLocalData.moneroViewKeyPrivate
-      )
+      edgeTransaction.otherParams.options.doNotBroadcast = false
+      const result = await this.SendFundsWithOptionsAsync(edgeTransaction.otherParams.options)
+      edgeTransaction.txid = result.tx_hash
+      edgeTransaction.networkFee = result.tx_fee
       console.log(`broadcastTx success txid: ${edgeTransaction.txid}`)
       return edgeTransaction
     } catch (e) {

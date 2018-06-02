@@ -1,3 +1,4 @@
 src/HostedMoneroAPIClient/*
 src/OpenAlias/*
-t.js
+sample.js
+sample.out.js

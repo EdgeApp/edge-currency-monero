@@ -5,3 +5,5 @@
 /intermediate
 /node_modules
 /build
+sample.out.*
+yarn-error.log

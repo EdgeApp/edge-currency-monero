@@ -1,15 +1,15 @@
-const monero_wallet_utils = require('mymonero-core-js/monero_utils/monero_wallet_utils.js')
-const MAINNET = require('mymonero-core-js/cryptonote_utils/nettype.js').network_type.MAINNET
-const monero_config = require('mymonero-core-js/monero_utils/monero_config.js')
-const fetch = require('node-fetch')
-const HostedMoneroAPIClient = require('./src/HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js')
+import monero_wallet_utils from 'mymonero-core-js/monero_utils/monero_wallet_utils.js'
+import { network_type } from 'mymonero-core-js/cryptonote_utils/nettype.js'
+import monero_config from 'mymonero-core-js/monero_utils/monero_config.js'
+import fetch from 'node-fetch'
+import { HostedMoneroAPIClient } from './src/HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js'
 // const OpenAliasResolver = require('src/OpenAlias/OpenAliasResolver.js')
-const monero_openalias_utils = require('./src/OpenAlias/monero_openalias_utils.js')
-const monero_sendingFunds_utils = require('mymonero-core-js/monero_utils/monero_sendingFunds_utils.js')
-const monero_response_parser_utils = require('mymonero-core-js/monero_utils/mymonero_response_parser_utils.js')
+import { MoneroOpenAliasUtils } from './src/OpenAlias/monero_openalias_utils.js'
+import monero_sendingFunds_utils from 'mymonero-core-js/monero_utils/monero_sendingFunds_utils.js'
+import monero_response_parser_utils from 'mymonero-core-js/monero_utils/mymonero_response_parser_utils.js'
 
-const xhr = require('node-xhr')
 const keyImageCache = {}
+const { MAINNET } = network_type
 
 async function main () {
   // const wallet = monero_wallet_utils.NewlyCreatedWallet('english', MAINNET)
@@ -124,21 +124,25 @@ async function main () {
   //       return
   //     }
 
-  monero_sendingFunds_utils.SendFundsWithOptions(
-    true,
-    '467qu7tVpAKCDfUpiABGgH5TCBK1dxJqQAuoeJgjgZWYXrrfPLC9ydh1WidJEuuXXhVDiK7pPQTDfhvPMthMNQyNJkqoj4i',
-    MAINNET,
-    0.0012345,
-    keyImageCache,
-    wallet2.keys.public_addr,
-    { view: wallet2.keys.view.sec, spend: wallet2.keys.spend.sec },
-    { view: wallet2.keys.view.pub, spend: wallet2.keys.spend.pub },
+  const options3 = {
+    isRingCT: true,
+    target_address: '467qu7tVpAKCDfUpiABGgH5TCBK1dxJqQAuoeJgjgZWYXrrfPLC9ydh1WidJEuuXXhVDiK7pPQTDfhvPMthMNQyNJkqoj4i',
+    nettype: MAINNET,
+    amount: 0.0012345,
+    wallet__keyImage_cache: keyImageCache,
+    wallet__public_address: wallet2.keys.public_addr,
+    wallet__private_keys: { view: wallet2.keys.view.sec, spend: wallet2.keys.spend.sec },
+    wallet__public_keys: { view: wallet2.keys.view.pub, spend: wallet2.keys.spend.pub },
     hostedMoneroAPIClient,
-    monero_openalias_utils,
-    null,
-    6,
-    1,
-    { doNotBroadcast: true },
+    monero_openalias_utils: MoneroOpenAliasUtils,
+    payment_id: null,
+    mixin: 6,
+    simple_priority: 1,
+    doNotBroadcast: true
+  }
+
+  monero_sendingFunds_utils.SendFundsWithOptions(
+    options3,
     (code) => {
       console.log(code)
     },
@@ -146,18 +150,31 @@ async function main () {
       console.log(result)
       console.log(result.tx_fee.toString())
       // Broadcast the transaction
-      hostedMoneroAPIClient.SubmitSerializedSignedTransaction(
-        '467qu7tVpAKCDfUpiABGgH5TCBK1dxJqQAuoeJgjgZWYXrrfPLC9ydh1WidJEuuXXhVDiK7pPQTDfhvPMthMNQyNJkqoj4i',
-        wallet2.keys.view.sec,
-        result.signedTx,
-        (err) => {
-          if (err) {
-            console.log('Something unexpected occurred when submitting your transaction:', err)
-            return
-          }
-          console.log('Success')
+      options3.doNotBroadcast = false
+      monero_sendingFunds_utils.SendFundsWithOptions(
+        options3,
+        (code) => {
+          console.log(code)
+        },
+        (code) => {
+          console.log(code)
+        },
+        (code) => {
+          console.log(code)
         }
       )
+      // hostedMoneroAPIClient.SubmitSerializedSignedTransaction(
+      //   '467qu7tVpAKCDfUpiABGgH5TCBK1dxJqQAuoeJgjgZWYXrrfPLC9ydh1WidJEuuXXhVDiK7pPQTDfhvPMthMNQyNJkqoj4i',
+      //   wallet2.keys.view.sec,
+      //   result.signedTx,
+      //   (err) => {
+      //     if (err) {
+      //       console.log('Something unexpected occurred when submitting your transaction:', err)
+      //       return
+      //     }
+      //     console.log('Success')
+      //   }
+      // )
 
     },
     (code) => {
