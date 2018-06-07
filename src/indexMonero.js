@@ -180,6 +180,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
           nativeAmount = bns.toFixed(nativeAmount, 0, 0)
           currencyCode = 'XMR'
         }
+        const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
         const label = getParameterByName('label', uri)
         const message = getParameterByName('message', uri)
 
@@ -191,6 +192,9 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         }
         if (currencyCode) {
           edgeParsedUri.currencyCode = currencyCode
+        }
+        if (uniqueIdentifier) {
+          edgeParsedUri.uniqueIdentifier = uniqueIdentifier
         }
         if (label || message) {
           edgeParsedUri.metadata = {}
