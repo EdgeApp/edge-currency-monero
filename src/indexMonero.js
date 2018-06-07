@@ -20,6 +20,7 @@ import moneroWalletUtils from 'mymonero-core-js/monero_utils/monero_wallet_utils
 import { HostedMoneroAPIClient } from './HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js'
 
 import { network_type as networkType } from 'mymonero-core-js/cryptonote_utils/nettype.js'
+import moneroUtils from 'mymonero-core-js/monero_utils/monero_cryptonote_utils_instance'
 
 const MAINNET = networkType.MAINNET
 
@@ -165,11 +166,13 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         }
         address = address.replace('/', '') // Remove any slashes
 
-        // TODO: Check if address is valid
-        // const valid: boolean = EthereumUtil.isValidAddress(address)
-        // if (!valid) {
-        //   throw new Error('InvalidPublicAddressError')
-        // }
+        try {
+          // verify address is decodable for currency
+          moneroUtils.decode_address(address, MAINNET)
+        } catch (e) {
+          throw new Error('InvalidPublicAddressError')
+        }
+
         const amountStr = getParameterByName('amount', uri)
         if (amountStr && typeof amountStr === 'string') {
           const denom = getDenomInfo('XMR')
@@ -213,11 +216,11 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         if (!obj.publicAddress) {
           throw new Error('InvalidPublicAddressError')
         }
-        // TODO: Check if address is valid
-        // const valid: boolean = EthereumUtil.isValidAddress(obj.publicAddress)
-        // if (!valid) {
-        //   throw new Error('InvalidPublicAddressError')
-        // }
+        try {
+          moneroUtils.decode_address(obj.publicAddress, MAINNET)
+        } catch (e) {
+          throw new Error('InvalidPublicAddressError')
+        }
         if (!obj.nativeAmount && !obj.label && !obj.message) {
           return obj.publicAddress
         } else {

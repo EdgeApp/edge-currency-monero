@@ -127,6 +127,21 @@ for (const fixture of fixtures) {
       assert.equal(parsedUri.nativeAmount, undefined)
       assert.equal(parsedUri.currencyCode, undefined)
     })
+    it('invalid address 0', function () {
+      assert.throws(() => {
+        plugin.parseUri(fixture['parseUri']['invalid address'][0])
+      })
+    })
+    it('invalid address 1', function () {
+      assert.throws(() => {
+        plugin.parseUri(fixture['parseUri']['invalid address'][1])
+      })
+    })
+    it('invalid address 2', function () {
+      assert.throws(() => {
+        plugin.parseUri(fixture['parseUri']['invalid address'][2])
+      })
+    })
     it('uri address', function () {
       const parsedUri = plugin.parseUri(fixture['parseUri']['uri address'][0])
       assert.equal(
@@ -244,6 +259,21 @@ for (const fixture of fixtures) {
         fixture['encodeUri']['address only'][0]
       )
       assert.equal(encodedUri, fixture['encodeUri']['address only'][1])
+    })
+    it('invalid address 0', function () {
+      assert.throws(() => {
+        plugin.encodeUri(fixture['encodeUri']['invalid address'][0])
+      })
+    })
+    it('invalid address 1', function () {
+      assert.throws(() => {
+        plugin.encodeUri(fixture['encodeUri']['invalid address'][1])
+      })
+    })
+    it('invalid address 2', function () {
+      assert.throws(() => {
+        plugin.encodeUri(fixture['encodeUri']['invalid address'][2])
+      })
     })
     it('address & amount', function () {
       const encodedUri = plugin.encodeUri(
