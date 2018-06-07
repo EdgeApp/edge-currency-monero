@@ -763,6 +763,17 @@ class MoneroEngine {
       throw InsufficientFundsError
     }
 
+    let paymentId = null
+    if (
+      edgeSpendInfo.spendTargets[0].otherParams &&
+      edgeSpendInfo.spendTargets[0].otherParams.paymentId
+    ) {
+      if (typeof edgeSpendInfo.spendTargets[0].otherParams.paymentId === 'string') {
+        paymentId = edgeSpendInfo.spendTargets[0].otherParams.paymentId
+      } else {
+        throw new Error('Error invalid destinationtag')
+      }
+    }
     let result
     let options: SendFundsOptions
     try {
@@ -780,7 +791,7 @@ class MoneroEngine {
         wallet__public_keys: { view: this.walletLocalData.moneroViewKeyPublic, spend: this.walletInfo.keys.moneroSpendKeyPublic },
         hostedMoneroAPIClient: this.hostedMoneroAPIClient,
         monero_openalias_utils: MoneroOpenAliasUtils,
-        payment_id: null,
+        payment_id: paymentId,
         mixin: 6,
         simple_priority: 1,
         doNotBroadcast: true
