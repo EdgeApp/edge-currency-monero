@@ -19,6 +19,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   currencyCode: 'XMR',
   currencyName: 'Monero',
   pluginName: 'monero',
+  requiredConfirmations: 10,
   walletTypes: [
     'wallet:monero'
   ],
