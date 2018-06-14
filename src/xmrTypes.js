@@ -33,6 +33,7 @@ export type SendFundsOptions = {
 export class WalletLocalData {
   blockHeight: number
   lastAddressQueryHeight: number
+  lockedXmrBalance: string
   nextNonce: string
   moneroAddress: string
   moneroViewKeyPrivate: string
@@ -51,6 +52,7 @@ export class WalletLocalData {
     this.nextNonce = '0'
 
     this.lastAddressQueryHeight = 0
+    this.lockedXmrBalance = '0'
 
     // Dumb extra local var needed to make Flow happy
     const transactionsObj:{[currencyCode: string]: Array<EdgeTransaction>} = {}
@@ -66,6 +68,7 @@ export class WalletLocalData {
 
       if (typeof data.blockHeight === 'number') this.blockHeight = data.blockHeight
       if (typeof data.lastAddressQueryHeight === 'string') this.lastAddressQueryHeight = data.lastAddressQueryHeight
+      if (typeof data.lockedXmrBalance === 'string') this.lockedXmrBalance = data.lockedXmrBalance
       if (typeof data.moneroAddress === 'string') this.moneroAddress = data.moneroAddress
       if (typeof data.moneroViewKeyPrivate === 'string') this.moneroViewKeyPrivate = data.moneroViewKeyPrivate
       if (typeof data.moneroViewKeyPublic === 'string') this.moneroViewKeyPublic = data.moneroViewKeyPublic
