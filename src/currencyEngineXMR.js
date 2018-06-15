@@ -16,6 +16,7 @@ import type {
   EdgeDataDump,
   EdgeIo, EdgeCurrencyPlugin
 } from 'edge-core-js'
+import { error } from 'edge-core-js'
 // import { sprintf } from 'sprintf-js'
 import { bns } from 'biggystring'
 import {
@@ -224,6 +225,8 @@ class MoneroEngine {
           this.walletLocalData.totalBalances.XMR = nativeBalance
           this.edgeTxLibCallbacks.onBalanceChanged('XMR', nativeBalance)
         }
+
+        this.walletLocalData.lockedXmrBalance = parsedAddrInfo.locked_balance_String
       }
     } catch (e) {
       this.log('Error fetching address info: ' + this.walletLocalData.moneroAddress)
@@ -756,11 +759,12 @@ class MoneroEngine {
       throw (new Error('ErrorNoAmountSpecified'))
     }
 
-    const InsufficientFundsError = new Error('Insufficient funds')
-    InsufficientFundsError.name = 'ErrorInsufficientFunds'
-
     if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
-      throw InsufficientFundsError
+      if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
+        throw new error.PendingFundsError()
+      } else {
+        throw new error.InsufficientFundsError()
+      }
     }
 
     let uniqueIdentifier = null
