@@ -27,7 +27,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   defaultSettings,
 
   addressExplorer: 'https://moneroblocks.info/search/%s',
-  transactionExplorer: 'https://moneroblocks.info/tx/%s',
+  transactionExplorer: 'https://moneroexplorer.com/tx/%s',
 
   denominations: [
     // An array of Objects of the possible denominations for this currency
