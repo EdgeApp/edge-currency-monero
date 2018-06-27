@@ -173,6 +173,7 @@ class MoneroEngine {
       const result = await this.fetchPostMyMonero('login')
       if (result.hasOwnProperty('new_address') && !this.loggedIn) {
         this.loggedIn = true
+        this.walletLocalData.hasLoggedIn = true
         clearTimeout(this.timers.loginInnerLoop)
         delete this.timers.loginInnerLoop
         this.addToLoop('checkAddressInnerLoop', ADDRESS_POLL_MILLISECONDS)
@@ -688,7 +689,11 @@ class MoneroEngine {
 
   // synchronous
   getFreshAddress (options: any): EdgeFreshAddress {
-    return { publicAddress: this.walletLocalData.moneroAddress }
+    if (this.walletLocalData.hasLoggedIn) {
+      return { publicAddress: this.walletLocalData.moneroAddress }
+    } else {
+      return { publicAddress: '' }
+    }
   }
 
   // synchronous
