@@ -6,7 +6,7 @@ import type { MoneroSettings } from './xmrTypes.js'
 
 const otherSettings: MoneroSettings = {
   mymoneroApiServers: [
-    'https://api.mymonero.com:8443'
+    'https://edge.mymonero.com:8443'
   ]
 }
 
