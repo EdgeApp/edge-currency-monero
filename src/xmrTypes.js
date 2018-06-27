@@ -35,6 +35,7 @@ export class WalletLocalData {
   lastAddressQueryHeight: number
   lockedXmrBalance: string
   nextNonce: string
+  hasLoggedIn: boolean
   moneroAddress: string
   moneroViewKeyPrivate: string
   moneroViewKeyPublic: string
@@ -62,11 +63,13 @@ export class WalletLocalData {
     this.moneroViewKeyPrivate = ''
     this.moneroViewKeyPublic = ''
     this.moneroSpendKeyPublic = ''
+    this.hasLoggedIn = false
     this.enabledTokens = [ PRIMARY_CURRENCY ]
     if (jsonString !== null) {
       const data = JSON.parse(jsonString)
 
       if (typeof data.blockHeight === 'number') this.blockHeight = data.blockHeight
+      if (typeof data.hasLoggedIn === 'boolean') this.hasLoggedIn = data.hasLoggedIn
       if (typeof data.lastAddressQueryHeight === 'string') this.lastAddressQueryHeight = data.lastAddressQueryHeight
       if (typeof data.lockedXmrBalance === 'string') this.lockedXmrBalance = data.lockedXmrBalance
       if (typeof data.moneroAddress === 'string') this.moneroAddress = data.moneroAddress
