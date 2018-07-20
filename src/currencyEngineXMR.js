@@ -761,7 +761,7 @@ class MoneroEngine {
     }
 
     if (bns.eq(nativeAmount, '0')) {
-      throw (new Error('ErrorNoAmountSpecified'))
+      throw (new error.NoAmountSpecifiedError())
     }
 
     if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
