@@ -5,9 +5,7 @@ import type { EdgeCurrencyInfo } from 'edge-core-js'
 import type { MoneroSettings } from './xmrTypes.js'
 
 const otherSettings: MoneroSettings = {
-  mymoneroApiServers: [
-    'https://edge.mymonero.com:8443'
-  ]
+  mymoneroApiServers: ['https://edge.mymonero.com:8443']
 }
 
 const defaultSettings: any = {
@@ -20,9 +18,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   currencyName: 'Monero',
   pluginName: 'monero',
   requiredConfirmations: 10,
-  walletTypes: [
-    'wallet:monero'
-  ],
+  walletTypes: ['wallet:monero'],
 
   defaultSettings,
 
@@ -37,7 +33,9 @@ export const currencyInfo: EdgeCurrencyInfo = {
       symbol: '‎ɱ'
     }
   ],
-  symbolImage: 'https://developer.airbitz.co/content/monero-symbol-orange-64.png', // Base64 encoded png image of the currency symbol (optional)
-  symbolImageDarkMono: 'https://developer.airbitz.co/content/monero-symbol-64-87939D.png', // Base64 encoded png image of the currency symbol (optional)
+  symbolImage:
+    'https://developer.airbitz.co/content/monero-symbol-orange-64.png', // Base64 encoded png image of the currency symbol (optional)
+  symbolImageDarkMono:
+    'https://developer.airbitz.co/content/monero-symbol-64-87939D.png', // Base64 encoded png image of the currency symbol (optional)
   metaTokens: []
 }

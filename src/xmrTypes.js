@@ -10,7 +10,7 @@ export const DATA_STORE_FILE = 'walletLocalData.json'
 export const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
 export type MoneroSettings = {
-  mymoneroApiServers: Array<string>,
+  mymoneroApiServers: Array<string>
 }
 
 export type SendFundsOptions = {
@@ -40,14 +40,14 @@ export class WalletLocalData {
   moneroViewKeyPrivate: string
   moneroViewKeyPublic: string
   moneroSpendKeyPublic: string
-  totalBalances: {[currencyCode: string]: string}
+  totalBalances: { [currencyCode: string]: string }
   enabledTokens: Array<string>
-  transactionsObj: {[currencyCode: string]: Array<EdgeTransaction>}
+  transactionsObj: { [currencyCode: string]: Array<EdgeTransaction> }
 
   constructor (jsonString: string | null) {
     this.blockHeight = 0
 
-    const totalBalances:{[currencyCode: string]: string} = { XMR: '0' }
+    const totalBalances: { [currencyCode: string]: string } = { XMR: '0' }
     this.totalBalances = totalBalances
 
     this.nextNonce = '0'
@@ -56,7 +56,9 @@ export class WalletLocalData {
     this.lockedXmrBalance = '0'
 
     // Dumb extra local var needed to make Flow happy
-    const transactionsObj:{[currencyCode: string]: Array<EdgeTransaction>} = {}
+    const transactionsObj: {
+      [currencyCode: string]: Array<EdgeTransaction>
+    } = {}
     this.transactionsObj = transactionsObj
 
     this.moneroAddress = ''
@@ -64,21 +66,21 @@ export class WalletLocalData {
     this.moneroViewKeyPublic = ''
     this.moneroSpendKeyPublic = ''
     this.hasLoggedIn = false
-    this.enabledTokens = [ PRIMARY_CURRENCY ]
+    this.enabledTokens = [PRIMARY_CURRENCY]
     if (jsonString !== null) {
       const data = JSON.parse(jsonString)
 
-      if (typeof data.blockHeight === 'number') this.blockHeight = data.blockHeight
-      if (typeof data.hasLoggedIn === 'boolean') this.hasLoggedIn = data.hasLoggedIn
-      if (typeof data.lastAddressQueryHeight === 'string') this.lastAddressQueryHeight = data.lastAddressQueryHeight
-      if (typeof data.lockedXmrBalance === 'string') this.lockedXmrBalance = data.lockedXmrBalance
-      if (typeof data.moneroAddress === 'string') this.moneroAddress = data.moneroAddress
-      if (typeof data.moneroViewKeyPrivate === 'string') this.moneroViewKeyPrivate = data.moneroViewKeyPrivate
-      if (typeof data.moneroViewKeyPublic === 'string') this.moneroViewKeyPublic = data.moneroViewKeyPublic
-      if (typeof data.moneroSpendKeyPublic === 'string') this.moneroSpendKeyPublic = data.moneroSpendKeyPublic
-      if (typeof data.totalBalances !== 'undefined') this.totalBalances = data.totalBalances
-      if (typeof data.enabledTokens !== 'undefined') this.enabledTokens = data.enabledTokens
-      if (typeof data.transactionsObj !== 'undefined') this.transactionsObj = data.transactionsObj
+      if (typeof data.blockHeight === 'number') { this.blockHeight = data.blockHeight }
+      if (typeof data.hasLoggedIn === 'boolean') { this.hasLoggedIn = data.hasLoggedIn }
+      if (typeof data.lastAddressQueryHeight === 'string') { this.lastAddressQueryHeight = data.lastAddressQueryHeight }
+      if (typeof data.lockedXmrBalance === 'string') { this.lockedXmrBalance = data.lockedXmrBalance }
+      if (typeof data.moneroAddress === 'string') { this.moneroAddress = data.moneroAddress }
+      if (typeof data.moneroViewKeyPrivate === 'string') { this.moneroViewKeyPrivate = data.moneroViewKeyPrivate }
+      if (typeof data.moneroViewKeyPublic === 'string') { this.moneroViewKeyPublic = data.moneroViewKeyPublic }
+      if (typeof data.moneroSpendKeyPublic === 'string') { this.moneroSpendKeyPublic = data.moneroSpendKeyPublic }
+      if (typeof data.totalBalances !== 'undefined') { this.totalBalances = data.totalBalances }
+      if (typeof data.enabledTokens !== 'undefined') { this.enabledTokens = data.enabledTokens }
+      if (typeof data.transactionsObj !== 'undefined') { this.transactionsObj = data.transactionsObj }
     }
   }
 }

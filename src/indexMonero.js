@@ -4,7 +4,11 @@
 // @flow
 import { currencyInfo } from './currencyInfoXMR.js'
 import { MoneroEngine } from './currencyEngineXMR.js'
-import { DATA_STORE_FILE, DATA_STORE_FOLDER, WalletLocalData } from './xmrTypes.js'
+import {
+  DATA_STORE_FILE,
+  DATA_STORE_FOLDER,
+  WalletLocalData
+} from './xmrTypes.js'
 import type {
   EdgeCurrencyEngine,
   EdgeCurrencyEngineOptions,
@@ -26,7 +30,7 @@ const MAINNET = networkType.MAINNET
 
 let io
 
-const randomBuffer = (size) => {
+const randomBuffer = size => {
   const array = io.random(size)
   return Buffer.from(array)
 }
@@ -77,7 +81,11 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         if (type === 'monero') {
           const randBuffer = randomBuffer(32)
           const randHex = randBuffer.toString('hex')
-          const wallet = moneroWalletUtils.NewlyCreatedWallet('english', MAINNET, randHex)
+          const wallet = moneroWalletUtils.NewlyCreatedWallet(
+            'english',
+            MAINNET,
+            randHex
+          )
           const moneroKey = wallet.mnemonicString
           const moneroSpendKeyPrivate = wallet.keys.spend.sec
           const moneroSpendKeyPublic = wallet.keys.spend.pub
@@ -94,7 +102,11 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
       derivePublicKey: (walletInfo: EdgeWalletInfo) => {
         const type = walletInfo.type.replace('wallet:', '')
         if (type === 'monero') {
-          const wallet = moneroWalletUtils.SeedAndKeysFromMnemonic_sync(walletInfo.keys.moneroKey, 'english', MAINNET)
+          const wallet = moneroWalletUtils.SeedAndKeysFromMnemonic_sync(
+            walletInfo.keys.moneroKey,
+            'english',
+            MAINNET
+          )
           const moneroAddress = wallet.keys.public_addr
           const moneroViewKeyPrivate = wallet.keys.view.sec
           const moneroViewKeyPublic = wallet.keys.view.pub
@@ -111,35 +123,53 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         }
       },
 
-      async makeEngine (walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions): Promise<EdgeCurrencyEngine> {
-        const moneroEngine = new MoneroEngine(this, io, walletInfo, hostedMoneroAPIClient, opts)
+      async makeEngine (
+        walletInfo: EdgeWalletInfo,
+        opts: EdgeCurrencyEngineOptions
+      ): Promise<EdgeCurrencyEngine> {
+        const moneroEngine = new MoneroEngine(
+          this,
+          io,
+          walletInfo,
+          hostedMoneroAPIClient,
+          opts
+        )
         try {
-          const result =
-            await moneroEngine.walletLocalFolder
-              .folder(DATA_STORE_FOLDER)
-              .file(DATA_STORE_FILE)
-              .getText(DATA_STORE_FOLDER, 'walletLocalData')
+          const result = await moneroEngine.walletLocalFolder
+            .folder(DATA_STORE_FOLDER)
+            .file(DATA_STORE_FILE)
+            .getText(DATA_STORE_FOLDER, 'walletLocalData')
 
           moneroEngine.walletLocalData = new WalletLocalData(result)
-          moneroEngine.walletLocalData.moneroAddress = moneroEngine.walletInfo.keys.moneroAddress
-          moneroEngine.walletLocalData.moneroViewKeyPrivate = moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-          moneroEngine.walletLocalData.moneroViewKeyPublic = moneroEngine.walletInfo.keys.moneroViewKeyPublic
-          moneroEngine.walletLocalData.moneroSpendKeyPublic = moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+          moneroEngine.walletLocalData.moneroAddress =
+            moneroEngine.walletInfo.keys.moneroAddress
+          moneroEngine.walletLocalData.moneroViewKeyPrivate =
+            moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+          moneroEngine.walletLocalData.moneroViewKeyPublic =
+            moneroEngine.walletInfo.keys.moneroViewKeyPublic
+          moneroEngine.walletLocalData.moneroSpendKeyPublic =
+            moneroEngine.walletInfo.keys.moneroSpendKeyPublic
         } catch (err) {
           try {
             console.log(err)
             console.log('No walletLocalData setup yet: Failure is ok')
             moneroEngine.walletLocalData = new WalletLocalData(null)
-            moneroEngine.walletLocalData.moneroAddress = moneroEngine.walletInfo.keys.moneroAddress
-            moneroEngine.walletLocalData.moneroViewKeyPrivate = moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-            moneroEngine.walletLocalData.moneroViewKeyPublic = moneroEngine.walletInfo.keys.moneroViewKeyPublic
-            moneroEngine.walletLocalData.moneroSpendKeyPublic = moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+            moneroEngine.walletLocalData.moneroAddress =
+              moneroEngine.walletInfo.keys.moneroAddress
+            moneroEngine.walletLocalData.moneroViewKeyPrivate =
+              moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+            moneroEngine.walletLocalData.moneroViewKeyPublic =
+              moneroEngine.walletInfo.keys.moneroViewKeyPublic
+            moneroEngine.walletLocalData.moneroSpendKeyPublic =
+              moneroEngine.walletInfo.keys.moneroSpendKeyPublic
             await moneroEngine.walletLocalFolder
               .folder(DATA_STORE_FOLDER)
               .file(DATA_STORE_FILE)
               .setText(JSON.stringify(moneroEngine.walletLocalData))
           } catch (e) {
-            console.log('Error writing to localDataStore. Engine not started:' + err)
+            console.log(
+              'Error writing to localDataStore. Engine not started:' + err
+            )
           }
         }
         return moneroEngine
@@ -187,7 +217,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         const label = getParameterByName('label', uri)
         const message = getParameterByName('message', uri)
 
-        const edgeParsedUri:EdgeParsedUri = {
+        const edgeParsedUri: EdgeParsedUri = {
           publicAddress: address
         }
         if (nativeAmount) {
@@ -228,7 +258,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
 
           if (typeof obj.nativeAmount === 'string') {
             let currencyCode: string = 'XMR'
-            const nativeAmount:string = obj.nativeAmount
+            const nativeAmount: string = obj.nativeAmount
             if (typeof obj.currencyCode === 'string') {
               currencyCode = obj.currencyCode
             }
