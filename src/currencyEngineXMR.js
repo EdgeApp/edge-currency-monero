@@ -314,9 +314,8 @@ class MoneroEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray = this.walletLocalData.transactionsObj[
-        PRIMARY_CURRENCY
-      ]
+      const obj = this.walletLocalData.transactionsObj
+      const transactionsArray = obj[PRIMARY_CURRENCY]
       const edgeTx = transactionsArray[idx]
 
       if (edgeTransaction.blockHeight) {

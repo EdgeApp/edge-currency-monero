@@ -70,17 +70,39 @@ export class WalletLocalData {
     if (jsonString !== null) {
       const data = JSON.parse(jsonString)
 
-      if (typeof data.blockHeight === 'number') { this.blockHeight = data.blockHeight }
-      if (typeof data.hasLoggedIn === 'boolean') { this.hasLoggedIn = data.hasLoggedIn }
-      if (typeof data.lastAddressQueryHeight === 'string') { this.lastAddressQueryHeight = data.lastAddressQueryHeight }
-      if (typeof data.lockedXmrBalance === 'string') { this.lockedXmrBalance = data.lockedXmrBalance }
-      if (typeof data.moneroAddress === 'string') { this.moneroAddress = data.moneroAddress }
-      if (typeof data.moneroViewKeyPrivate === 'string') { this.moneroViewKeyPrivate = data.moneroViewKeyPrivate }
-      if (typeof data.moneroViewKeyPublic === 'string') { this.moneroViewKeyPublic = data.moneroViewKeyPublic }
-      if (typeof data.moneroSpendKeyPublic === 'string') { this.moneroSpendKeyPublic = data.moneroSpendKeyPublic }
-      if (typeof data.totalBalances !== 'undefined') { this.totalBalances = data.totalBalances }
-      if (typeof data.enabledTokens !== 'undefined') { this.enabledTokens = data.enabledTokens }
-      if (typeof data.transactionsObj !== 'undefined') { this.transactionsObj = data.transactionsObj }
+      if (typeof data.blockHeight === 'number') {
+        this.blockHeight = data.blockHeight
+      }
+      if (typeof data.hasLoggedIn === 'boolean') {
+        this.hasLoggedIn = data.hasLoggedIn
+      }
+      if (typeof data.lastAddressQueryHeight === 'string') {
+        this.lastAddressQueryHeight = data.lastAddressQueryHeight
+      }
+      if (typeof data.lockedXmrBalance === 'string') {
+        this.lockedXmrBalance = data.lockedXmrBalance
+      }
+      if (typeof data.moneroAddress === 'string') {
+        this.moneroAddress = data.moneroAddress
+      }
+      if (typeof data.moneroViewKeyPrivate === 'string') {
+        this.moneroViewKeyPrivate = data.moneroViewKeyPrivate
+      }
+      if (typeof data.moneroViewKeyPublic === 'string') {
+        this.moneroViewKeyPublic = data.moneroViewKeyPublic
+      }
+      if (typeof data.moneroSpendKeyPublic === 'string') {
+        this.moneroSpendKeyPublic = data.moneroSpendKeyPublic
+      }
+      if (typeof data.totalBalances !== 'undefined') {
+        this.totalBalances = data.totalBalances
+      }
+      if (typeof data.enabledTokens !== 'undefined') {
+        this.enabledTokens = data.enabledTokens
+      }
+      if (typeof data.transactionsObj !== 'undefined') {
+        this.transactionsObj = data.transactionsObj
+      }
     }
   }
 }
