@@ -22,16 +22,10 @@ import { bns } from 'biggystring'
 import {
   DATA_STORE_FILE,
   DATA_STORE_FOLDER,
-  WalletLocalData,
-  type SendFundsOptions
+  WalletLocalData
 } from './xmrTypes.js'
 import { normalizeAddress, validateObject } from './utils.js'
-import moneroResponseParserUtils from 'mymonero-core-js/monero_utils/mymonero_response_parser_utils.js'
-import moneroSendingFundsUtils from 'mymonero-core-js/monero_utils/monero_sendingFunds_utils.js'
-import { network_type as networkType } from 'mymonero-core-js/cryptonote_utils/nettype.js'
-
-import { MoneroOpenAliasUtils } from './OpenAlias/monero_openalias_utils.js'
-const MAINNET = networkType.MAINNET
+import { type QueryParams, type SendFundsParams } from 'mymonero-core-js/lib/MyMoneroApi.js'
 
 const ADDRESS_POLL_MILLISECONDS = 7000
 const TRANSACTIONS_POLL_MILLISECONDS = 4000
@@ -54,13 +48,14 @@ class MoneroEngine {
   currencyInfo: EdgeCurrencyInfo
   allTokens: Array<EdgeMetaToken>
   keyImageCache: Object
-  hostedMoneroAPIClient: Object
+  myMoneroApi: Object
   currentSettings: any
   timers: any
   walletId: string
   io: EdgeIo
+  currencyPlugin: EdgeCurrencyPlugin
 
-  constructor (currencyPlugin: EdgeCurrencyPlugin, io_: any, walletInfo: EdgeWalletInfo, hostedMoneroAPIClient: Object, opts: EdgeCurrencyEngineOptions) {
+  constructor (currencyPlugin: EdgeCurrencyPlugin, io_: any, walletInfo: EdgeWalletInfo, myMoneroApi: Object, opts: EdgeCurrencyEngineOptions) {
     const { walletLocalFolder, callbacks } = opts
 
     this.io = io_
@@ -73,7 +68,9 @@ class MoneroEngine {
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
     this.currencyInfo = currencyInfo
-    this.hostedMoneroAPIClient = hostedMoneroAPIClient
+    this.currencyPlugin = currencyPlugin
+    this.myMoneroApi = myMoneroApi
+
     this.allTokens = currencyInfo.metaTokens.slice(0)
     // this.customTokens = []
     this.timers = {}
@@ -90,6 +87,10 @@ class MoneroEngine {
     this.edgeTxLibCallbacks = callbacks
     this.walletLocalFolder = walletLocalFolder
 
+    this.log(`Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${this.currencyInfo.pluginName} `)
+  }
+
+  async init () {
     if (
       typeof this.walletInfo.keys.moneroAddress !== 'string' ||
       typeof this.walletInfo.keys.moneroViewKeyPrivate !== 'string' ||
@@ -97,25 +98,23 @@ class MoneroEngine {
       typeof this.walletInfo.keys.moneroSpendKeyPublic !== 'string'
     ) {
       if (
-        walletInfo.keys.moneroAddress &&
-        walletInfo.keys.moneroViewKeyPrivate &&
-        walletInfo.keys.moneroViewKeyPublic &&
-        walletInfo.keys.moneroSpendKeyPublic
+        this.walletInfo.keys.moneroAddress &&
+        this.walletInfo.keys.moneroViewKeyPrivate &&
+        this.walletInfo.keys.moneroViewKeyPublic &&
+        this.walletInfo.keys.moneroSpendKeyPublic
       ) {
-        this.walletInfo.keys.moneroAddress = walletInfo.keys.moneroAddress
-        this.walletInfo.keys.moneroViewKeyPrivate = walletInfo.keys.moneroViewKeyPrivate
-        this.walletInfo.keys.moneroViewKeyPublic = walletInfo.keys.moneroViewKeyPublic
-        this.walletInfo.keys.moneroSpendKeyPublic = walletInfo.keys.moneroSpendKeyPublic
+        this.walletInfo.keys.moneroAddress = this.walletInfo.keys.moneroAddress
+        this.walletInfo.keys.moneroViewKeyPrivate = this.walletInfo.keys.moneroViewKeyPrivate
+        this.walletInfo.keys.moneroViewKeyPublic = this.walletInfo.keys.moneroViewKeyPublic
+        this.walletInfo.keys.moneroSpendKeyPublic = this.walletInfo.keys.moneroSpendKeyPublic
       } else {
-        const pubKeys = currencyPlugin.derivePublicKey(this.walletInfo)
+        const pubKeys = await this.currencyPlugin.derivePublicKey(this.walletInfo)
         this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
         this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
         this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
         this.walletInfo.keys.moneroSpendKeyPublic = pubKeys.moneroSpendKeyPublic
       }
     }
-
-    this.log(`Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${this.currencyInfo.pluginName} `)
   }
 
   async fetchPost (url: string, options: Object) {
@@ -190,44 +189,26 @@ class MoneroEngine {
   // ***************************************************
   async checkAddressInnerLoop () {
     try {
-      const result = await this.fetchPostMyMonero('get_address_info')
-      const valid = validateObject(result, {
-        'type': 'object',
-        'properties': {
-          'locked_funds': {'type': 'string'},
-          'total_received': {'type': 'string'},
-          'total_sent': {'type': 'string'},
-          'scanned_height': {'type': 'number'},
-          'scanned_block_height': {'type': 'number'},
-          'start_height': {'type': 'number'},
-          'transaction_height': {'type': 'number'},
-          'blockchain_height': {'type': 'number'}
-        }
-      })
+      const params: QueryParams = {
+        moneroAddress: this.walletLocalData.moneroAddress,
+        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
+        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
+      }
 
-      if (valid) {
-        const parsedAddrInfo = moneroResponseParserUtils.Parsed_AddressInfo__sync(
-          this.keyImageCache,
-          result,
-          this.walletLocalData.moneroAddress,
-          this.walletLocalData.moneroViewKeyPrivate,
-          this.walletLocalData.moneroSpendKeyPublic,
-          this.walletInfo.keys.moneroSpendKeyPrivate
-        )
-        if (this.walletLocalData.blockHeight !== parsedAddrInfo.blockchain_height) {
-          this.walletLocalData.blockHeight = parsedAddrInfo.blockchain_height // Convert to decimal
-          this.walletLocalDataDirty = true
-          this.edgeTxLibCallbacks.onBlockHeightChanged(this.walletLocalData.blockHeight)
-        }
+      const addrResult = await this.myMoneroApi.getAddressInfo(params)
 
-        const nativeBalance = bns.sub(parsedAddrInfo.total_received_String, parsedAddrInfo.total_sent_String)
+      if (this.walletLocalData.blockHeight !== addrResult.blockHeight) {
+        this.walletLocalData.blockHeight = addrResult.blockHeight // Convert to decimal
+        this.walletLocalDataDirty = true
+        this.edgeTxLibCallbacks.onBlockHeightChanged(this.walletLocalData.blockHeight)
+      }
 
-        if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
-          this.walletLocalData.totalBalances.XMR = nativeBalance
-          this.edgeTxLibCallbacks.onBalanceChanged('XMR', nativeBalance)
-        }
+      const nativeBalance = bns.sub(addrResult.totalReceived, addrResult.totalSent)
 
-        this.walletLocalData.lockedXmrBalance = parsedAddrInfo.locked_balance_String
+      if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
+        this.walletLocalData.totalBalances.XMR = nativeBalance
+        this.edgeTxLibCallbacks.onBalanceChanged('XMR', nativeBalance)
       }
     } catch (e) {
       this.log('Error fetching address info: ' + this.walletLocalData.moneroAddress)
@@ -313,60 +294,26 @@ class MoneroEngine {
     // }
 
     try {
-      const result = await this.fetchPostMyMonero('get_address_txs')
-      const valid = validateObject(result, {
-        'type': 'object',
-        'properties': {
-          'total_received': {'type': 'string'},
-          'scanned_height': {'type': 'number'},
-          'scanned_block_height': {'type': 'number'},
-          'start_height': {'type': 'number'},
-          'transaction_height': {'type': 'number'},
-          'transactions': {
-            'type': 'array',
-            'items': {
-              'type': 'object',
-              'properties': {
-                'hash': {'type': 'string'},
-                'timestamp': {'type': 'string'},
-                'total_received': {'type': 'string'},
-                'total_sent': {'type': 'string'},
-                'unlock_time': {'type': 'number'},
-                'height': {'type': 'number'},
-                'coinbase': {'type': 'boolean'},
-                'mempool': {'type': 'boolean'}
-              }
-            }
-          }
-        }
-      })
-
-      if (valid) {
-        const parsedTxs = moneroResponseParserUtils.Parsed_AddressTransactions__sync(
-          this.keyImageCache,
-          result,
-          this.walletLocalData.moneroAddress,
-          this.walletLocalData.moneroViewKeyPrivate,
-          this.walletLocalData.moneroSpendKeyPublic,
-          this.walletInfo.keys.moneroSpendKeyPrivate
-        )
-
-        const transactions = parsedTxs.serialized_transactions
-        this.log('Fetched transactions count: ' + transactions.length)
-
-        // Get transactions
-        // Iterate over transactions in address
-        for (let i = 0; i < transactions.length; i++) {
-          const tx = transactions[i]
-          this.processMoneroTransaction(tx)
-          if (i % 10 === 0) {
-            this.updateOnAddressesChecked(i, transactions.length)
-          }
-        }
-        this.updateOnAddressesChecked(transactions.length, transactions.length)
-      } else {
-        checkAddressSuccess = false
+      const params: QueryParams = {
+        moneroAddress: this.walletLocalData.moneroAddress,
+        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
+        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
       }
+      const transactions = await this.myMoneroApi.getTransactions(params)
+
+      this.log('Fetched transactions count: ' + transactions.length)
+
+      // Get transactions
+      // Iterate over transactions in address
+      for (let i = 0; i < transactions.length; i++) {
+        const tx = transactions[i]
+        this.processMoneroTransaction(tx)
+        if (i % 10 === 0) {
+          this.updateOnAddressesChecked(i, transactions.length)
+        }
+      }
+      this.updateOnAddressesChecked(transactions.length, transactions.length)
     } catch (e) {
       this.log(e)
       checkAddressSuccess = false
@@ -471,43 +418,6 @@ class MoneroEngine {
     console.log(...text)
   }
 
-  async SendFundsWithOptionsAsync (options: SendFundsOptions) {
-    return new Promise((resolve, reject) => {
-      moneroSendingFundsUtils.SendFundsWithOptions(
-        options,
-        (code) => {
-          console.log(`SendFundsWithOptionsAsync code:${code}`)
-        },
-        (result) => {
-          console.log(`SendFundsWithOptionsAsync result:${JSON.stringify(result)}`)
-          resolve(result)
-        },
-        (err) => {
-          console.log(`SendFundsWithOptionsAsync error:${err}`)
-          reject(err)
-        }
-      )
-    })
-  }
-  //
-  // async SubmitSerializedSignedTransactionAsync (signedTx: string, destinationAddress: string, moneroViewKeyPrivate: string) {
-  //   // Broadcast the transaction
-  //   return new Promise((resolve, reject) => {
-  //     this.hostedMoneroAPIClient.SubmitSerializedSignedTransaction(
-  //       destinationAddress,
-  //       moneroViewKeyPrivate,
-  //       signedTx,
-  //       (err) => {
-  //         if (err) {
-  //           console.log('Something unexpected occurred when submitting your transaction:', err)
-  //           reject(err)
-  //         }
-  //         console.log('*** Success Sending Transaction *** ')
-  //         resolve(true)
-  //       }
-  //     )
-  //   })
-  // }
   // *************************************
   // Public methods
   // *************************************
@@ -783,50 +693,68 @@ class MoneroEngine {
         throw new Error('Error invalid payment id')
       }
     }
+
+    let priority = 2
+    // Fee estimates
+    if (edgeSpendInfo.networkFeeOption) {
+      switch (edgeSpendInfo.networkFeeOption) {
+        case 'low':
+          priority = 1
+          break
+        case 'standard':
+          priority = 2
+          break
+        case 'high':
+          priority = 4
+          break
+      }
+    }
+
     let result
-    let options: SendFundsOptions
+    let sendParams: SendFundsParams
     try {
       const amountFloatString: string = bns.div(nativeAmount, '1000000000000', 8)
       // Todo: Yikes. Why does mymonero-core-js take a float, not a string? -paulvp
       const amountFloat = parseFloat(amountFloatString)
-      options = {
-        isRingCT: true,
-        target_address: publicAddress, // currency-ready wallet address, but not an OA address (resolve before calling)
-        nettype: MAINNET,
-        amount: amountFloat, // number
-        wallet__keyImage_cache: this.keyImageCache,
-        wallet__public_address: this.walletLocalData.moneroAddress,
-        wallet__private_keys: { view: this.walletLocalData.moneroViewKeyPrivate, spend: this.walletInfo.keys.moneroSpendKeyPrivate },
-        wallet__public_keys: { view: this.walletLocalData.moneroViewKeyPublic, spend: this.walletInfo.keys.moneroSpendKeyPublic },
-        hostedMoneroAPIClient: this.hostedMoneroAPIClient,
-        monero_openalias_utils: MoneroOpenAliasUtils,
-        payment_id: uniqueIdentifier,
-        mixin: 6,
-        simple_priority: 1,
-        doNotBroadcast: true
+
+      sendParams = {
+        moneroAddress: this.walletLocalData.moneroAddress,
+        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
+        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate,
+        targetAddress: publicAddress,
+        floatAmount: amountFloat,
+        moneroViewKeyPublic: this.walletLocalData.moneroViewKeyPublic,
+        nettype: 'mainnet', // 'mainnet' only for now
+        isSweepTx: false,
+        paymentId: uniqueIdentifier || '',
+        priority,
+        doBroadcast: false,
+        onStatus: (code: number) => {
+          console.log(`SendFunds - onStatus:${code.toString()}`)
+        }
       }
-      result = await this.SendFundsWithOptionsAsync(options)
+      result = await this.myMoneroApi.sendFunds(sendParams)
     } catch (e) {
       console.log(`makeSpend error: ${e}`)
       throw e
     }
 
-    const nativeNetworkFee = result.tx_fee
-
     const date = Date.now() / 1000
     nativeAmount = '-' + nativeAmount
 
+    sendParams.moneroSpendKeyPrivate = ''
     const edgeTransaction: EdgeTransaction = {
-      txid: result.tx_hash,
+      txid: result.txid,
       date,
       currencyCode, // currencyCode
       blockHeight: 0, // blockHeight
       nativeAmount, // nativeAmount
-      networkFee: nativeNetworkFee,
+      networkFee: result.networkFee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: '', // signedTx
       otherParams: {
-        options
+        sendParams
       }
     }
 
@@ -836,7 +764,7 @@ class MoneroEngine {
   // asynchronous
   async signTx (edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
     // Monero transactions are signed at broadcast
-    if (edgeTransaction.otherParams.options) {
+    if (edgeTransaction.otherParams.sendParams) {
       return edgeTransaction
     } else {
       throw new Error('Invalid EdgeTransaction. No otherParams.options')
@@ -846,19 +774,27 @@ class MoneroEngine {
   // asynchronous
   async broadcastTx (edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
     try {
-      edgeTransaction.otherParams.options.doNotBroadcast = false
-      const result = await this.SendFundsWithOptionsAsync(edgeTransaction.otherParams.options)
-      edgeTransaction.txid = result.tx_hash
-      edgeTransaction.networkFee = result.tx_fee
+      const sendParams = edgeTransaction.otherParams.sendParams
+      sendParams.doBroadcast = true
+      sendParams.moneroSpendKeyPrivate = this.walletInfo.keys.moneroSpendKeyPrivate
+      const result = await this.myMoneroApi.sendFunds(sendParams)
+
+      edgeTransaction.txid = result.txid
+      edgeTransaction.networkFee = result.networkFee
       console.log(`broadcastTx success txid: ${edgeTransaction.txid}`)
       return edgeTransaction
     } catch (e) {
+      edgeTransaction.otherParams.sendParams.moneroSpendKeyPrivate = ''
       throw e
     }
   }
 
   // asynchronous
   async saveTx (edgeTransaction: EdgeTransaction) {
+    edgeTransaction.otherParams.sendParams.moneroSpendKeyPrivate = ''
+    edgeTransaction.otherParams.sendParams.moneroSpendKeyPublic = ''
+    edgeTransaction.otherParams.sendParams.moneroViewKeyPrivate = ''
+    edgeTransaction.otherParams.sendParams.moneroViewKeyPublic = ''
     this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])

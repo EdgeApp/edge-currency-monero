@@ -11,9 +11,16 @@ for (const fixture of fixtures) {
   const keyName = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Key'
   const address = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Address'
 
+  let randomIndex = 0
+  const len = fixture['key']
   const opts = {
     io: {
-      random: size => fixture['key'],
+      random: (size) => {
+        if (randomIndex + size > len) {
+          randomIndex = 0
+        }
+        return fixture['key'].slice(randomIndex, randomIndex + size)
+      },
       fetch,
       console: {
         info: console.log,
@@ -58,8 +65,8 @@ for (const fixture of fixtures) {
       )
     })
 
-    it('Create valid key', function () {
-      const keys = plugin.createPrivateKey(WALLET_TYPE)
+    it('Create valid key', async function () {
+      const keys = await plugin.createPrivateKey(WALLET_TYPE)
       assert.equal(!keys, false)
       assert.equal(typeof keys[keyName], 'string')
       const length1 = keys.moneroSpendKeyPrivate.length
@@ -71,38 +78,43 @@ for (const fixture of fixtures) {
 
   describe(`derivePublicKey for Wallet type ${WALLET_TYPE}`, function () {
     let plugin
-    let keys
 
-    before('Plugin', function (done) {
-      CurrencyPluginFactory.makePlugin(opts).then(currencyPlugin => {
-        assert.equal(
-          currencyPlugin.currencyInfo.currencyCode,
-          fixture['Test Currency code']
-        )
-        plugin = currencyPlugin
-        keys = plugin.createPrivateKey(WALLET_TYPE)
-        done()
-      })
+    before('Plugin', async function () {
+      const currencyPlugin = await CurrencyPluginFactory.makePlugin(opts)
+      assert.equal(
+        currencyPlugin.currencyInfo.currencyCode,
+        fixture['Test Currency code']
+      )
+      plugin = currencyPlugin
+      await plugin.createPrivateKey(WALLET_TYPE)
     })
 
-    it('Valid private key', function () {
-      keys = plugin.derivePublicKey({
+    it('Valid private key', async function () {
+      const keys = await plugin.derivePublicKey({
         type: WALLET_TYPE,
-        keys: { [keyName]: keys[keyName] }
+        keys: { [keyName]: fixture['mnemonic'] }
       })
       assert.equal(keys[address], fixture['xpub'])
     })
 
-    it('Invalid key name', function () {
-      assert.throws(() => {
-        plugin.derivePublicKey(fixture['Invalid key name'])
-      })
+    it('Invalid key name', async function () {
+      // assert.throws(async () => {
+      try {
+        await plugin.derivePublicKey(fixture['Invalid key name'])
+        assert(false)
+      } catch (e) {
+        assert(true)
+      }
+      // })
     })
 
-    it('Invalid wallet type', function () {
-      assert.throws(() => {
-        plugin.derivePublicKey(fixture['Invalid wallet type'])
-      })
+    it('Invalid wallet type', async function () {
+      try {
+        await plugin.derivePublicKey(fixture['Invalid wallet type'])
+        assert(false)
+      } catch (e) {
+        assert(true)
+      }
     })
   })
 
