@@ -17,7 +17,7 @@ import type {
 import { parse, serialize } from 'uri-js'
 import { bns } from 'biggystring'
 
-import { MyMoneroApi } from 'mymonero-core-js'
+import { initMonero } from 'mymonero-core-js'
 
 let request
 
@@ -51,6 +51,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
 
   async makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
     io = opts.io
+    const { MyMoneroApi } = await initMonero()
 
     console.log(`Creating Currency Plugin for monero`)
     const options = {
@@ -62,7 +63,6 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
       randomBytes: io.random
     }
     const myMoneroApi = new MyMoneroApi(options)
-    await myMoneroApi.init()
 
     const moneroPlugin: EdgeCurrencyPlugin = {
       pluginName: 'monero',
@@ -133,7 +133,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         return moneroEngine
       },
 
-      parseUri: (uri: string) => {
+      parseUri: async (uri: string): Promise<EdgeParsedUri> => {
         const parsedUri = parse(uri)
         let address: string
         let nativeAmount: string | null = null
@@ -156,7 +156,10 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
 
         try {
           // verify address is decodable for currency
-          myMoneroApi.decodeAddress(address)
+          const result = await myMoneroApi.decodeAddress(address)
+          if (result.err_msg === 'Invalid address') {
+            throw new Error('InvalidUriError')
+          }
         } catch (e) {
           throw new Error('InvalidPublicAddressError')
         }
@@ -200,12 +203,15 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         return edgeParsedUri
       },
 
-      encodeUri: (obj: EdgeEncodeUri) => {
+      encodeUri: async (obj: EdgeEncodeUri): Promise<string> => {
         if (!obj.publicAddress) {
           throw new Error('InvalidPublicAddressError')
         }
         try {
-          myMoneroApi.decodeAddress(obj.publicAddress)
+          const result = await myMoneroApi.decodeAddress(obj.publicAddress)
+          if (result.err_msg === 'Invalid address') {
+            throw new Error('InvalidUriError')
+          }
         } catch (e) {
           throw new Error('InvalidPublicAddressError')
         }
