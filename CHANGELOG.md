@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+## 0.0.10
+
+* No code changes. Only use renamed `EdgeApp/mymonero-core-js` repo
+
 ## 0.0.9
 
 * Fix issue with `NoAmountSpecifiedError` error not being included in NPM version
