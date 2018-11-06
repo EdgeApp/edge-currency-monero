@@ -210,6 +210,7 @@ class MoneroEngine {
         this.walletLocalData.totalBalances.XMR = nativeBalance
         this.edgeTxLibCallbacks.onBalanceChanged('XMR', nativeBalance)
       }
+      this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
       this.log('Error fetching address info: ' + this.walletLocalData.moneroAddress)
     }
@@ -719,7 +720,7 @@ class MoneroEngine {
 
       sendParams = {
         moneroAddress: this.walletLocalData.moneroAddress,
-        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+        moneroSpendKeyPrivate: '',
         moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
         moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate,
         targetAddress: publicAddress,
@@ -731,10 +732,14 @@ class MoneroEngine {
         priority,
         doBroadcast: false,
         onStatus: (code: number) => {
-          console.log(`SendFunds - onStatus:${code.toString()}`)
+          console.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
         }
       }
-      result = await this.myMoneroApi.sendFunds(sendParams)
+      result = await this.myMoneroApi.sendFunds(
+        Object.assign({}, sendParams, {
+          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate
+        })
+      )
     } catch (e) {
       console.log(`makeSpend error: ${e}`)
       throw e
@@ -743,7 +748,6 @@ class MoneroEngine {
     const date = Date.now() / 1000
     nativeAmount = '-' + nativeAmount
 
-    sendParams.moneroSpendKeyPrivate = ''
     const edgeTransaction: EdgeTransaction = {
       txid: result.txid,
       date,
@@ -776,8 +780,14 @@ class MoneroEngine {
     try {
       const sendParams = edgeTransaction.otherParams.sendParams
       sendParams.doBroadcast = true
-      sendParams.moneroSpendKeyPrivate = this.walletInfo.keys.moneroSpendKeyPrivate
-      const result = await this.myMoneroApi.sendFunds(sendParams)
+      const result = await this.myMoneroApi.sendFunds(
+        Object.assign({}, sendParams, {
+          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+          onStatus: (code: number) => {
+            console.log(`broadcastTx:SendFunds - onStatus:${code.toString()}`)
+          }
+        })
+      )
 
       edgeTransaction.txid = result.txid
       edgeTransaction.networkFee = result.networkFee
