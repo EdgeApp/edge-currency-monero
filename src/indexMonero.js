@@ -168,7 +168,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         const label = getParameterByName('label', uri)
         const message = getParameterByName('message', uri)
 
-        const edgeParsedUri:EdgeParsedUri = {
+        const edgeParsedUri: EdgeParsedUri = {
           publicAddress: address
         }
         if (nativeAmount) {
@@ -212,7 +212,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
 
           if (typeof obj.nativeAmount === 'string') {
             const currencyCode: string = 'XMR'
-            const nativeAmount:string = obj.nativeAmount
+            const nativeAmount: string = obj.nativeAmount
             const denom = getDenomInfo(currencyCode)
             if (!denom) {
               throw new Error('InternalErrorInvalidCurrencyCode')

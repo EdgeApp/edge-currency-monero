@@ -537,9 +537,9 @@ class MoneroEngine {
 
   // asynchronous
   async getTransactions (options: any) {
-    let currencyCode:string = PRIMARY_CURRENCY
+    let currencyCode: string = PRIMARY_CURRENCY
 
-    const valid:boolean = validateObject(options, {
+    const valid: boolean = validateObject(options, {
       'type': 'object',
       'properties': {
         'currencyCode': {'type': 'string'}
@@ -554,8 +554,8 @@ class MoneroEngine {
       return []
     }
 
-    let startIndex:number = 0
-    let numEntries:number = 0
+    let startIndex: number = 0
+    let numEntries: number = 0
     if (options === null) {
       return this.walletLocalData.transactionsObj[currencyCode].slice(0)
     }

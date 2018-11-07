@@ -30,7 +30,7 @@ export class WalletLocalData {
   constructor (jsonString: string | null) {
     this.blockHeight = 0
 
-    const totalBalances:{[currencyCode: string]: string} = { XMR: '0' }
+    const totalBalances: {[currencyCode: string]: string} = { XMR: '0' }
     this.totalBalances = totalBalances
 
     this.nextNonce = '0'
@@ -39,7 +39,7 @@ export class WalletLocalData {
     this.lockedXmrBalance = '0'
 
     // Dumb extra local var needed to make Flow happy
-    const transactionsObj:{[currencyCode: string]: Array<EdgeTransaction>} = {}
+    const transactionsObj: {[currencyCode: string]: Array<EdgeTransaction>} = {}
     this.transactionsObj = transactionsObj
 
     this.moneroAddress = ''
