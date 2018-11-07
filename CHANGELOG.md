@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+## 0.1.0
+
+* Implement new mymonero-core-js library with bulletproofs support
+
 ## 0.0.10
 
 * No code changes. Only use renamed `EdgeApp/mymonero-core-js` repo

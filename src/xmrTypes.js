@@ -13,23 +13,6 @@ export type MoneroSettings = {
   mymoneroApiServers: Array<string>,
 }
 
-export type SendFundsOptions = {
-  isRingCT: boolean,
-  target_address: string, // currency-ready wallet address, but not an OA address (resolve before calling)
-  nettype: string,
-  amount: number, // number
-  wallet__keyImage_cache: Object,
-  wallet__public_address: string,
-  wallet__private_keys: Object,
-  wallet__public_keys: Object,
-  hostedMoneroAPIClient: Object,
-  monero_openalias_utils: Object,
-  payment_id: string | null,
-  mixin: number,
-  simple_priority: number,
-  doNotBroadcast: boolean
-}
-
 export class WalletLocalData {
   blockHeight: number
   lastAddressQueryHeight: number
@@ -47,7 +30,7 @@ export class WalletLocalData {
   constructor (jsonString: string | null) {
     this.blockHeight = 0
 
-    const totalBalances:{[currencyCode: string]: string} = { XMR: '0' }
+    const totalBalances: {[currencyCode: string]: string} = { XMR: '0' }
     this.totalBalances = totalBalances
 
     this.nextNonce = '0'
@@ -56,7 +39,7 @@ export class WalletLocalData {
     this.lockedXmrBalance = '0'
 
     // Dumb extra local var needed to make Flow happy
-    const transactionsObj:{[currencyCode: string]: Array<EdgeTransaction>} = {}
+    const transactionsObj: {[currencyCode: string]: Array<EdgeTransaction>} = {}
     this.transactionsObj = transactionsObj
 
     this.moneroAddress = ''

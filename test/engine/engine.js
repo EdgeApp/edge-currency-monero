@@ -1,10 +1,11 @@
 // @flow
 import EventEmitter from 'events'
 
-import { makeFakeIos, makeContext, destroyAllContexts } from 'edge-core-js'
+import { makeFakeIos, destroyAllContexts } from 'edge-core-js'
 import type {
   // EdgeSpendInfo,
   EdgeWalletInfo,
+  // EdgeContext,
   EdgeCurrencyEngineOptions,
   EdgeCurrencyEngineCallbacks
 } from 'edge-core-js'
@@ -29,11 +30,17 @@ for (const fixture of fixtures) {
     throw new Error('Missing fakeio.folder')
   }
   const walletLocalFolder = fakeIo.folder
-  const plugins = [CurrencyPluginFactory]
+  // const plugins = [CurrencyPluginFactory]
   // $FlowFixMe
   fakeIo.fetch = fetch
+  const myIo = {
+    random: size => fixture['key']
+  }
+  const opts = {
+    io: Object.assign({}, fakeIo, myIo)
+  }
 
-  const context = makeContext({ io: fakeIo, plugins })
+  // const context: Promise<EdgeContext> = makeEdgeContext({ io: fakeIo, plugins })
 
   const callbacks: EdgeCurrencyEngineCallbacks = {
     onAddressesChecked (progressRatio) {
@@ -65,22 +72,20 @@ for (const fixture of fixtures) {
   }
 
   describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function () {
-    it('Plugin', function () {
-      return context.getCurrencyPlugins().then(currencyPlugins => {
-        const currencyPlugin = currencyPlugins[0]
-        assert.equal(
-          currencyPlugin.currencyInfo.currencyCode,
-          fixture['Test Currency code']
-        )
-        plugin = currencyPlugin
-        keys = plugin.createPrivateKey(WALLET_TYPE)
-        const info: EdgeWalletInfo = {
-          id: '1',
-          type: WALLET_TYPE,
-          keys
-        }
-        keys = plugin.derivePublicKey(info)
-      })
+    it('Plugin', async function () {
+      const currencyPlugin = await CurrencyPluginFactory.makePlugin(opts)
+      assert.equal(
+        currencyPlugin.currencyInfo.currencyCode,
+        fixture['Test Currency code']
+      )
+      plugin = currencyPlugin
+      keys = await plugin.createPrivateKey(WALLET_TYPE)
+      const info: EdgeWalletInfo = {
+        id: '1',
+        type: WALLET_TYPE,
+        keys
+      }
+      keys = await plugin.derivePublicKey(info)
     })
   })
 
