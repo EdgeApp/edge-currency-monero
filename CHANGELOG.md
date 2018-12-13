@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+## 0.1.1
+
+* Use different blockexplorer
+* Use new colored icon
+
 ## 0.1.0
 
 * Implement new mymonero-core-js library with bulletproofs support
