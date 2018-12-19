@@ -730,14 +730,14 @@ class MoneroEngine {
         isSweepTx: false,
         paymentId: uniqueIdentifier || '',
         priority,
-        doBroadcast: false,
-        onStatus: (code: number) => {
-          console.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
-        }
+        doBroadcast: false
       }
       result = await this.myMoneroApi.sendFunds(
         Object.assign({}, sendParams, {
-          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate
+          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
+          onStatus: (code: number) => {
+            console.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
+          }
         })
       )
     } catch (e) {
