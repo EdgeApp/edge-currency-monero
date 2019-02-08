@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+## 0.1.3
+
+* Fix notes and category metadata tagging
+
 ## 0.1.2
 
 * Sanitize edgeTransaction returned from makeSpend to make it bridge compatible
