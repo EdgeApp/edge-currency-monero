@@ -167,6 +167,7 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
         const label = getParameterByName('label', uri)
         const message = getParameterByName('message', uri)
+        const category = getParameterByName('category', uri)
 
         const edgeParsedUri: EdgeParsedUri = {
           publicAddress: address
@@ -180,13 +181,16 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         if (uniqueIdentifier) {
           edgeParsedUri.uniqueIdentifier = uniqueIdentifier
         }
-        if (label || message) {
+        if (label || message || category) {
           edgeParsedUri.metadata = {}
           if (label) {
             edgeParsedUri.metadata.name = label
           }
           if (message) {
-            edgeParsedUri.metadata.message = message
+            edgeParsedUri.metadata.notes = message
+          }
+          if (category) {
+            edgeParsedUri.metadata.category = category
           }
         }
 
