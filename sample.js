@@ -1,12 +1,13 @@
-import monero_wallet_utils from 'mymonero-core-js/monero_utils/monero_wallet_utils.js'
 import { network_type } from 'mymonero-core-js/cryptonote_utils/nettype.js'
 import monero_config from 'mymonero-core-js/monero_utils/monero_config.js'
+import monero_sendingFunds_utils from 'mymonero-core-js/monero_utils/monero_sendingFunds_utils.js'
+import monero_wallet_utils from 'mymonero-core-js/monero_utils/monero_wallet_utils.js'
+import monero_response_parser_utils from 'mymonero-core-js/monero_utils/mymonero_response_parser_utils.js'
 import fetch from 'node-fetch'
+
 import { HostedMoneroAPIClient } from './src/HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js'
 // const OpenAliasResolver = require('src/OpenAlias/OpenAliasResolver.js')
 import { MoneroOpenAliasUtils } from './src/OpenAlias/monero_openalias_utils.js'
-import monero_sendingFunds_utils from 'mymonero-core-js/monero_utils/monero_sendingFunds_utils.js'
-import monero_response_parser_utils from 'mymonero-core-js/monero_utils/mymonero_response_parser_utils.js'
 
 const keyImageCache = {}
 const { MAINNET } = network_type

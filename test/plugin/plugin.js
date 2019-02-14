@@ -1,10 +1,11 @@
 // @flow
 
-import { describe, it, before } from 'mocha'
-import * as Factories from '../../src/indexMonero.js'
 import { assert } from 'chai'
-import fixtures from './fixtures.json'
+import { before, describe, it } from 'mocha'
 import fetch from 'node-fetch'
+
+import * as Factories from '../../src/indexMonero.js'
+import fixtures from './fixtures.json'
 
 for (const fixture of fixtures) {
   const CurrencyPluginFactory = Factories[fixture['factory']]
@@ -16,7 +17,7 @@ for (const fixture of fixtures) {
   const len = fixture['key']
   const opts = {
     io: {
-      random: (size) => {
+      random: size => {
         if (randomIndex + size > len) {
           randomIndex = 0
         }
@@ -133,7 +134,9 @@ for (const fixture of fixtures) {
       })
     })
     it('address only', async function () {
-      const parsedUri = await plugin.parseUri(fixture['parseUri']['address only'][0])
+      const parsedUri = await plugin.parseUri(
+        fixture['parseUri']['address only'][0]
+      )
       assert.equal(
         parsedUri.publicAddress,
         fixture['parseUri']['address only'][1]
@@ -142,31 +145,42 @@ for (const fixture of fixtures) {
       assert.equal(parsedUri.currencyCode, undefined)
     })
     it('invalid address 0', function (done) {
-      plugin.parseUri(fixture['parseUri']['invalid address'][0]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .parseUri(fixture['parseUri']['invalid address'][0])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('invalid address 1', function (done) {
-      plugin.parseUri(fixture['parseUri']['invalid address'][1]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .parseUri(fixture['parseUri']['invalid address'][1])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('invalid address 2', function (done) {
-      plugin.parseUri(fixture['parseUri']['invalid address'][2]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .parseUri(fixture['parseUri']['invalid address'][2])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('uri address', async function () {
-      const parsedUri = await plugin.parseUri(fixture['parseUri']['uri address'][0])
+      const parsedUri = await plugin.parseUri(
+        fixture['parseUri']['uri address'][0]
+      )
       assert.equal(
         parsedUri.publicAddress,
         fixture['parseUri']['uri address'][1]
@@ -285,28 +299,37 @@ for (const fixture of fixtures) {
       assert.equal(encodedUri, fixture['encodeUri']['address only'][1])
     })
     it('invalid address 0', function (done) {
-      plugin.encodeUri(fixture['encodeUri']['invalid address'][0]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .encodeUri(fixture['encodeUri']['invalid address'][0])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('invalid address 1', function (done) {
-      plugin.encodeUri(fixture['encodeUri']['invalid address'][1]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .encodeUri(fixture['encodeUri']['invalid address'][1])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('invalid address 2', function (done) {
-      plugin.encodeUri(fixture['encodeUri']['invalid address'][2]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .encodeUri(fixture['encodeUri']['invalid address'][2])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
     it('address & amount', async function () {
       const encodedUri = await plugin.encodeUri(
@@ -333,12 +356,15 @@ for (const fixture of fixtures) {
       )
     })
     it('invalid currencyCode', function (done) {
-      plugin.encodeUri(fixture['encodeUri']['invalid currencyCode'][0]).then(() => {
-        assert.equal(0, 1)
-        done()
-      }).catch(e => {
-        done()
-      })
+      plugin
+        .encodeUri(fixture['encodeUri']['invalid currencyCode'][0])
+        .then(() => {
+          assert.equal(0, 1)
+          done()
+        })
+        .catch(e => {
+          done()
+        })
     })
   })
 }
