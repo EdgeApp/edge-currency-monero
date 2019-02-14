@@ -3,7 +3,6 @@
  */
 // @flow
 
-// import { sprintf } from 'sprintf-js'
 import { bns } from 'biggystring'
 import type {
   EdgeCurrencyEngineCallbacks,

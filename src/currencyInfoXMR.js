@@ -1,4 +1,3 @@
-/* global */
 // @flow
 
 import type { EdgeCurrencyInfo } from 'edge-core-js'

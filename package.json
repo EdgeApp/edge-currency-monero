@@ -20,7 +20,7 @@
   "main": "./lib/indexMonero.js",
   "module": "./lib/indexMonero.es.js",
   "scripts": {
-    "build": "npm run webpack && npm run rollup && npm run build:flow",
+    "build": "npm run rollup && npm run build:flow",
     "build:clean": "rimraf lib",
     "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
     "build:sample": "rollup -c rollup.config.sample.js",
@@ -34,8 +34,7 @@
     "pretest": "npm run build:test",
     "test": "nyc mocha --require source-map-support/register build/tests.cjs.js",
     "posttest": "nyc report --reporter=html",
-    "updot": "updot",
-    "webpack": "webpack"
+    "updot": "updot"
   },
   "husky": {
     "hooks": {
@@ -54,8 +53,6 @@
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
     "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#1a815ca",
-    "node-xhr": "^1.0.5",
-    "sprintf-js": "^1.1.1",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
@@ -79,7 +76,6 @@
     "import-sort-cli": "^5.2.0",
     "import-sort-parser-babylon": "^5.2.0",
     "import-sort-style-module": "^5.0.0",
-    "json-loader": "^0.5.4",
     "lint-staged": "^8.1.0",
     "mocha": "^4.0.0",
     "node-fetch": "^2.1.2",
@@ -92,8 +88,7 @@
     "rollup-plugin-babel": "^3.0.2",
     "rollup-plugin-json": "^2.3.0",
     "rollup-plugin-multi-entry": "^2.0.2",
-    "updot": "^1.1.7",
-    "webpack": "^1.14.0"
+    "updot": "^1.1.7"
   },
   "importSort": {
     ".js, .es": {
