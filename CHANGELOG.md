@@ -1,5 +1,11 @@
 # edge-currency-monero
 
+## 0.1.4 (2019-02-15)
+
+- Update the readme file
+- Upgrade to the edge-core-js v0.14.0 types
+- Modernize the build system
+
 ## 0.1.3
 
 - Fix notes and category metadata tagging
