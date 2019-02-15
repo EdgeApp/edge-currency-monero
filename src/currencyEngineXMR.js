@@ -295,9 +295,8 @@ class MoneroEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray = this.walletLocalData.transactionsObj[
-        PRIMARY_CURRENCY
-      ]
+      const transactionsArray: Array<EdgeTransaction> = this.walletLocalData
+        .transactionsObj[PRIMARY_CURRENCY]
       const edgeTx = transactionsArray[idx]
 
       if (edgeTransaction.blockHeight) {
@@ -590,7 +589,7 @@ class MoneroEngine {
   }
 
   // asynchronous
-  async getTransactions (options: any) {
+  async getTransactions (options: any): Promise<Array<EdgeTransaction>> {
     let currencyCode: string = PRIMARY_CURRENCY
 
     const valid: boolean = validateObject(options, {
