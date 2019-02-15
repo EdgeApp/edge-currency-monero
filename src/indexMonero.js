@@ -5,6 +5,7 @@
 
 import { bns } from 'biggystring'
 import {
+  type EdgeCorePluginOptions,
   type EdgeCurrencyEngine,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyPlugin,
@@ -18,13 +19,7 @@ import { parse, serialize } from 'uri-js'
 
 import { MoneroEngine } from './currencyEngineXMR.js'
 import { currencyInfo } from './currencyInfoXMR.js'
-import {
-  DATA_STORE_FILE,
-  DATA_STORE_FOLDER,
-  WalletLocalData
-} from './xmrTypes.js'
-
-let io
+import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
 function getDenomInfo (denom: string) {
   return currencyInfo.denominations.find(element => {
@@ -41,8 +36,10 @@ function getParameterByName (param, url) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-async function makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
-  io = opts.io
+async function makePlugin (
+  opts: EdgeCorePluginOptions
+): Promise<EdgeCurrencyPlugin> {
+  const { io } = opts
   const { MyMoneroApi } = await initMonero()
 
   console.log(`Creating Currency Plugin for monero`)
@@ -104,10 +101,9 @@ async function makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
       )
       await moneroEngine.init()
       try {
-        const result = await moneroEngine.walletLocalFolder
-          .folder(DATA_STORE_FOLDER)
-          .file(DATA_STORE_FILE)
-          .getText(DATA_STORE_FOLDER, 'walletLocalData')
+        const result = await moneroEngine.walletLocalDisklet.getText(
+          DATA_STORE_FILE
+        )
 
         moneroEngine.walletLocalData = new WalletLocalData(result)
         moneroEngine.walletLocalData.moneroAddress =
@@ -131,10 +127,10 @@ async function makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
             moneroEngine.walletInfo.keys.moneroViewKeyPublic
           moneroEngine.walletLocalData.moneroSpendKeyPublic =
             moneroEngine.walletInfo.keys.moneroSpendKeyPublic
-          await moneroEngine.walletLocalFolder
-            .folder(DATA_STORE_FOLDER)
-            .file(DATA_STORE_FILE)
-            .setText(JSON.stringify(moneroEngine.walletLocalData))
+          await moneroEngine.walletLocalDisklet.setText(
+            DATA_STORE_FILE,
+            JSON.stringify(moneroEngine.walletLocalData)
+          )
         } catch (e) {
           console.log(
             'Error writing to localDataStore. Engine not started:' + err
@@ -265,17 +261,14 @@ async function makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
     }
   }
 
-  async function initPlugin (opts: any) {
-    return moneroPlugin
-  }
-  return initPlugin(opts)
+  return moneroPlugin
 }
 
 export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
   pluginType: 'currency',
   pluginName: currencyInfo.pluginName,
 
-  async makePlugin (opts: any): Promise<EdgeCurrencyPlugin> {
+  async makePlugin (opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin> {
     return makePlugin(opts)
   }
 }
