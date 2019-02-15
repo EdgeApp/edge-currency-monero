@@ -3,29 +3,35 @@
  */
 // @flow
 
-import { currencyInfo } from './currencyInfoXMR.js'
-import type {
-  EdgeTransaction,
-  EdgeCurrencyEngineCallbacks,
-  EdgeCurrencyEngineOptions,
-  EdgeSpendInfo,
-  EdgeWalletInfo,
-  EdgeMetaToken,
-  EdgeCurrencyInfo,
-  EdgeFreshAddress,
-  EdgeDataDump,
-  EdgeIo, EdgeCurrencyPlugin
-} from 'edge-core-js'
-import { error } from 'edge-core-js'
-// import { sprintf } from 'sprintf-js'
 import { bns } from 'biggystring'
+import {
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeCurrencyEngineOptions,
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeDataDump,
+  type EdgeFreshAddress,
+  type EdgeIo,
+  type EdgeMetaToken,
+  type EdgeSpendInfo,
+  type EdgeTransaction,
+  type EdgeWalletInfo,
+  InsufficientFundsError,
+  NoAmountSpecifiedError,
+  PendingFundsError
+} from 'edge-core-js/types'
+import type {
+  QueryParams,
+  SendFundsParams
+} from 'mymonero-core-js/lib/myMoneroApi.js'
+
+import { currencyInfo } from './currencyInfoXMR.js'
+import { normalizeAddress, validateObject } from './utils.js'
 import {
   DATA_STORE_FILE,
   DATA_STORE_FOLDER,
   WalletLocalData
 } from './xmrTypes.js'
-import { normalizeAddress, validateObject } from './utils.js'
-import type { QueryParams, SendFundsParams } from 'mymonero-core-js/lib/myMoneroApi.js'
 
 const ADDRESS_POLL_MILLISECONDS = 7000
 const TRANSACTIONS_POLL_MILLISECONDS = 4000
@@ -55,7 +61,13 @@ class MoneroEngine {
   io: EdgeIo
   currencyPlugin: EdgeCurrencyPlugin
 
-  constructor (currencyPlugin: EdgeCurrencyPlugin, io_: any, walletInfo: EdgeWalletInfo, myMoneroApi: Object, opts: EdgeCurrencyEngineOptions) {
+  constructor (
+    currencyPlugin: EdgeCurrencyPlugin,
+    io_: any,
+    walletInfo: EdgeWalletInfo,
+    myMoneroApi: Object,
+    opts: EdgeCurrencyEngineOptions
+  ) {
     const { walletLocalFolder, callbacks } = opts
 
     this.io = io_
@@ -87,7 +99,11 @@ class MoneroEngine {
     this.edgeTxLibCallbacks = callbacks
     this.walletLocalFolder = walletLocalFolder
 
-    this.log(`Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${this.currencyInfo.pluginName} `)
+    this.log(
+      `Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${
+        this.currencyInfo.pluginName
+      } `
+    )
   }
 
   async init () {
@@ -108,7 +124,9 @@ class MoneroEngine {
         this.walletInfo.keys.moneroViewKeyPublic = this.walletInfo.keys.moneroViewKeyPublic
         this.walletInfo.keys.moneroSpendKeyPublic = this.walletInfo.keys.moneroSpendKeyPublic
       } else {
-        const pubKeys = await this.currencyPlugin.derivePublicKey(this.walletInfo)
+        const pubKeys = await this.currencyPlugin.derivePublicKey(
+          this.walletInfo
+        )
         this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
         this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
         this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
@@ -118,13 +136,17 @@ class MoneroEngine {
   }
 
   async fetchPost (url: string, options: Object) {
-    const opts = Object.assign({}, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    }, options)
+    const opts = Object.assign(
+      {},
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        }
+      },
+      options
+    )
 
     const response = await this.io.fetch(url, opts)
     if (!response.ok) {
@@ -137,16 +159,22 @@ class MoneroEngine {
   }
 
   async fetchPostMyMonero (cmd: string, params: Object = {}) {
-    const body = Object.assign({}, {
-      address: this.walletLocalData.moneroAddress,
-      view_key: this.walletLocalData.moneroViewKeyPrivate,
-      create_account: true
-    }, params)
+    const body = Object.assign(
+      {},
+      {
+        address: this.walletLocalData.moneroAddress,
+        view_key: this.walletLocalData.moneroViewKeyPrivate,
+        create_account: true
+      },
+      params
+    )
 
     const options = {
       body: JSON.stringify(body)
     }
-    const url = `${this.currentSettings.otherSettings.mymoneroApiServers[0]}/${cmd}`
+    const url = `${
+      this.currentSettings.otherSettings.mymoneroApiServers[0]
+    }/${cmd}`
     return this.fetchPost(url, options)
   }
 
@@ -176,7 +204,10 @@ class MoneroEngine {
         clearTimeout(this.timers.loginInnerLoop)
         delete this.timers.loginInnerLoop
         this.addToLoop('checkAddressInnerLoop', ADDRESS_POLL_MILLISECONDS)
-        this.addToLoop('checkTransactionsInnerLoop', TRANSACTIONS_POLL_MILLISECONDS)
+        this.addToLoop(
+          'checkTransactionsInnerLoop',
+          TRANSACTIONS_POLL_MILLISECONDS
+        )
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
       }
     } catch (e) {
@@ -201,10 +232,15 @@ class MoneroEngine {
       if (this.walletLocalData.blockHeight !== addrResult.blockHeight) {
         this.walletLocalData.blockHeight = addrResult.blockHeight // Convert to decimal
         this.walletLocalDataDirty = true
-        this.edgeTxLibCallbacks.onBlockHeightChanged(this.walletLocalData.blockHeight)
+        this.edgeTxLibCallbacks.onBlockHeightChanged(
+          this.walletLocalData.blockHeight
+        )
       }
 
-      const nativeBalance = bns.sub(addrResult.totalReceived, addrResult.totalSent)
+      const nativeBalance = bns.sub(
+        addrResult.totalReceived,
+        addrResult.totalSent
+      )
 
       if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
         this.walletLocalData.totalBalances.XMR = nativeBalance
@@ -212,7 +248,9 @@ class MoneroEngine {
       }
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
-      this.log('Error fetching address info: ' + this.walletLocalData.moneroAddress)
+      this.log(
+        'Error fetching address info: ' + this.walletLocalData.moneroAddress
+      )
     }
   }
 
@@ -259,8 +297,9 @@ class MoneroEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray = this.walletLocalData.transactionsObj[ PRIMARY_CURRENCY ]
-      const edgeTx = transactionsArray[ idx ]
+      const transactionsArray: Array<EdgeTransaction> = this.walletLocalData
+        .transactionsObj[PRIMARY_CURRENCY]
+      const edgeTx = transactionsArray[idx]
 
       if (edgeTransaction.blockHeight) {
         // Only update old transactions if the incoming tx is confirmed
@@ -323,7 +362,9 @@ class MoneroEngine {
   }
 
   findTransaction (currencyCode: string, txid: string) {
-    if (typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined') {
+    if (
+      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
+    ) {
       return -1
     }
 
@@ -343,7 +384,10 @@ class MoneroEngine {
 
     if (idx === -1) {
       this.log('addTransaction: adding and sorting:' + edgeTransaction.txid)
-      if (typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined') {
+      if (
+        typeof this.walletLocalData.transactionsObj[currencyCode] ===
+        'undefined'
+      ) {
         this.walletLocalData.transactionsObj[currencyCode] = []
       }
       this.walletLocalData.transactionsObj[currencyCode].push(edgeTransaction)
@@ -357,7 +401,11 @@ class MoneroEngine {
     }
   }
 
-  updateTransaction (currencyCode: string, edgeTransaction: EdgeTransaction, idx: number) {
+  updateTransaction (
+    currencyCode: string,
+    edgeTransaction: EdgeTransaction,
+    idx: number
+  ) {
     // Update the transaction
     this.walletLocalData.transactionsObj[currencyCode][idx] = edgeTransaction
     this.walletLocalDataDirty = true
@@ -390,7 +438,10 @@ class MoneroEngine {
         this.edgeTxLibCallbacks.onTransactionsChanged(
           this.walletLocalData.transactionsObj[currencyCode]
         )
-        this.edgeTxLibCallbacks.onBalanceChanged(currencyCode, this.walletLocalData.totalBalances[currencyCode])
+        this.edgeTxLibCallbacks.onBalanceChanged(
+          currencyCode,
+          this.walletLocalData.totalBalances[currencyCode]
+        )
       } catch (e) {
         this.log('Error for currencyCode', currencyCode, e)
       }
@@ -494,9 +545,9 @@ class MoneroEngine {
 
     if (typeof options !== 'undefined') {
       const valid = validateObject(options, {
-        'type': 'object',
-        'properties': {
-          'currencyCode': {'type': 'string'}
+        type: 'object',
+        properties: {
+          currencyCode: { type: 'string' }
         }
       })
 
@@ -505,7 +556,9 @@ class MoneroEngine {
       }
     }
 
-    if (typeof this.walletLocalData.totalBalances[currencyCode] === 'undefined') {
+    if (
+      typeof this.walletLocalData.totalBalances[currencyCode] === 'undefined'
+    ) {
       return '0'
     } else {
       const nativeBalance = this.walletLocalData.totalBalances[currencyCode]
@@ -518,9 +571,9 @@ class MoneroEngine {
     let currencyCode = PRIMARY_CURRENCY
 
     const valid = validateObject(options, {
-      'type': 'object',
-      'properties': {
-        'currencyCode': {'type': 'string'}
+      type: 'object',
+      properties: {
+        currencyCode: { type: 'string' }
       }
     })
 
@@ -528,7 +581,9 @@ class MoneroEngine {
       currencyCode = options.currencyCode
     }
 
-    if (typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined') {
+    if (
+      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
+    ) {
       return 0
     } else {
       return this.walletLocalData.transactionsObj[currencyCode].length
@@ -536,13 +591,13 @@ class MoneroEngine {
   }
 
   // asynchronous
-  async getTransactions (options: any) {
+  async getTransactions (options: any): Promise<Array<EdgeTransaction>> {
     let currencyCode: string = PRIMARY_CURRENCY
 
     const valid: boolean = validateObject(options, {
-      'type': 'object',
-      'properties': {
-        'currencyCode': {'type': 'string'}
+      type: 'object',
+      properties: {
+        currencyCode: { type: 'string' }
       }
     })
 
@@ -550,7 +605,9 @@ class MoneroEngine {
       currencyCode = options.currencyCode
     }
 
-    if (typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined') {
+    if (
+      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
+    ) {
       return []
     }
 
@@ -562,8 +619,7 @@ class MoneroEngine {
     if (options.startIndex !== null && options.startIndex > 0) {
       startIndex = options.startIndex
       if (
-        startIndex >=
-        this.walletLocalData.transactionsObj[currencyCode].length
+        startIndex >= this.walletLocalData.transactionsObj[currencyCode].length
       ) {
         startIndex =
           this.walletLocalData.transactionsObj[currencyCode].length - 1
@@ -577,8 +633,7 @@ class MoneroEngine {
       ) {
         // Don't read past the end of the transactionsObj
         numEntries =
-          this.walletLocalData.transactionsObj[currencyCode].length -
-          startIndex
+          this.walletLocalData.transactionsObj[currencyCode].length - startIndex
       }
     }
 
@@ -608,8 +663,7 @@ class MoneroEngine {
   }
 
   // synchronous
-  addGapLimitAddresses (addresses: Array<string>, options: any) {
-  }
+  addGapLimitAddresses (addresses: Array<string>, options: any) {}
 
   // synchronous
   isAddressUsed (address: string, options: any) {
@@ -620,37 +674,35 @@ class MoneroEngine {
   async makeSpend (edgeSpendInfo: EdgeSpendInfo) {
     // Validate the spendInfo
     const valid = validateObject(edgeSpendInfo, {
-      'type': 'object',
-      'properties': {
-        'currencyCode': { 'type': 'string' },
-        'networkFeeOption': { 'type': 'string' },
-        'spendTargets': {
-          'type': 'array',
-          'items': {
-            'type': 'object',
-            'properties': {
-              'currencyCode': { 'type': 'string' },
-              'publicAddress': { 'type': 'string' },
-              'nativeAmount': { 'type': 'string' },
-              'destMetadata': { 'type': 'object' },
-              'destWallet': { 'type': 'object' }
+      type: 'object',
+      properties: {
+        currencyCode: { type: 'string' },
+        networkFeeOption: { type: 'string' },
+        spendTargets: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              currencyCode: { type: 'string' },
+              publicAddress: { type: 'string' },
+              nativeAmount: { type: 'string' },
+              destMetadata: { type: 'object' },
+              destWallet: { type: 'object' }
             },
-            'required': [
-              'publicAddress'
-            ]
+            required: ['publicAddress']
           }
         }
       },
-      'required': [ 'spendTargets' ]
+      required: ['spendTargets']
     })
 
     if (!valid) {
-      throw (new Error('Error: invalid ABCSpendInfo'))
+      throw new Error('Error: invalid ABCSpendInfo')
     }
 
     // Monero can only have one output
     if (edgeSpendInfo.spendTargets.length !== 1) {
-      throw (new Error('Error: only one output allowed'))
+      throw new Error('Error: only one output allowed')
     }
 
     const currencyCode: string = 'XMR'
@@ -668,18 +720,18 @@ class MoneroEngine {
     if (typeof edgeSpendInfo.spendTargets[0].nativeAmount === 'string') {
       nativeAmount = edgeSpendInfo.spendTargets[0].nativeAmount
     } else {
-      throw (new Error('Error: no amount specified'))
+      throw new Error('Error: no amount specified')
     }
 
     if (bns.eq(nativeAmount, '0')) {
-      throw (new error.NoAmountSpecifiedError())
+      throw new NoAmountSpecifiedError()
     }
 
     if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
       if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
-        throw new error.PendingFundsError()
+        throw new PendingFundsError()
       } else {
-        throw new error.InsufficientFundsError()
+        throw new InsufficientFundsError()
       }
     }
 
@@ -688,8 +740,12 @@ class MoneroEngine {
       edgeSpendInfo.spendTargets[0].otherParams &&
       edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier
     ) {
-      if (typeof edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier === 'string') {
-        uniqueIdentifier = edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier
+      if (
+        typeof edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier ===
+        'string'
+      ) {
+        uniqueIdentifier =
+          edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier
       } else {
         throw new Error('Error invalid payment id')
       }
@@ -714,7 +770,11 @@ class MoneroEngine {
     let result
     let sendParams: SendFundsParams
     try {
-      const amountFloatString: string = bns.div(nativeAmount, '1000000000000', 8)
+      const amountFloatString: string = bns.div(
+        nativeAmount,
+        '1000000000000',
+        8
+      )
       // Todo: Yikes. Why does mymonero-core-js take a float, not a string? -paulvp
       const amountFloat = parseFloat(amountFloatString)
 
@@ -776,7 +836,9 @@ class MoneroEngine {
   }
 
   // asynchronous
-  async broadcastTx (edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
+  async broadcastTx (
+    edgeTransaction: EdgeTransaction
+  ): Promise<EdgeTransaction> {
     try {
       const sendParams = edgeTransaction.otherParams.sendParams
       sendParams.doBroadcast = true

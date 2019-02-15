@@ -3,6 +3,10 @@
   "version": "0.1.3",
   "description": "Edge Monero currency plugin",
   "homepage": "https://edge.app",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:EdgeApp/edge-currency-monero.git"
+  },
   "license": "SEE LICENSE IN LICENSE",
   "author": "Edge (Airbitz, Inc)",
   "contributors": [
@@ -10,84 +14,74 @@
   ],
   "files": [
     "CHANGELOG.md",
-    "README.md",
-    "lib/*"
+    "index.js",
+    "lib/*",
+    "LICENSE",
+    "package.json",
+    "README.md"
   ],
   "main": "./lib/indexMonero.js",
   "module": "./lib/indexMonero.es.js",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:Airbitz/edge-currency-monero.git"
-  },
-  "react-native": {
-    "request": false,
-    "fs": false
-  },
   "scripts": {
-    "build": "npm run webpack && npm run rollup && npm run build:flow",
-    "build:clean": "rimraf lib",
-    "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
-    "build:test": "rollup -c rollup.config.test.js",
-    "build:sample": "rollup -c rollup.config.sample.js",
-    "precommit": "npm run build && npm test",
-    "flow": "flow status",
-    "format": "prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
-    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js' && npm run flow",
-    "lint:fix": "eslint --fix '*.js' 'src/**/*.js' 'test/**/*.js' && npm run flow",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow",
+    "flow": "flow",
+    "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "lint": "eslint '*.js' 'src/**/*.js' 'test/**/*.js'",
+    "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "npm run build",
-    "rollup": "rollup -c",
-    "pretest": "npm run build:test && npm run lint",
-    "test": "nyc mocha --require source-map-support/register build/tests.cjs.js",
+    "test": "nyc mocha -r sucrase/register './test/**/*.js'",
     "posttest": "nyc report --reporter=html",
-    "updot": "updot",
-    "webpack": "webpack"
+    "updot": "updot"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run precommit"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint",
+      "import-sort --list-different",
+      "prettier-eslint --list-different"
+    ]
   },
   "dependencies": {
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
     "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#1a815ca",
-    "node-xhr": "^1.0.5",
-    "sprintf-js": "^1.1.1",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
-    "babel-cli": "^6.24.1",
-    "babel-eslint": "^7.2.3",
-    "babel-plugin-transform-flow-strip-types": "^6.22.0",
-    "babel-preset-flow": "^6.23.0",
+    "babel-eslint": "^10.0.1",
     "chai": "^4.1.2",
     "chai-as-promised": "^6.0.0",
-    "edge-core-js": "git://github.com/EdgeApp/edge-core-js.git#e8b9c19",
-    "eslint": "4.5.0",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-flowtype": "^2.35.0",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.4.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "flow-bin": "^0.76.0",
-    "flow-copy-source": "^1.2.1",
-    "husky": "^0.14.3",
-    "json-loader": "^0.5.4",
+    "edge-core-js": "^0.14.0",
+    "eslint": "5.9.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-flowtype": "^3.2.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "flow-bin": "^0.89.0",
+    "husky": "^1.1.3",
+    "import-sort-cli": "^5.2.0",
+    "import-sort-parser-babylon": "^5.2.0",
+    "import-sort-style-module": "^5.0.0",
+    "lint-staged": "^8.1.0",
     "mocha": "^4.0.0",
     "node-fetch": "^2.1.2",
     "nyc": "^11.3.0",
-    "prettier-eslint-cli": "^4.4.0",
-    "request": "^2.83.0",
-    "rimraf": "^2.6.1",
-    "rollup": "0.48.0",
-    "rollup-plugin-alias": "^1.4.0",
-    "rollup-plugin-babel": "^3.0.2",
-    "rollup-plugin-json": "^2.3.0",
-    "rollup-plugin-multi-entry": "^2.0.2",
-    "updot": "^1.1.7",
-    "webpack": "^1.14.0"
+    "prettier-eslint-cli": "^4.7.1",
+    "rimraf": "^2.6.2",
+    "sucrase": "^3.9.5",
+    "updot": "^1.1.7"
   },
-  "standard": {
-    "parser": "babel-eslint",
-    "plugins": [
-      "flowtype"
-    ]
+  "importSort": {
+    ".js, .es": {
+      "parser": "babylon",
+      "style": "module"
+    }
   }
 }

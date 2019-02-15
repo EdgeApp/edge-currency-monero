@@ -1,13 +1,11 @@
-/* global */
 // @flow
 
-import type { EdgeCurrencyInfo } from 'edge-core-js'
+import { type EdgeCurrencyInfo } from 'edge-core-js/types'
+
 import type { MoneroSettings } from './xmrTypes.js'
 
 const otherSettings: MoneroSettings = {
-  mymoneroApiServers: [
-    'https://edge.mymonero.com:8443'
-  ]
+  mymoneroApiServers: ['https://edge.mymonero.com:8443']
 }
 
 const defaultSettings: any = {
@@ -20,9 +18,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   currencyName: 'Monero',
   pluginName: 'monero',
   requiredConfirmations: 10,
-  walletTypes: [
-    'wallet:monero'
-  ],
+  walletTypes: ['wallet:monero'],
 
   defaultSettings,
 
@@ -38,6 +34,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
     }
   ],
   symbolImage: 'https://developer.airbitz.co/content/monero-logo-solo-64.png', // Base64 encoded png image of the currency symbol (optional)
-  symbolImageDarkMono: 'https://developer.airbitz.co/content/monero-logo-solo-64.png', // Base64 encoded png image of the currency symbol (optional)
+  symbolImageDarkMono:
+    'https://developer.airbitz.co/content/monero-logo-solo-64.png', // Base64 encoded png image of the currency symbol (optional)
   metaTokens: []
 }

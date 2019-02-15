@@ -1,15 +1,16 @@
 // @flow
+
 import EventEmitter from 'events'
 
-import { makeFakeIos, destroyAllContexts } from 'edge-core-js'
-import type {
-  // EdgeSpendInfo,
-  EdgeWalletInfo,
-  // EdgeContext,
-  EdgeCurrencyEngineOptions,
-  EdgeCurrencyEngineCallbacks
-} from 'edge-core-js'
 import { assert } from 'chai'
+import { downgradeDisklet } from 'disklet'
+import {
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeCurrencyEngineOptions,
+  type EdgeWalletInfo,
+  destroyAllContexts,
+  makeFakeIos
+} from 'edge-core-js'
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
@@ -26,18 +27,9 @@ for (const fixture of fixtures) {
   let plugin, keys, engine
   const emitter = new EventEmitter()
   const [fakeIo] = makeFakeIos(1)
-  if (!fakeIo.folder) {
-    throw new Error('Missing fakeio.folder')
-  }
-  const walletLocalFolder = fakeIo.folder
   // const plugins = [CurrencyPluginFactory]
-  // $FlowFixMe
-  fakeIo.fetch = fetch
-  const myIo = {
-    random: size => fixture['key']
-  }
   const opts = {
-    io: Object.assign({}, fakeIo, myIo)
+    io: { ...fakeIo, fetch, random: size => fixture['key'] }
   }
 
   // const context: Promise<EdgeContext> = makeEdgeContext({ io: fakeIo, plugins })
@@ -65,10 +57,14 @@ for (const fixture of fixtures) {
     }
   }
 
+  const walletLocalDisklet = fakeIo.disklet
+  const walletLocalFolder = downgradeDisklet(walletLocalDisklet)
   const currencyEngineOptions: EdgeCurrencyEngineOptions = {
     callbacks,
-    walletLocalFolder,
-    walletLocalEncryptedFolder: walletLocalFolder
+    walletLocalDisklet,
+    walletLocalEncryptedDisklet: walletLocalDisklet,
+    walletLocalEncryptedFolder: walletLocalFolder,
+    walletLocalFolder
   }
 
   describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function () {
@@ -116,46 +112,40 @@ for (const fixture of fixtures) {
         type: WALLET_TYPE,
         keys
       }
-      return plugin
-        .makeEngine(info, currencyEngineOptions)
-        .then(e => {
-          engine = e
-          assert.equal(typeof engine.startEngine, 'function', 'startEngine')
-          assert.equal(typeof engine.killEngine, 'function', 'killEngine')
-          // assert.equal(typeof engine.enableTokens, 'function', 'enableTokens')
-          assert.equal(
-            typeof engine.getBlockHeight,
-            'function',
-            'getBlockHeight'
-          )
-          assert.equal(typeof engine.getBalance, 'function', 'getBalance')
-          assert.equal(
-            typeof engine.getNumTransactions,
-            'function',
-            'getNumTransactions'
-          )
-          assert.equal(
-            typeof engine.getTransactions,
-            'function',
-            'getTransactions'
-          )
-          assert.equal(
-            typeof engine.getFreshAddress,
-            'function',
-            'getFreshAddress'
-          )
-          assert.equal(
-            typeof engine.addGapLimitAddresses,
-            'function',
-            'addGapLimitAddresses'
-          )
-          assert.equal(typeof engine.isAddressUsed, 'function', 'isAddressUsed')
-          assert.equal(typeof engine.makeSpend, 'function', 'makeSpend')
-          assert.equal(typeof engine.signTx, 'function', 'signTx')
-          assert.equal(typeof engine.broadcastTx, 'function', 'broadcastTx')
-          assert.equal(typeof engine.saveTx, 'function', 'saveTx')
-          return true
-        })
+      return plugin.makeEngine(info, currencyEngineOptions).then(e => {
+        engine = e
+        assert.equal(typeof engine.startEngine, 'function', 'startEngine')
+        assert.equal(typeof engine.killEngine, 'function', 'killEngine')
+        // assert.equal(typeof engine.enableTokens, 'function', 'enableTokens')
+        assert.equal(typeof engine.getBlockHeight, 'function', 'getBlockHeight')
+        assert.equal(typeof engine.getBalance, 'function', 'getBalance')
+        assert.equal(
+          typeof engine.getNumTransactions,
+          'function',
+          'getNumTransactions'
+        )
+        assert.equal(
+          typeof engine.getTransactions,
+          'function',
+          'getTransactions'
+        )
+        assert.equal(
+          typeof engine.getFreshAddress,
+          'function',
+          'getFreshAddress'
+        )
+        assert.equal(
+          typeof engine.addGapLimitAddresses,
+          'function',
+          'addGapLimitAddresses'
+        )
+        assert.equal(typeof engine.isAddressUsed, 'function', 'isAddressUsed')
+        assert.equal(typeof engine.makeSpend, 'function', 'makeSpend')
+        assert.equal(typeof engine.signTx, 'function', 'signTx')
+        assert.equal(typeof engine.broadcastTx, 'function', 'broadcastTx')
+        assert.equal(typeof engine.saveTx, 'function', 'saveTx')
+        return true
+      })
     })
   })
 

@@ -2,22 +2,27 @@
  * Created by paul on 8/8/17.
  */
 // @flow
-import { currencyInfo } from './currencyInfoXMR.js'
-import { MoneroEngine } from './currencyEngineXMR.js'
-import { DATA_STORE_FILE, DATA_STORE_FOLDER, WalletLocalData } from './xmrTypes.js'
-import type {
-  EdgeCurrencyEngine,
-  EdgeCurrencyEngineOptions,
-  EdgeParsedUri,
-  EdgeEncodeUri,
-  EdgeCurrencyPlugin,
-  EdgeCurrencyPluginFactory,
-  EdgeWalletInfo
-} from 'edge-core-js'
-import { parse, serialize } from 'uri-js'
-import { bns } from 'biggystring'
 
+import { bns } from 'biggystring'
+import {
+  type EdgeCurrencyEngine,
+  type EdgeCurrencyEngineOptions,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyPluginFactory,
+  type EdgeEncodeUri,
+  type EdgeParsedUri,
+  type EdgeWalletInfo
+} from 'edge-core-js/types'
 import { initMonero } from 'mymonero-core-js'
+import { parse, serialize } from 'uri-js'
+
+import { MoneroEngine } from './currencyEngineXMR.js'
+import { currencyInfo } from './currencyInfoXMR.js'
+import {
+  DATA_STORE_FILE,
+  DATA_STORE_FOLDER,
+  WalletLocalData
+} from './xmrTypes.js'
 
 let io
 
@@ -76,7 +81,9 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
       derivePublicKey: async (walletInfo: EdgeWalletInfo) => {
         const type = walletInfo.type.replace('wallet:', '')
         if (type === 'monero') {
-          const result = await myMoneroApi.createWalletFromMnemonic(walletInfo.keys.moneroKey)
+          const result = await myMoneroApi.createWalletFromMnemonic(
+            walletInfo.keys.moneroKey
+          )
           return {
             moneroAddress: result.moneroAddress,
             moneroViewKeyPrivate: result.moneroViewKeyPrivate,
@@ -88,36 +95,54 @@ export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
         }
       },
 
-      async makeEngine (walletInfo: EdgeWalletInfo, opts: EdgeCurrencyEngineOptions): Promise<EdgeCurrencyEngine> {
-        const moneroEngine = new MoneroEngine(this, io, walletInfo, myMoneroApi, opts)
+      async makeEngine (
+        walletInfo: EdgeWalletInfo,
+        opts: EdgeCurrencyEngineOptions
+      ): Promise<EdgeCurrencyEngine> {
+        const moneroEngine = new MoneroEngine(
+          this,
+          io,
+          walletInfo,
+          myMoneroApi,
+          opts
+        )
         await moneroEngine.init()
         try {
-          const result =
-            await moneroEngine.walletLocalFolder
-              .folder(DATA_STORE_FOLDER)
-              .file(DATA_STORE_FILE)
-              .getText(DATA_STORE_FOLDER, 'walletLocalData')
+          const result = await moneroEngine.walletLocalFolder
+            .folder(DATA_STORE_FOLDER)
+            .file(DATA_STORE_FILE)
+            .getText(DATA_STORE_FOLDER, 'walletLocalData')
 
           moneroEngine.walletLocalData = new WalletLocalData(result)
-          moneroEngine.walletLocalData.moneroAddress = moneroEngine.walletInfo.keys.moneroAddress
-          moneroEngine.walletLocalData.moneroViewKeyPrivate = moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-          moneroEngine.walletLocalData.moneroViewKeyPublic = moneroEngine.walletInfo.keys.moneroViewKeyPublic
-          moneroEngine.walletLocalData.moneroSpendKeyPublic = moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+          moneroEngine.walletLocalData.moneroAddress =
+            moneroEngine.walletInfo.keys.moneroAddress
+          moneroEngine.walletLocalData.moneroViewKeyPrivate =
+            moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+          moneroEngine.walletLocalData.moneroViewKeyPublic =
+            moneroEngine.walletInfo.keys.moneroViewKeyPublic
+          moneroEngine.walletLocalData.moneroSpendKeyPublic =
+            moneroEngine.walletInfo.keys.moneroSpendKeyPublic
         } catch (err) {
           try {
             console.log(err)
             console.log('No walletLocalData setup yet: Failure is ok')
             moneroEngine.walletLocalData = new WalletLocalData(null)
-            moneroEngine.walletLocalData.moneroAddress = moneroEngine.walletInfo.keys.moneroAddress
-            moneroEngine.walletLocalData.moneroViewKeyPrivate = moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-            moneroEngine.walletLocalData.moneroViewKeyPublic = moneroEngine.walletInfo.keys.moneroViewKeyPublic
-            moneroEngine.walletLocalData.moneroSpendKeyPublic = moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+            moneroEngine.walletLocalData.moneroAddress =
+              moneroEngine.walletInfo.keys.moneroAddress
+            moneroEngine.walletLocalData.moneroViewKeyPrivate =
+              moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+            moneroEngine.walletLocalData.moneroViewKeyPublic =
+              moneroEngine.walletInfo.keys.moneroViewKeyPublic
+            moneroEngine.walletLocalData.moneroSpendKeyPublic =
+              moneroEngine.walletInfo.keys.moneroSpendKeyPublic
             await moneroEngine.walletLocalFolder
               .folder(DATA_STORE_FOLDER)
               .file(DATA_STORE_FILE)
               .setText(JSON.stringify(moneroEngine.walletLocalData))
           } catch (e) {
-            console.log('Error writing to localDataStore. Engine not started:' + err)
+            console.log(
+              'Error writing to localDataStore. Engine not started:' + err
+            )
           }
         }
         return moneroEngine
