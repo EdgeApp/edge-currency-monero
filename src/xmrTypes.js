@@ -5,10 +5,9 @@
 
 import { type EdgeTransaction } from 'edge-core-js/types'
 
-import { currencyInfo } from './currencyInfoXMR.js'
+import { currencyInfo } from './xmrInfo.js'
 
-export const DATA_STORE_FOLDER = 'txEngineFolder'
-export const DATA_STORE_FILE = 'walletLocalData.json'
+export const DATA_STORE_FILE = 'txEngineFolder/walletLocalData.json'
 export const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
 export type MoneroSettings = {

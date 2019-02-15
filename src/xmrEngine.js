@@ -4,6 +4,7 @@
 // @flow
 
 import { bns } from 'biggystring'
+import type { Disklet } from 'disklet'
 import {
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
@@ -25,13 +26,9 @@ import type {
   SendFundsParams
 } from 'mymonero-core-js/lib/myMoneroApi.js'
 
-import { currencyInfo } from './currencyInfoXMR.js'
 import { normalizeAddress, validateObject } from './utils.js'
-import {
-  DATA_STORE_FILE,
-  DATA_STORE_FOLDER,
-  WalletLocalData
-} from './xmrTypes.js'
+import { currencyInfo } from './xmrInfo.js'
+import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
 const ADDRESS_POLL_MILLISECONDS = 7000
 const TRANSACTIONS_POLL_MILLISECONDS = 4000
@@ -44,7 +41,7 @@ const PRIMARY_CURRENCY = currencyInfo.currencyCode
 class MoneroEngine {
   walletInfo: EdgeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
-  walletLocalFolder: any
+  walletLocalDisklet: Disklet
   engineOn: boolean
   loggedIn: boolean
   addressesChecked: boolean
@@ -68,7 +65,7 @@ class MoneroEngine {
     myMoneroApi: Object,
     opts: EdgeCurrencyEngineOptions
   ) {
-    const { walletLocalFolder, callbacks } = opts
+    const { walletLocalDisklet, callbacks } = opts
 
     this.io = io_
     this.engineOn = false
@@ -97,7 +94,7 @@ class MoneroEngine {
     // this.walletInfo.keys.moneroKey = '389b07b3466eed587d6bdae09a3613611de9add2635432d6cd1521af7bbc3757'
     // this.walletInfo.keys.moneroAddress = '0x9fa817e5A48DD1adcA7BEc59aa6E3B1F5C4BeA9a'
     this.edgeTxLibCallbacks = callbacks
-    this.walletLocalFolder = walletLocalFolder
+    this.walletLocalDisklet = walletLocalDisklet
 
     this.log(
       `Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${
@@ -421,10 +418,7 @@ class MoneroEngine {
       try {
         this.log('walletLocalDataDirty. Saving...')
         const walletJson = JSON.stringify(this.walletLocalData)
-        await this.walletLocalFolder
-          .folder(DATA_STORE_FOLDER)
-          .file(DATA_STORE_FILE)
-          .setText(walletJson)
+        await this.walletLocalDisklet.setText(DATA_STORE_FILE, walletJson)
         this.walletLocalDataDirty = false
       } catch (err) {
         this.log(err)

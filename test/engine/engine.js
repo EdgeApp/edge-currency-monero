@@ -5,8 +5,10 @@ import EventEmitter from 'events'
 import { assert } from 'chai'
 import { downgradeDisklet } from 'disklet'
 import {
+  type EdgeCurrencyEngine,
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
+  type EdgeCurrencyPlugin,
   type EdgeWalletInfo,
   destroyAllContexts,
   makeFakeIos
@@ -14,17 +16,20 @@ import {
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import * as Factories from '../../src/indexMonero.js'
+import * as Factories from '../../src/xmrIndex.js'
 import fixtures from './fixtures.json'
 
 // const DATA_STORE_FOLDER = 'txEngineFolderBTC'
 
 for (const fixture of fixtures) {
+  let engine: EdgeCurrencyEngine
+  let plugin: EdgeCurrencyPlugin
+  let keys
+
   const CurrencyPluginFactory = Factories[fixture['factory']]
   const WALLET_TYPE = fixture['WALLET_TYPE']
   // const TX_AMOUNT = fixture['TX_AMOUNT']
 
-  let plugin, keys, engine
   const emitter = new EventEmitter()
   const [fakeIo] = makeFakeIos(1)
   // const plugins = [CurrencyPluginFactory]
