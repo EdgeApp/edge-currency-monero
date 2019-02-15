@@ -1,4 +1,5 @@
 // @flow
+
 import { describe, it, before } from 'mocha'
 import * as Factories from '../../src/indexMonero.js'
 import { assert } from 'chai'

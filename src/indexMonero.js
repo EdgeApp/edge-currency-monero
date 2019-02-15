@@ -2,6 +2,7 @@
  * Created by paul on 8/8/17.
  */
 // @flow
+
 import { currencyInfo } from './currencyInfoXMR.js'
 import { MoneroEngine } from './currencyEngineXMR.js'
 import { DATA_STORE_FILE, DATA_STORE_FOLDER, WalletLocalData } from './xmrTypes.js'
