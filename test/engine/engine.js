@@ -3,11 +3,13 @@
 import EventEmitter from 'events'
 
 import { assert } from 'chai'
-import { destroyAllContexts, makeFakeIos } from 'edge-core-js'
-import type {
-  EdgeCurrencyEngineCallbacks,
-  EdgeCurrencyEngineOptions,
-  EdgeWalletInfo
+import { downgradeDisklet } from 'disklet'
+import {
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeCurrencyEngineOptions,
+  type EdgeWalletInfo,
+  destroyAllContexts,
+  makeFakeIos
 } from 'edge-core-js'
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
@@ -25,18 +27,9 @@ for (const fixture of fixtures) {
   let plugin, keys, engine
   const emitter = new EventEmitter()
   const [fakeIo] = makeFakeIos(1)
-  if (!fakeIo.folder) {
-    throw new Error('Missing fakeio.folder')
-  }
-  const walletLocalFolder = fakeIo.folder
   // const plugins = [CurrencyPluginFactory]
-  // $FlowFixMe
-  fakeIo.fetch = fetch
-  const myIo = {
-    random: size => fixture['key']
-  }
   const opts = {
-    io: Object.assign({}, fakeIo, myIo)
+    io: { ...fakeIo, fetch, random: size => fixture['key'] }
   }
 
   // const context: Promise<EdgeContext> = makeEdgeContext({ io: fakeIo, plugins })
@@ -64,10 +57,14 @@ for (const fixture of fixtures) {
     }
   }
 
+  const walletLocalDisklet = fakeIo.disklet
+  const walletLocalFolder = downgradeDisklet(walletLocalDisklet)
   const currencyEngineOptions: EdgeCurrencyEngineOptions = {
     callbacks,
-    walletLocalFolder,
-    walletLocalEncryptedFolder: walletLocalFolder
+    walletLocalDisklet,
+    walletLocalEncryptedDisklet: walletLocalDisklet,
+    walletLocalEncryptedFolder: walletLocalFolder,
+    walletLocalFolder
   }
 
   describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function () {

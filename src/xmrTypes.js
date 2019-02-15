@@ -3,7 +3,7 @@
  */
 // @flow
 
-import type { EdgeTransaction } from 'edge-core-js'
+import { type EdgeTransaction } from 'edge-core-js/types'
 
 import { currencyInfo } from './currencyInfoXMR.js'
 

@@ -4,20 +4,22 @@
 // @flow
 
 import { bns } from 'biggystring'
-import type {
-  EdgeCurrencyEngineCallbacks,
-  EdgeCurrencyEngineOptions,
-  EdgeCurrencyInfo,
-  EdgeCurrencyPlugin,
-  EdgeDataDump,
-  EdgeFreshAddress,
-  EdgeIo,
-  EdgeMetaToken,
-  EdgeSpendInfo,
-  EdgeTransaction,
-  EdgeWalletInfo
-} from 'edge-core-js'
-import { error } from 'edge-core-js'
+import {
+  type EdgeCurrencyEngineCallbacks,
+  type EdgeCurrencyEngineOptions,
+  type EdgeCurrencyInfo,
+  type EdgeCurrencyPlugin,
+  type EdgeDataDump,
+  type EdgeFreshAddress,
+  type EdgeIo,
+  type EdgeMetaToken,
+  type EdgeSpendInfo,
+  type EdgeTransaction,
+  type EdgeWalletInfo,
+  InsufficientFundsError,
+  NoAmountSpecifiedError,
+  PendingFundsError
+} from 'edge-core-js/types'
 import type {
   QueryParams,
   SendFundsParams
@@ -722,14 +724,14 @@ class MoneroEngine {
     }
 
     if (bns.eq(nativeAmount, '0')) {
-      throw new error.NoAmountSpecifiedError()
+      throw new NoAmountSpecifiedError()
     }
 
     if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
       if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
-        throw new error.PendingFundsError()
+        throw new PendingFundsError()
       } else {
-        throw new error.InsufficientFundsError()
+        throw new InsufficientFundsError()
       }
     }
 
