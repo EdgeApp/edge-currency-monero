@@ -23,7 +23,6 @@
     "build": "npm run rollup && npm run build:flow",
     "build:clean": "rimraf lib",
     "build:flow": "flow-copy-source -v -i '**/test/**' src lib",
-    "build:sample": "rollup -c rollup.config.sample.js",
     "build:test": "rollup -c rollup.config.test.js",
     "flow": "flow status",
     "format": "import-sort -l --write '*.js' 'src/**/*.js' 'test/**/*.js'; prettier-eslint --write '*.js' 'src/**/*.js' 'test/**/*.js'",
