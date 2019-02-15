@@ -20,8 +20,8 @@
     "package.json",
     "README.md"
   ],
-  "main": "./lib/indexMonero.js",
-  "module": "./lib/indexMonero.es.js",
+  "main": "./index.js",
+  "module": "./lib/indexMonero.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow",
     "flow": "flow",
@@ -83,5 +83,6 @@
       "parser": "babylon",
       "style": "module"
     }
-  }
+  },
+  "react-native": "./lib/indexMonero.js"
 }
