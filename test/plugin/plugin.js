@@ -4,7 +4,7 @@ import { assert } from 'chai'
 import { before, describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import * as Factories from '../../src/indexMonero.js'
+import * as Factories from '../../src/xmrIndex.js'
 import fixtures from './fixtures.json'
 
 for (const fixture of fixtures) {

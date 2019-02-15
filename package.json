@@ -21,7 +21,7 @@
     "README.md"
   ],
   "main": "./index.js",
-  "module": "./lib/indexMonero.js",
+  "module": "./lib/xmrIndex.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow",
     "flow": "flow",
@@ -84,5 +84,5 @@
       "style": "module"
     }
   },
-  "react-native": "./lib/indexMonero.js"
+  "react-native": "./lib/xmrIndex.js"
 }

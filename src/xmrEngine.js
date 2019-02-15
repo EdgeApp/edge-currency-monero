@@ -26,8 +26,8 @@ import type {
   SendFundsParams
 } from 'mymonero-core-js/lib/myMoneroApi.js'
 
-import { currencyInfo } from './currencyInfoXMR.js'
 import { normalizeAddress, validateObject } from './utils.js'
+import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
 const ADDRESS_POLL_MILLISECONDS = 7000

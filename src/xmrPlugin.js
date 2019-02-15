@@ -17,8 +17,8 @@ import {
 import { initMonero } from 'mymonero-core-js'
 import { parse, serialize } from 'uri-js'
 
-import { MoneroEngine } from './currencyEngineXMR.js'
-import { currencyInfo } from './currencyInfoXMR.js'
+import { MoneroEngine } from './xmrEngine.js'
+import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
 function getDenomInfo (denom: string) {

@@ -14,7 +14,7 @@ import {
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import * as Factories from '../../src/indexMonero.js'
+import * as Factories from '../../src/xmrIndex.js'
 import fixtures from './fixtures.json'
 
 // const DATA_STORE_FOLDER = 'txEngineFolderBTC'
