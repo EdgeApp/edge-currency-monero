@@ -1,6 +1,6 @@
 [
   {
-    "factory": "moneroCurrencyPluginFactory",
+    "pluginName": "monero",
     "WALLET_TYPE": "wallet:monero",
     "TX_AMOUNT": 6,
     "Test Currency code": "XMR",

@@ -9,7 +9,7 @@ import {
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
-  type EdgeCurrencyPlugin,
+  type EdgeCurrencyTools,
   type EdgeDataDump,
   type EdgeFreshAddress,
   type EdgeIo,
@@ -56,10 +56,10 @@ class MoneroEngine {
   timers: any
   walletId: string
   io: EdgeIo
-  currencyPlugin: EdgeCurrencyPlugin
+  currencyPlugin: EdgeCurrencyTools
 
   constructor (
-    currencyPlugin: EdgeCurrencyPlugin,
+    currencyPlugin: EdgeCurrencyTools,
     io_: any,
     walletInfo: EdgeWalletInfo,
     myMoneroApi: Object,
@@ -84,8 +84,8 @@ class MoneroEngine {
     // this.customTokens = []
     this.timers = {}
 
-    if (typeof opts.optionalSettings !== 'undefined') {
-      this.currentSettings = opts.optionalSettings
+    if (opts.userSettings != null) {
+      this.currentSettings = opts.userSettings
     } else {
       this.currentSettings = this.currencyInfo.defaultSettings
     }
@@ -468,8 +468,8 @@ class MoneroEngine {
   // Public methods
   // *************************************
 
-  updateSettings (settings: any) {
-    this.currentSettings = settings
+  async changeUserSettings (userSettings: Object): Promise<mixed> {
+    this.currentSettings = userSettings
   }
 
   async startEngine () {
