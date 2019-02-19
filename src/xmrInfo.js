@@ -15,10 +15,10 @@ const defaultSettings: any = {
 export const currencyInfo: EdgeCurrencyInfo = {
   // Basic currency information:
   currencyCode: 'XMR',
-  currencyName: 'Monero',
+  displayName: 'Monero',
   pluginName: 'monero',
   requiredConfirmations: 10,
-  walletTypes: ['wallet:monero'],
+  walletType: 'wallet:monero',
 
   defaultSettings,
 

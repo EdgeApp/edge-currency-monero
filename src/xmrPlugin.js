@@ -9,8 +9,9 @@ import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyPlugin,
-  type EdgeCurrencyPluginFactory,
+  type EdgeCurrencyTools,
   type EdgeEncodeUri,
+  type EdgeIo,
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
@@ -36,10 +37,7 @@ function getParameterByName (param, url) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-async function makePlugin (
-  opts: EdgeCorePluginOptions
-): Promise<EdgeCurrencyPlugin> {
-  const { io } = opts
+async function makeMoneroTools (io: EdgeIo): Promise<EdgeCurrencyTools> {
   const { MyMoneroApi } = await initMonero()
 
   console.log(`Creating Currency Plugin for monero`)
@@ -52,9 +50,10 @@ async function makePlugin (
   }
   const myMoneroApi = new MyMoneroApi(options)
 
-  const moneroPlugin: EdgeCurrencyPlugin = {
+  const moneroPlugin: EdgeCurrencyTools = {
     pluginName: 'monero',
     currencyInfo,
+    myMoneroApi,
 
     createPrivateKey: async (walletType: string) => {
       const type = walletType.replace('wallet:', '')
@@ -86,58 +85,6 @@ async function makePlugin (
       } else {
         throw new Error('InvalidWalletType')
       }
-    },
-
-    async makeEngine (
-      walletInfo: EdgeWalletInfo,
-      opts: EdgeCurrencyEngineOptions
-    ): Promise<EdgeCurrencyEngine> {
-      const moneroEngine = new MoneroEngine(
-        this,
-        io,
-        walletInfo,
-        myMoneroApi,
-        opts
-      )
-      await moneroEngine.init()
-      try {
-        const result = await moneroEngine.walletLocalDisklet.getText(
-          DATA_STORE_FILE
-        )
-
-        moneroEngine.walletLocalData = new WalletLocalData(result)
-        moneroEngine.walletLocalData.moneroAddress =
-          moneroEngine.walletInfo.keys.moneroAddress
-        moneroEngine.walletLocalData.moneroViewKeyPrivate =
-          moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-        moneroEngine.walletLocalData.moneroViewKeyPublic =
-          moneroEngine.walletInfo.keys.moneroViewKeyPublic
-        moneroEngine.walletLocalData.moneroSpendKeyPublic =
-          moneroEngine.walletInfo.keys.moneroSpendKeyPublic
-      } catch (err) {
-        try {
-          console.log(err)
-          console.log('No walletLocalData setup yet: Failure is ok')
-          moneroEngine.walletLocalData = new WalletLocalData(null)
-          moneroEngine.walletLocalData.moneroAddress =
-            moneroEngine.walletInfo.keys.moneroAddress
-          moneroEngine.walletLocalData.moneroViewKeyPrivate =
-            moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-          moneroEngine.walletLocalData.moneroViewKeyPublic =
-            moneroEngine.walletInfo.keys.moneroViewKeyPublic
-          moneroEngine.walletLocalData.moneroSpendKeyPublic =
-            moneroEngine.walletInfo.keys.moneroSpendKeyPublic
-          await moneroEngine.walletLocalDisklet.setText(
-            DATA_STORE_FILE,
-            JSON.stringify(moneroEngine.walletLocalData)
-          )
-        } catch (e) {
-          console.log(
-            'Error writing to localDataStore. Engine not started:' + err
-          )
-        }
-      }
-      return moneroEngine
     },
 
     parseUri: async (uri: string): Promise<EdgeParsedUri> => {
@@ -264,11 +211,82 @@ async function makePlugin (
   return moneroPlugin
 }
 
-export const moneroCurrencyPluginFactory: EdgeCurrencyPluginFactory = {
-  pluginType: 'currency',
-  pluginName: currencyInfo.pluginName,
+export function makeMoneroPlugin (
+  opts: EdgeCorePluginOptions
+): EdgeCurrencyPlugin {
+  const { io, nativeIo } = opts
 
-  async makePlugin (opts: EdgeCorePluginOptions): Promise<EdgeCurrencyPlugin> {
-    return makePlugin(opts)
+  if (nativeIo['edge-currency-monero']) {
+    const { methodByString } = nativeIo['edge-currency-monero']
+    global.moneroCore = { methodByString }
+  }
+  global.moneroApiKey = opts.initOptions.apiKey
+
+  let toolsPromise: Promise<EdgeCurrencyTools>
+  function makeCurrencyTools (): Promise<EdgeCurrencyTools> {
+    if (toolsPromise != null) return toolsPromise
+    toolsPromise = makeMoneroTools(io)
+    return toolsPromise
+  }
+
+  async function makeCurrencyEngine (
+    walletInfo: EdgeWalletInfo,
+    opts: EdgeCurrencyEngineOptions
+  ): Promise<EdgeCurrencyEngine> {
+    const tools: EdgeCurrencyTools = await makeCurrencyTools()
+    const moneroEngine = new MoneroEngine(
+      tools,
+      io,
+      walletInfo,
+      // $FlowFixMe
+      tools.myMoneroApi,
+      opts
+    )
+    await moneroEngine.init()
+    try {
+      const result = await moneroEngine.walletLocalDisklet.getText(
+        DATA_STORE_FILE
+      )
+      moneroEngine.walletLocalData = new WalletLocalData(result)
+      moneroEngine.walletLocalData.moneroAddress =
+        moneroEngine.walletInfo.keys.moneroAddress
+      moneroEngine.walletLocalData.moneroViewKeyPrivate =
+        moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+      moneroEngine.walletLocalData.moneroViewKeyPublic =
+        moneroEngine.walletInfo.keys.moneroViewKeyPublic
+      moneroEngine.walletLocalData.moneroSpendKeyPublic =
+        moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+    } catch (err) {
+      try {
+        console.log(err)
+        console.log('No walletLocalData setup yet: Failure is ok')
+        moneroEngine.walletLocalData = new WalletLocalData(null)
+        moneroEngine.walletLocalData.moneroAddress =
+          moneroEngine.walletInfo.keys.moneroAddress
+        moneroEngine.walletLocalData.moneroViewKeyPrivate =
+          moneroEngine.walletInfo.keys.moneroViewKeyPrivate
+        moneroEngine.walletLocalData.moneroViewKeyPublic =
+          moneroEngine.walletInfo.keys.moneroViewKeyPublic
+        moneroEngine.walletLocalData.moneroSpendKeyPublic =
+          moneroEngine.walletInfo.keys.moneroSpendKeyPublic
+        await moneroEngine.walletLocalDisklet.setText(
+          DATA_STORE_FILE,
+          JSON.stringify(moneroEngine.walletLocalData)
+        )
+      } catch (e) {
+        console.log(
+          'Error writing to localDataStore. Engine not started:' + err
+        )
+      }
+    }
+
+    const out: EdgeCurrencyEngine = moneroEngine
+    return out
+  }
+
+  return {
+    currencyInfo,
+    makeCurrencyEngine,
+    makeCurrencyTools
   }
 }

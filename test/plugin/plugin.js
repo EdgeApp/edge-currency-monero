@@ -1,11 +1,17 @@
 // @flow
 
 import { assert, expect } from 'chai'
-import { type EdgeCurrencyPlugin, type EdgeParsedUri } from 'edge-core-js'
+import {
+  type EdgeCorePluginOptions,
+  type EdgeCurrencyPlugin,
+  type EdgeCurrencyTools,
+  type EdgeParsedUri,
+  makeFakeIo
+} from 'edge-core-js'
 import { before, describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import * as Factories from '../../src/xmrIndex.js'
+import edgeCorePlugins from '../../src/xmrIndex.js'
 import fixtures from './fixtures.json'
 
 /**
@@ -26,40 +32,34 @@ export function expectRejection (
 }
 
 for (const fixture of fixtures) {
-  let plugin: EdgeCurrencyPlugin
+  let tools: EdgeCurrencyTools
 
-  const CurrencyPluginFactory = Factories[fixture['factory']]
   const WALLET_TYPE = fixture['WALLET_TYPE']
   const keyName = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Key'
   const address = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Address'
 
   let randomIndex = 0
   const len = fixture['key']
-  const opts = {
-    io: {
-      random: size => {
-        if (randomIndex + size > len) {
-          randomIndex = 0
-        }
-        return fixture['key'].slice(randomIndex, randomIndex + size)
-      },
-      fetch,
-      console: {
-        info: console.log,
-        warn: console.log,
-        error: console.log
+  const fakeIo = {
+    ...makeFakeIo(),
+    random: size => {
+      if (randomIndex + size > len) {
+        randomIndex = 0
       }
-    }
+      return fixture['key'].slice(randomIndex, randomIndex + size)
+    },
+    fetch
   }
+  const opts: EdgeCorePluginOptions = {
+    initOptions: {},
+    io: fakeIo,
+    nativeIo: {},
+    pluginDisklet: fakeIo.disklet
+  }
+  const factory = edgeCorePlugins[fixture['pluginName']]
+  const plugin: EdgeCurrencyPlugin = factory(opts)
 
   describe(`Info for Wallet type ${WALLET_TYPE}`, function () {
-    before('Plugin', function (done) {
-      CurrencyPluginFactory.makePlugin(opts).then(currencyPlugin => {
-        plugin = currencyPlugin
-        done()
-      })
-    })
-
     it('Test Currency code', function () {
       assert.equal(
         plugin.currencyInfo.currencyCode,
@@ -69,22 +69,14 @@ for (const fixture of fixtures) {
   })
 
   describe(`createPrivateKey for Wallet type ${WALLET_TYPE}`, function () {
-    before('Plugin', function (done) {
-      CurrencyPluginFactory.makePlugin(opts).then(currencyPlugin => {
-        plugin = currencyPlugin
-        done()
+    before('Tools', function () {
+      return plugin.makeCurrencyTools().then(currencyTools => {
+        tools = currencyTools
       })
     })
 
-    it('Test Currency code', function () {
-      assert.equal(
-        plugin.currencyInfo.currencyCode,
-        fixture['Test Currency code']
-      )
-    })
-
     it('Create valid key', async function () {
-      const keys = await plugin.createPrivateKey(WALLET_TYPE)
+      const keys = await tools.createPrivateKey(WALLET_TYPE)
       assert.equal(!keys, false)
       assert.equal(typeof keys[keyName], 'string')
       const length1 = keys.moneroSpendKeyPrivate.length
@@ -95,18 +87,17 @@ for (const fixture of fixtures) {
   })
 
   describe(`derivePublicKey for Wallet type ${WALLET_TYPE}`, function () {
-    before('Plugin', async function () {
-      const currencyPlugin = await CurrencyPluginFactory.makePlugin(opts)
-      assert.equal(
-        currencyPlugin.currencyInfo.currencyCode,
-        fixture['Test Currency code']
-      )
-      plugin = currencyPlugin
-      await plugin.createPrivateKey(WALLET_TYPE)
+    before('Plugin', function () {
+      before('Tools', function () {
+        return plugin.makeCurrencyTools().then(currencyTools => {
+          tools = currencyTools
+          return tools.createPrivateKey(WALLET_TYPE)
+        })
+      })
     })
 
     it('Valid private key', async function () {
-      const keys = await plugin.derivePublicKey({
+      const keys = await tools.derivePublicKey({
         id: 'id',
         keys: { [keyName]: fixture['mnemonic'] },
         type: WALLET_TYPE
@@ -117,7 +108,7 @@ for (const fixture of fixtures) {
     it('Invalid key name', async function () {
       // assert.throws(async () => {
       try {
-        await plugin.derivePublicKey(fixture['Invalid key name'])
+        await tools.derivePublicKey(fixture['Invalid key name'])
         assert(false)
       } catch (e) {
         assert(true)
@@ -127,7 +118,7 @@ for (const fixture of fixtures) {
 
     it('Invalid wallet type', async function () {
       try {
-        await plugin.derivePublicKey(fixture['Invalid wallet type'])
+        await tools.derivePublicKey(fixture['Invalid wallet type'])
         assert(false)
       } catch (e) {
         assert(true)
@@ -136,18 +127,14 @@ for (const fixture of fixtures) {
   })
 
   describe(`parseUri for Wallet type ${WALLET_TYPE}`, function () {
-    before('Plugin', function (done) {
-      CurrencyPluginFactory.makePlugin(opts).then(currencyPlugin => {
-        assert.equal(
-          currencyPlugin.currencyInfo.currencyCode,
-          fixture['Test Currency code']
-        )
-        plugin = currencyPlugin
-        done()
+    before('Tools', function () {
+      return plugin.makeCurrencyTools().then(currencyTools => {
+        tools = currencyTools
       })
     })
+
     it('address only', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['address only'][0]
       )
       assert.equal(
@@ -159,27 +146,21 @@ for (const fixture of fixtures) {
     })
     it('invalid address 0', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.parseUri(fixture['parseUri']['invalid address'][0])
-        )
+        tools.parseUri(fixture['parseUri']['invalid address'][0])
       )
     })
     it('invalid address 1', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.parseUri(fixture['parseUri']['invalid address'][1])
-        )
+        tools.parseUri(fixture['parseUri']['invalid address'][1])
       )
     })
     it('invalid address 2', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.parseUri(fixture['parseUri']['invalid address'][2])
-        )
+        tools.parseUri(fixture['parseUri']['invalid address'][2])
       )
     })
     it('uri address', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['uri address'][0]
       )
       assert.equal(
@@ -190,7 +171,7 @@ for (const fixture of fixtures) {
       assert.equal(parsedUri.currencyCode, undefined)
     })
     it('uri address with amount', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['uri address with amount'][0]
       )
       assert.equal(
@@ -207,7 +188,7 @@ for (const fixture of fixtures) {
       )
     })
     it('uri address with unique identifier', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['uri address with unique identifier'][0]
       )
       assert.equal(
@@ -220,7 +201,7 @@ for (const fixture of fixtures) {
       )
     })
     it('uri address with amount & label', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['uri address with amount & label'][0]
       )
       assert.equal(
@@ -242,7 +223,7 @@ for (const fixture of fixtures) {
       )
     })
     it('uri address with amount, label & message', async function () {
-      const parsedUri: EdgeParsedUri = await plugin.parseUri(
+      const parsedUri: EdgeParsedUri = await tools.parseUri(
         fixture['parseUri']['uri address with amount & label'][0]
       )
       assert.equal(
@@ -264,7 +245,7 @@ for (const fixture of fixtures) {
       )
     })
     it('uri address with unsupported param', async function () {
-      const parsedUri = await plugin.parseUri(
+      const parsedUri = await tools.parseUri(
         fixture['parseUri']['uri address with amount & label'][0]
       )
       assert.equal(
@@ -283,47 +264,40 @@ for (const fixture of fixtures) {
   })
 
   describe(`encodeUri for Wallet type ${WALLET_TYPE}`, async function () {
-    before('Plugin', function (done) {
-      CurrencyPluginFactory.makePlugin(opts).then(currencyPlugin => {
-        plugin = currencyPlugin
-        done()
+    before('Tools', function () {
+      return plugin.makeCurrencyTools().then(currencyTools => {
+        tools = currencyTools
       })
     })
     it('address only', async function () {
-      const encodedUri = await plugin.encodeUri(
+      const encodedUri = await tools.encodeUri(
         fixture['encodeUri']['address only'][0]
       )
       assert.equal(encodedUri, fixture['encodeUri']['address only'][1])
     })
     it('invalid address 0', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.encodeUri(fixture['encodeUri']['invalid address'][0])
-        )
+        tools.encodeUri(fixture['encodeUri']['invalid address'][0])
       )
     })
     it('invalid address 1', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.encodeUri(fixture['encodeUri']['invalid address'][1])
-        )
+        tools.encodeUri(fixture['encodeUri']['invalid address'][1])
       )
     })
     it('invalid address 2', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.encodeUri(fixture['encodeUri']['invalid address'][2])
-        )
+        tools.encodeUri(fixture['encodeUri']['invalid address'][2])
       )
     })
     it('address & amount', async function () {
-      const encodedUri = await plugin.encodeUri(
+      const encodedUri = await tools.encodeUri(
         fixture['encodeUri']['address & amount'][0]
       )
       assert.equal(encodedUri, fixture['encodeUri']['address & amount'][1])
     })
     it('address, amount, and label', async function () {
-      const encodedUri = await plugin.encodeUri(
+      const encodedUri = await tools.encodeUri(
         fixture['encodeUri']['address, amount, and label'][0]
       )
       assert.equal(
@@ -332,7 +306,7 @@ for (const fixture of fixtures) {
       )
     })
     it('address, amount, label, & message', async function () {
-      const encodedUri = await plugin.encodeUri(
+      const encodedUri = await tools.encodeUri(
         fixture['encodeUri']['address, amount, label, & message'][0]
       )
       assert.equal(
@@ -342,9 +316,7 @@ for (const fixture of fixtures) {
     })
     it('invalid currencyCode', function () {
       return expectRejection(
-        Promise.resolve(
-          plugin.encodeUri(fixture['encodeUri']['invalid currencyCode'][0])
-        )
+        tools.encodeUri(fixture['encodeUri']['invalid currencyCode'][0])
       )
     })
   })
