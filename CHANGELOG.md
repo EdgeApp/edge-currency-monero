@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.2.0 (2019-02-19)
+
+- Upgrade to the edge-core-js v0.15.0 and adapt to breaking changes.
+
 ## 0.1.4 (2019-02-15)
 
 - Update the readme file
