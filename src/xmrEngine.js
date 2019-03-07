@@ -833,6 +833,8 @@ class MoneroEngine {
   async broadcastTx (
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
+    const { io } = this
+
     try {
       const sendParams = edgeTransaction.otherParams.sendParams
       sendParams.doBroadcast = true
@@ -840,16 +842,19 @@ class MoneroEngine {
         Object.assign({}, sendParams, {
           moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
           onStatus: (code: number) => {
-            console.log(`broadcastTx:SendFunds - onStatus:${code.toString()}`)
+            io.console.info(
+              `broadcastTx:SendFunds - onStatus:${code.toString()}`
+            )
           }
         })
       )
 
       edgeTransaction.txid = result.txid
       edgeTransaction.networkFee = result.networkFee
-      console.log(`broadcastTx success txid: ${edgeTransaction.txid}`)
+      io.console.info(`broadcastTx success txid: ${edgeTransaction.txid}`)
       return edgeTransaction
     } catch (e) {
+      io.console.info(`broadcastTx failed: ${String(e)}`)
       edgeTransaction.otherParams.sendParams.moneroSpendKeyPrivate = ''
       throw e
     }
