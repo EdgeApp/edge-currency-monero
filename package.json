@@ -49,7 +49,7 @@
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
-    "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#1a815ca",
+    "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#f147829f00",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
