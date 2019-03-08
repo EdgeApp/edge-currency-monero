@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.2.1 (2019-03-07)
+
+- Upgrade `mymonero-core-js` in preparation for the Monero v0.14.0 hard fork.
+- Properly report failed broadcasts.
+
 # 0.2.0 (2019-02-19)
 
 - Upgrade to the edge-core-js v0.15.0 and adapt to breaking changes.
