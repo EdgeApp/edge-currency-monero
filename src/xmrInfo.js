@@ -22,7 +22,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
 
   defaultSettings,
 
-  addressExplorer: 'https://xmrchain.net/tx/%s',
+  addressExplorer: 'https://xmrchain.net/search?value=%s',
   transactionExplorer: 'https://xmrchain.net/tx/%s',
 
   denominations: [
