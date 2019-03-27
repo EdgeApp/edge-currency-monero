@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.2.2 (2019-03-27)
+
+- Fix block explorer link.
+
 # 0.2.1 (2019-03-07)
 
 - Upgrade `mymonero-core-js` in preparation for the Monero v0.14.0 hard fork.
