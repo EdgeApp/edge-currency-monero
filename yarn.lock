@@ -4580,9 +4580,9 @@ mute-stream@0.0.7:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
 
-"mymonero-core-js@git://github.com/EdgeApp/mymonero-core-js.git#6eddbd64":
+"mymonero-core-js@git://github.com/EdgeApp/mymonero-core-js.git#william/v0.14.0-hardfork":
   version "1.1.0"
-  resolved "git://github.com/EdgeApp/mymonero-core-js.git#6eddbd64460d79da2bb46a31dfe55d5ef062a56d"
+  resolved "git://github.com/EdgeApp/mymonero-core-js.git#c17011785963677ec64981cc3d79e4e29f9e526a"
   dependencies:
     node-fetch "^2.2.0"
 
