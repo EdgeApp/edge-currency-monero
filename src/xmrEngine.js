@@ -159,6 +159,7 @@ class MoneroEngine {
     const body = Object.assign(
       {},
       {
+        api_key: this.myMoneroApi.options.apiKey,
         address: this.walletLocalData.moneroAddress,
         view_key: this.walletLocalData.moneroViewKeyPrivate,
         create_account: true

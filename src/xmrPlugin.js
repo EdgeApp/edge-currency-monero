@@ -22,6 +22,10 @@ import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
+type InitOptions = {
+  apiKey: string
+}
+
 function getDenomInfo (denom: string) {
   return currencyInfo.denominations.find(element => {
     return element.name === denom
@@ -37,13 +41,17 @@ function getParameterByName (param, url) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-async function makeMoneroTools (io: EdgeIo): Promise<EdgeCurrencyTools> {
+async function makeMoneroTools (
+  io: EdgeIo,
+  initOptions: InitOptions
+): Promise<EdgeCurrencyTools> {
   const { MyMoneroApi } = await initMonero()
 
   console.log(`Creating Currency Plugin for monero`)
   const options = {
     appUserAgentProduct: 'tester',
     appUserAgentVersion: '0.0.1',
+    apiKey: initOptions.apiKey,
     apiServer: 'https://edge.mymonero.com:8443',
     fetch: io.fetch,
     randomBytes: io.random
@@ -214,18 +222,17 @@ async function makeMoneroTools (io: EdgeIo): Promise<EdgeCurrencyTools> {
 export function makeMoneroPlugin (
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
-  const { io, nativeIo } = opts
+  const { io, nativeIo, initOptions = { apiKey: '' } } = opts
 
   if (nativeIo['edge-currency-monero']) {
     const { methodByString } = nativeIo['edge-currency-monero']
     global.moneroCore = { methodByString }
   }
-  global.moneroApiKey = opts.initOptions.apiKey
 
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools (): Promise<EdgeCurrencyTools> {
     if (toolsPromise != null) return toolsPromise
-    toolsPromise = makeMoneroTools(io)
+    toolsPromise = makeMoneroTools(io, initOptions)
     return toolsPromise
   }
 
