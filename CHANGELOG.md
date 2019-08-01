@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.2.3 (2019-07-31)
+
+- Pass an `apiKey` with every API request.
+- Correctly handle the server-provided `fee_mask`.
+
 # 0.2.2 (2019-03-27)
 
 - Fix block explorer link.
