@@ -278,7 +278,7 @@ class MoneroEngine {
       nativeAmount: netNativeAmount,
       networkFee: nativeNetworkFee,
       ourReceiveAddresses,
-      signedTx: 'no_signature',
+      signedTx: '',
       otherParams: {}
     }
 
