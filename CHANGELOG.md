@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.2.4 (2019-08-08)
+
+- Default `signedTx` property on EdgeTransaction to empty string
+
 # 0.2.3 (2019-07-31)
 
 - Pass an `apiKey` with every API request.
