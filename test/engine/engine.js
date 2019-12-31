@@ -72,7 +72,7 @@ for (const fixture of fixtures) {
     walletLocalEncryptedDisklet: walletLocalDisklet,
     walletLocalEncryptedFolder: walletLocalFolder,
     walletLocalFolder,
-    userSettings: void 0
+    userSettings: undefined
   }
 
   describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function() {

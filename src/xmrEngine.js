@@ -108,25 +108,11 @@ class MoneroEngine {
       typeof this.walletInfo.keys.moneroViewKeyPublic !== 'string' ||
       typeof this.walletInfo.keys.moneroSpendKeyPublic !== 'string'
     ) {
-      if (
-        this.walletInfo.keys.moneroAddress &&
-        this.walletInfo.keys.moneroViewKeyPrivate &&
-        this.walletInfo.keys.moneroViewKeyPublic &&
-        this.walletInfo.keys.moneroSpendKeyPublic
-      ) {
-        this.walletInfo.keys.moneroAddress = this.walletInfo.keys.moneroAddress
-        this.walletInfo.keys.moneroViewKeyPrivate = this.walletInfo.keys.moneroViewKeyPrivate
-        this.walletInfo.keys.moneroViewKeyPublic = this.walletInfo.keys.moneroViewKeyPublic
-        this.walletInfo.keys.moneroSpendKeyPublic = this.walletInfo.keys.moneroSpendKeyPublic
-      } else {
-        const pubKeys = await this.currencyPlugin.derivePublicKey(
-          this.walletInfo
-        )
-        this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
-        this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
-        this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
-        this.walletInfo.keys.moneroSpendKeyPublic = pubKeys.moneroSpendKeyPublic
-      }
+      const pubKeys = await this.currencyPlugin.derivePublicKey(this.walletInfo)
+      this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
+      this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
+      this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
+      this.walletInfo.keys.moneroSpendKeyPublic = pubKeys.moneroSpendKeyPublic
     }
   }
 
@@ -192,7 +178,7 @@ class MoneroEngine {
   async loginInnerLoop() {
     try {
       const result = await this.fetchPostMyMonero('login')
-      if (result.hasOwnProperty('new_address') && !this.loggedIn) {
+      if ('new_address' in result && !this.loggedIn) {
         this.loggedIn = true
         this.walletLocalData.hasLoggedIn = true
         clearTimeout(this.timers.loginInnerLoop)
