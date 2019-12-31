@@ -28,7 +28,7 @@ export class WalletLocalData {
   enabledTokens: Array<string>
   transactionsObj: { [currencyCode: string]: Array<EdgeTransaction> }
 
-  constructor (jsonString: string | null) {
+  constructor(jsonString: string | null) {
     this.blockHeight = 0
 
     const totalBalances: { [currencyCode: string]: string } = { XMR: '0' }
