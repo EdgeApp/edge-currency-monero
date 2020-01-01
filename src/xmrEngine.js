@@ -26,7 +26,7 @@ import type {
   SendFundsParams
 } from 'mymonero-core-js/lib/myMoneroApi.js'
 
-import { normalizeAddress, validateObject } from './utils.js'
+import { getOtherParams, normalizeAddress, validateObject } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
@@ -804,8 +804,10 @@ class MoneroEngine {
 
   // asynchronous
   async signTx(edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
+    const otherParams = getOtherParams(edgeTransaction)
+
     // Monero transactions are signed at broadcast
-    if (edgeTransaction.otherParams.sendParams) {
+    if (otherParams.sendParams) {
       return edgeTransaction
     } else {
       throw new Error('Invalid EdgeTransaction. No otherParams.options')
@@ -816,10 +818,11 @@ class MoneroEngine {
   async broadcastTx(
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
+    const otherParams = getOtherParams(edgeTransaction)
     const { io } = this
 
     try {
-      const sendParams = edgeTransaction.otherParams.sendParams
+      const sendParams = otherParams.sendParams
       sendParams.doBroadcast = true
       const result = await this.myMoneroApi.sendFunds(
         Object.assign({}, sendParams, {
@@ -838,17 +841,18 @@ class MoneroEngine {
       return edgeTransaction
     } catch (e) {
       io.console.info(`broadcastTx failed: ${String(e)}`)
-      edgeTransaction.otherParams.sendParams.moneroSpendKeyPrivate = ''
+      otherParams.sendParams.moneroSpendKeyPrivate = ''
       throw e
     }
   }
 
   // asynchronous
   async saveTx(edgeTransaction: EdgeTransaction) {
-    edgeTransaction.otherParams.sendParams.moneroSpendKeyPrivate = ''
-    edgeTransaction.otherParams.sendParams.moneroSpendKeyPublic = ''
-    edgeTransaction.otherParams.sendParams.moneroViewKeyPrivate = ''
-    edgeTransaction.otherParams.sendParams.moneroViewKeyPublic = ''
+    const otherParams = getOtherParams(edgeTransaction)
+    otherParams.sendParams.moneroSpendKeyPrivate = ''
+    otherParams.sendParams.moneroSpendKeyPublic = ''
+    otherParams.sendParams.moneroViewKeyPrivate = ''
+    otherParams.sendParams.moneroViewKeyPublic = ''
     this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])
