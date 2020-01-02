@@ -26,13 +26,13 @@ type InitOptions = {
   apiKey: string
 }
 
-function getDenomInfo (denom: string) {
+function getDenomInfo(denom: string) {
   return currencyInfo.denominations.find(element => {
     return element.name === denom
   })
 }
 
-function getParameterByName (param, url) {
+function getParameterByName(param, url) {
   const name = param.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
   const results = regex.exec(url)
@@ -41,7 +41,7 @@ function getParameterByName (param, url) {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-async function makeMoneroTools (
+async function makeMoneroTools(
   io: EdgeIo,
   initOptions: InitOptions
 ): Promise<EdgeCurrencyTools> {
@@ -219,7 +219,7 @@ async function makeMoneroTools (
   return moneroPlugin
 }
 
-export function makeMoneroPlugin (
+export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
   const { io, nativeIo, initOptions = { apiKey: '' } } = opts
@@ -230,13 +230,13 @@ export function makeMoneroPlugin (
   }
 
   let toolsPromise: Promise<EdgeCurrencyTools>
-  function makeCurrencyTools (): Promise<EdgeCurrencyTools> {
+  function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     if (toolsPromise != null) return toolsPromise
     toolsPromise = makeMoneroTools(io, initOptions)
     return toolsPromise
   }
 
-  async function makeCurrencyEngine (
+  async function makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine> {
