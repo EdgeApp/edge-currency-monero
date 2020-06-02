@@ -97,7 +97,7 @@ class MoneroEngine {
     this.walletLocalDisklet = walletLocalDisklet
 
     this.log(
-      `Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${this.currencyInfo.pluginName} `
+      `Created Wallet Type ${this.walletInfo.type} for Currency Plugin ${this.currencyInfo.pluginId} `
     )
   }
 
@@ -876,7 +876,7 @@ class MoneroEngine {
     const dataDump: EdgeDataDump = {
       walletId: this.walletId.split(' - ')[0],
       walletType: this.walletInfo.type,
-      pluginType: this.currencyInfo.pluginName,
+      pluginType: this.currencyInfo.pluginId,
       data: {
         walletLocalData: this.walletLocalData
       }
