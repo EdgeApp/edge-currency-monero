@@ -27,7 +27,12 @@ import type {
   SendFundsParams
 } from 'mymonero-core-js/lib/myMoneroApi.js'
 
-import { getOtherParams, normalizeAddress, validateObject } from './utils.js'
+import {
+  getOtherParams,
+  makeMutex,
+  normalizeAddress,
+  validateObject
+} from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
 
@@ -38,6 +43,8 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = (4 * 60 * 24 * 7) // ~ one week
 
 const PRIMARY_CURRENCY = currencyInfo.currencyCode
+
+const makeSpendMutex = makeMutex()
 
 class MoneroEngine {
   walletInfo: EdgeWalletInfo
@@ -445,11 +452,6 @@ class MoneroEngine {
     return true
   }
 
-  log(...text: Array<any>) {
-    text[0] = `${this.walletId}${text[0]}`
-    this.log(...text)
-  }
-
   // *************************************
   // Public methods
   // *************************************
@@ -650,8 +652,12 @@ class MoneroEngine {
     return false
   }
 
+  async makeSpend(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+    return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo))
+  }
+
   // synchronous
-  async makeSpend(edgeSpendInfo: EdgeSpendInfo) {
+  async makeSpendInner(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
     // Validate the spendInfo
     const valid = validateObject(edgeSpendInfo, {
       type: 'object',
