@@ -13,6 +13,7 @@ import {
   type EdgeDataDump,
   type EdgeFreshAddress,
   type EdgeIo,
+  type EdgeLog,
   type EdgeMetaToken,
   type EdgeSpendInfo,
   type EdgeTransaction,
@@ -56,6 +57,7 @@ class MoneroEngine {
   timers: any
   walletId: string
   io: EdgeIo
+  log: EdgeLog
   currencyPlugin: EdgeCurrencyTools
 
   constructor(
@@ -68,6 +70,7 @@ class MoneroEngine {
     const { walletLocalDisklet, callbacks } = opts
 
     this.io = io_
+    this.log = opts.log
     this.engineOn = false
     this.loggedIn = false
     this.addressesChecked = false
@@ -191,7 +194,7 @@ class MoneroEngine {
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
       }
     } catch (e) {
-      console.log('Error logging into mymonero', e)
+      this.log('Error logging into mymonero', e)
     }
   }
 
@@ -444,7 +447,7 @@ class MoneroEngine {
 
   log(...text: Array<any>) {
     text[0] = `${this.walletId}${text[0]}`
-    console.log(...text)
+    this.log(...text)
   }
 
   // *************************************
@@ -773,12 +776,12 @@ class MoneroEngine {
         Object.assign({}, sendParams, {
           moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
           onStatus: (code: number) => {
-            console.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
+            this.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
           }
         })
       )
     } catch (e) {
-      console.log(`makeSpend error: ${e}`)
+      this.log(`makeSpend error: ${e}`)
       throw e
     }
 
