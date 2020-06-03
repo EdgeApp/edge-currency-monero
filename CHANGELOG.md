@@ -1,5 +1,13 @@
 # edge-currency-monero
 
+# 0.2.5 (2020-06-03)
+
+- Upgrade mymonero-core-js to export transaction private key
+- Upgrade edge-core-js to v0.17.4
+  - Add `EdgeTransaction.txSecret` to capture transaction private key
+  - Improve logging
+- Add makeMutex() to wrap makeSpend() to avoid entering it more than once at a time
+
 # 0.2.4 (2019-08-08)
 
 - Default `signedTx` property on EdgeTransaction to empty string
