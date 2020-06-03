@@ -445,11 +445,6 @@ class MoneroEngine {
     return true
   }
 
-  log(...text: Array<any>) {
-    text[0] = `${this.walletId}${text[0]}`
-    this.log(...text)
-  }
-
   // *************************************
   // Public methods
   // *************************************
