@@ -840,6 +840,7 @@ class MoneroEngine {
 
       edgeTransaction.txid = result.txid
       edgeTransaction.networkFee = result.networkFee
+      edgeTransaction.txSecret = result.tx_key
       io.console.info(`broadcastTx success txid: ${edgeTransaction.txid}`)
       return edgeTransaction
     } catch (e) {

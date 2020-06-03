@@ -45,7 +45,7 @@
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
-    "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#william/v0.14.0-hardfork",
+    "mymonero-core-js": "git://github.com/EdgeApp/mymonero-core-js.git#matthew/txPrivateKey",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
