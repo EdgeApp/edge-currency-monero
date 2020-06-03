@@ -12,6 +12,7 @@ import {
   type EdgeCurrencyTools,
   type EdgeEncodeUri,
   type EdgeIo,
+  type EdgeLog,
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
@@ -43,11 +44,12 @@ function getParameterByName(param, url) {
 
 async function makeMoneroTools(
   io: EdgeIo,
+  log: EdgeLog,
   initOptions: InitOptions
 ): Promise<EdgeCurrencyTools> {
   const { MyMoneroApi } = await initMonero()
 
-  console.log(`Creating Currency Plugin for monero`)
+  log(`Creating Currency Plugin for monero`)
   const options = {
     appUserAgentProduct: 'tester',
     appUserAgentVersion: '0.0.1',
@@ -232,7 +234,7 @@ export function makeMoneroPlugin(
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     if (toolsPromise != null) return toolsPromise
-    toolsPromise = makeMoneroTools(io, initOptions)
+    toolsPromise = makeMoneroTools(io, opts.log, initOptions)
     return toolsPromise
   }
 
@@ -265,8 +267,8 @@ export function makeMoneroPlugin(
         moneroEngine.walletInfo.keys.moneroSpendKeyPublic
     } catch (err) {
       try {
-        console.log(err)
-        console.log('No walletLocalData setup yet: Failure is ok')
+        opts.log(err)
+        opts.log('No walletLocalData setup yet: Failure is ok')
         moneroEngine.walletLocalData = new WalletLocalData(null)
         moneroEngine.walletLocalData.moneroAddress =
           moneroEngine.walletInfo.keys.moneroAddress
@@ -281,9 +283,7 @@ export function makeMoneroPlugin(
           JSON.stringify(moneroEngine.walletLocalData)
         )
       } catch (e) {
-        console.log(
-          'Error writing to localDataStore. Engine not started:' + err
-        )
+        opts.log('Error writing to localDataStore. Engine not started:' + err)
       }
     }
 

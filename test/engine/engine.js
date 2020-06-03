@@ -18,6 +18,7 @@ import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
 import edgeCorePlugins from '../../src/xmrIndex.js'
+import { fakeLog } from '../fakeLog.js'
 import fixtures from './fixtures.json'
 
 // const DATA_STORE_FOLDER = 'txEngineFolderBTC'
@@ -34,6 +35,7 @@ for (const fixture of fixtures) {
   const opts: EdgeCorePluginOptions = {
     initOptions: {},
     io: fakeIo,
+    log: fakeLog,
     nativeIo: {},
     pluginDisklet: fakeIo.disklet
   }
@@ -68,6 +70,7 @@ for (const fixture of fixtures) {
   const walletLocalFolder = downgradeDisklet(walletLocalDisklet)
   const currencyEngineOptions: EdgeCurrencyEngineOptions = {
     callbacks,
+    log: fakeLog,
     walletLocalDisklet,
     walletLocalEncryptedDisklet: walletLocalDisklet,
     walletLocalEncryptedFolder: walletLocalFolder,

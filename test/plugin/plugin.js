@@ -12,6 +12,7 @@ import { before, describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
 import edgeCorePlugins from '../../src/xmrIndex.js'
+import { fakeLog } from '../fakeLog.js'
 import fixtures from './fixtures.json'
 
 /**
@@ -53,6 +54,7 @@ for (const fixture of fixtures) {
   const opts: EdgeCorePluginOptions = {
     initOptions: {},
     io: fakeIo,
+    log: fakeLog,
     nativeIo: {},
     pluginDisklet: fakeIo.disklet
   }
