@@ -876,8 +876,8 @@ class MoneroEngine {
   }
 
   getDisplayPublicSeed() {
-    if (this.walletInfo.keys && this.walletInfo.keys.moneroAddress) {
-      return this.walletInfo.keys.moneroAddress
+    if (this.walletInfo.keys && this.walletInfo.keys.moneroViewKeyPrivate) {
+      return this.walletInfo.keys.moneroViewKeyPrivate
     }
     return ''
   }
