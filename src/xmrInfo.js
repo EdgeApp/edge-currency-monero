@@ -23,7 +23,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   defaultSettings,
 
   addressExplorer: 'https://xmrchain.net/search?value=%s',
-  transactionExplorer: 'https://xmrchain.net/tx/%s',
+  transactionExplorer: 'https://blockchair.com/monero/transaction/%s',
 
   denominations: [
     // An array of Objects of the possible denominations for this currency
