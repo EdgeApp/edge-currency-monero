@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.2.6 (2020-08-11)
+
+- Export private view key via getDisplayPublicSeed()
+- Update transaction explorer to Blockchair
+
 # 0.2.5 (2020-06-03)
 
 - Upgrade mymonero-core-js to export transaction private key
