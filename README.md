@@ -7,7 +7,7 @@ Implements Monero send/receive functionality per the spec for crypto currency pl
 
 ## Installing
 
-    npm i edge-currency-monero -s
+    yarn add edge-currency-monero react-native-mymonero-core
 
 ```
 import { moneroCurrencyPluginFactory } from `edge-currency-monero`

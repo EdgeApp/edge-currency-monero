@@ -12,6 +12,8 @@
   "contributors": [
     "Paul Puey <paul@edge.app>"
   ],
+  "main": "./index.js",
+  "module": "./lib/xmrIndex.js",
   "files": [
     "CHANGELOG.md",
     "index.js",
@@ -20,8 +22,6 @@
     "package.json",
     "README.md"
   ],
-  "main": "./index.js",
-  "module": "./lib/xmrIndex.js",
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
     "fix": "npm run lint -- --fix",
@@ -76,6 +76,9 @@
     "sucrase": "^3.9.5",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3"
+  },
+  "peerDependencies": {
+    "react-native-mymonero-core": "^0.1.0"
   },
   "react-native": "./lib/xmrIndex.js"
 }
