@@ -14,6 +14,7 @@ import {
   type EdgeIo,
   type EdgeLog,
   type EdgeParsedUri,
+  type EdgeParseUriOptions,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
 import { initMonero } from 'mymonero-core-js'
@@ -97,7 +98,15 @@ async function makeMoneroTools(
       }
     },
 
-    parseUri: async (uri: string): Promise<EdgeParsedUri> => {
+    parseUri: async (uri: string, currencyOptions?: EdgeParseUriOptions): Promise<EdgeParsedUri> => {
+      if (
+        typeof currencyOptions === 'object' &&
+        currencyOptions !== null &&
+        currencyOptions.fromFio &&
+        uri.indexOf('monero') !== 0
+      ) {
+        uri = `monero:${uri}`
+      }
       const parsedUri = parse(uri)
       let address: string
       let nativeAmount: string | null = null
