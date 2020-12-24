@@ -194,6 +194,25 @@ for (const fixture of fixtures) {
         fixture.parseUri['uri address with unique identifier'][2]
       )
     })
+    it('uri address with unique identifier and without network prefix', async function() {
+      const parsedUri = await tools.parseUri(
+        fixture.parseUri[
+          'uri address with unique identifier and without network prefix'
+        ][0]
+      )
+      assert.equal(
+        parsedUri.publicAddress,
+        fixture.parseUri[
+          'uri address with unique identifier and without network prefix'
+        ][1]
+      )
+      assert.equal(
+        parsedUri.uniqueIdentifier,
+        fixture.parseUri[
+          'uri address with unique identifier and without network prefix'
+        ][2]
+      )
+    })
     it('uri address with amount & label', async function() {
       const parsedUri = await tools.parseUri(
         fixture.parseUri['uri address with amount & label'][0]
