@@ -201,7 +201,7 @@ class MoneroEngine {
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
       }
     } catch (e) {
-      this.log('Error logging into mymonero', e)
+      this.log.error('Error logging into mymonero', e)
     }
   }
 
@@ -238,7 +238,7 @@ class MoneroEngine {
       }
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
-      this.log(
+      this.log.error(
         'Error fetching address info: ' + this.walletLocalData.moneroAddress
       )
     }
@@ -345,7 +345,7 @@ class MoneroEngine {
       }
       this.updateOnAddressesChecked(transactions.length, transactions.length)
     } catch (e) {
-      this.log(e)
+      this.log.error(e)
       checkAddressSuccess = false
     }
     return checkAddressSuccess
@@ -414,7 +414,7 @@ class MoneroEngine {
         await this.walletLocalDisklet.setText(DATA_STORE_FILE, walletJson)
         this.walletLocalDataDirty = false
       } catch (err) {
-        this.log(err)
+        this.log.error(err)
       }
     }
   }
@@ -430,7 +430,7 @@ class MoneroEngine {
           this.walletLocalData.totalBalances[currencyCode]
         )
       } catch (e) {
-        this.log('Error for currencyCode', currencyCode, e)
+        this.log.error('Error for currencyCode', currencyCode, e)
       }
     }
   }
@@ -440,7 +440,7 @@ class MoneroEngine {
       // $FlowFixMe
       await this[func]()
     } catch (e) {
-      this.log('Error in Loop:', func, e)
+      this.log.error('Error in Loop:', func, e)
     }
     if (this.engineOn) {
       this.timers[func] = setTimeout(() => {
@@ -782,12 +782,12 @@ class MoneroEngine {
         Object.assign({}, sendParams, {
           moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
           onStatus: (code: number) => {
-            this.log(`makeSpend:SendFunds - onStatus:${code.toString()}`)
+            this.log.warn(`makeSpend:SendFunds - onStatus:${code.toString()}`)
           }
         })
       )
     } catch (e) {
-      this.log(`makeSpend error: ${e}`)
+      this.log.error(`makeSpend error: ${e}`)
       throw e
     }
 
