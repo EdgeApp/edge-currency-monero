@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.2.8 (2021-01-05)
+
+- Update logging levels
+- Add parseUri tests
+
 # 0.2.7 (2020-12-08)
 
 - Update Blockchair explorer URL to include partner ID
