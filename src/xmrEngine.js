@@ -373,7 +373,11 @@ class MoneroEngine {
     const idx = this.findTransaction(currencyCode, edgeTransaction.txid)
 
     if (idx === -1) {
-      this.log('addTransaction: adding and sorting:' + edgeTransaction.txid)
+      this.log.warn(
+        'addTransaction: adding and sorting:' +
+          edgeTransaction.txid +
+          edgeTransaction.nativeAmount
+      )
       if (
         typeof this.walletLocalData.transactionsObj[currencyCode] ===
         'undefined'
@@ -400,7 +404,9 @@ class MoneroEngine {
     this.walletLocalData.transactionsObj[currencyCode][idx] = edgeTransaction
     this.walletLocalDataDirty = true
     this.transactionsChangedArray.push(edgeTransaction)
-    this.log('updateTransaction:' + edgeTransaction.txid)
+    this.log.warn(
+      'updateTransaction' + edgeTransaction.txid + edgeTransaction.nativeAmount
+    )
   }
 
   // *************************************
@@ -807,7 +813,7 @@ class MoneroEngine {
         sendParams
       }
     }
-
+    this.log.warn(`makeSpend result ${JSON.stringify(result)}`)
     return edgeTransaction
   }
 
@@ -828,7 +834,6 @@ class MoneroEngine {
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
     const otherParams = getOtherParams(edgeTransaction)
-    const { io } = this
 
     try {
       const sendParams = otherParams.sendParams
@@ -837,9 +842,7 @@ class MoneroEngine {
         Object.assign({}, sendParams, {
           moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
           onStatus: (code: number) => {
-            io.console.info(
-              `broadcastTx:SendFunds - onStatus:${code.toString()}`
-            )
+            this.log.warn(`broadcastTx:SendFunds - onStatus:${code.toString()}`)
           }
         })
       )
@@ -847,10 +850,13 @@ class MoneroEngine {
       edgeTransaction.txid = result.txid
       edgeTransaction.networkFee = result.networkFee
       edgeTransaction.txSecret = result.tx_key
-      io.console.info(`broadcastTx success txid: ${edgeTransaction.txid}`)
+      this.log.warn(
+        `broadcastTx success edgeTransaction ${JSON.stringify(edgeTransaction)}`
+      )
+      this.log.warn(`broadcastTx success result ${JSON.stringify(result)}`)
       return edgeTransaction
     } catch (e) {
-      io.console.info(`broadcastTx failed: ${String(e)}`)
+      this.log.error(`broadcastTx failed: ${String(e)}`)
       otherParams.sendParams.moneroSpendKeyPrivate = ''
       throw e
     }
