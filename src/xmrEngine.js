@@ -55,9 +55,9 @@ class MoneroEngine {
   addressesChecked: boolean
   walletLocalData: WalletLocalData
   walletLocalDataDirty: boolean
-  transactionsChangedArray: Array<EdgeTransaction>
+  transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
-  allTokens: Array<EdgeMetaToken>
+  allTokens: EdgeMetaToken[]
   keyImageCache: Object
   myMoneroApi: Object
   currentSettings: any
@@ -245,7 +245,7 @@ class MoneroEngine {
   }
 
   processMoneroTransaction(tx: Object) {
-    const ourReceiveAddresses: Array<string> = []
+    const ourReceiveAddresses: string[] = []
 
     // const nativeNetworkFee:string = bns.mul(tx.gasPrice, tx.gasUsed)
     const nativeNetworkFee: string = '0' // Can't know the fee right now. Limitation of monero
@@ -287,7 +287,7 @@ class MoneroEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray: Array<EdgeTransaction> = this.walletLocalData
+      const transactionsArray: EdgeTransaction[] = this.walletLocalData
         .transactionsObj[PRIMARY_CURRENCY]
       const edgeTx = transactionsArray[idx]
 
@@ -496,7 +496,7 @@ class MoneroEngine {
     return parseInt(this.walletLocalData.blockHeight)
   }
 
-  enableTokensSync(tokens: Array<string>) {
+  enableTokensSync(tokens: string[]) {
     for (const token of tokens) {
       if (this.walletLocalData.enabledTokens.indexOf(token) === -1) {
         this.walletLocalData.enabledTokens.push(token)
@@ -505,12 +505,12 @@ class MoneroEngine {
   }
 
   // asynchronous
-  async enableTokens(tokens: Array<string>) {}
+  async enableTokens(tokens: string[]) {}
 
   // asynchronous
-  async disableTokens(tokens: Array<string>) {}
+  async disableTokens(tokens: string[]) {}
 
-  async getEnabledTokens(): Promise<Array<string>> {
+  async getEnabledTokens(): Promise<string[]> {
     return []
   }
 
@@ -573,7 +573,7 @@ class MoneroEngine {
   }
 
   // asynchronous
-  async getTransactions(options: any): Promise<Array<EdgeTransaction>> {
+  async getTransactions(options: any): Promise<EdgeTransaction[]> {
     let currencyCode: string = PRIMARY_CURRENCY
 
     const valid: boolean = validateObject(options, {
@@ -645,7 +645,7 @@ class MoneroEngine {
   }
 
   // synchronous
-  addGapLimitAddresses(addresses: Array<string>, options: any) {}
+  addGapLimitAddresses(addresses: string[], options: any) {}
 
   // synchronous
   isAddressUsed(address: string, options: any) {

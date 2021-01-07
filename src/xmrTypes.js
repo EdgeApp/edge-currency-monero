@@ -11,7 +11,7 @@ export const DATA_STORE_FILE = 'txEngineFolder/walletLocalData.json'
 export const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
 export type MoneroSettings = {
-  mymoneroApiServers: Array<string>
+  mymoneroApiServers: string[]
 }
 
 export class WalletLocalData {
@@ -25,8 +25,8 @@ export class WalletLocalData {
   moneroViewKeyPublic: string
   moneroSpendKeyPublic: string
   totalBalances: { [currencyCode: string]: string }
-  enabledTokens: Array<string>
-  transactionsObj: { [currencyCode: string]: Array<EdgeTransaction> }
+  enabledTokens: string[]
+  transactionsObj: { [currencyCode: string]: EdgeTransaction[] }
 
   constructor(jsonString: string | null) {
     this.blockHeight = 0
@@ -41,7 +41,7 @@ export class WalletLocalData {
 
     // Dumb extra local var needed to make Flow happy
     const transactionsObj: {
-      [currencyCode: string]: Array<EdgeTransaction>
+      [currencyCode: string]: EdgeTransaction[]
     } = {}
     this.transactionsObj = transactionsObj
 
