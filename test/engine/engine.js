@@ -78,8 +78,8 @@ for (const fixture of fixtures) {
     userSettings: undefined
   }
 
-  describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function() {
-    it('Plugin', async function() {
+  describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function () {
+    it('Plugin', async function () {
       assert.equal(
         plugin.currencyInfo.currencyCode,
         fixture['Test Currency code']
@@ -95,7 +95,7 @@ for (const fixture of fixtures) {
     })
   })
 
-  describe(`Make Engine for Wallet type ${WALLET_TYPE}`, function() {
+  describe(`Make Engine for Wallet type ${WALLET_TYPE}`, function () {
     // before('Create local cache file', function (done) {
     //   walletLocalFolder
     //     .folder(DATA_STORE_FOLDER)
@@ -116,7 +116,7 @@ for (const fixture of fixtures) {
     //     .then(done)
     // })
 
-    it('Make Engine', function() {
+    it('Make Engine', function () {
       const info: EdgeWalletInfo = {
         id: '1',
         type: WALLET_TYPE,
@@ -246,8 +246,8 @@ for (const fixture of fixtures) {
   //   })
   // })
 
-  describe('Start engine', function() {
-    it('Get BlockHeight', function(done) {
+  describe('Start engine', function () {
+    it('Get BlockHeight', function (done) {
       this.timeout(10000)
       // request.get(
       //   'https://api.etherscan.io/api?module=proxy&action=eth_blockNumber',
@@ -501,8 +501,8 @@ for (const fixture of fixtures) {
   //     engine.killEngine().then(done)
   //   })
   // })
-  describe('Stop the engine', function() {
-    it('Should stop the engine', function(done) {
+  describe('Stop the engine', function () {
+    it('Should stop the engine', function (done) {
       engine.killEngine().then(() => {
         closeEdge()
         done()
