@@ -4,8 +4,11 @@
  */
 
 import { bns } from 'biggystring'
+import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
 import { type EdgeTransaction, type JsonObject } from 'edge-core-js/types'
 import { validate } from 'jsonschema'
+import { type SendFundsParams } from 'mymonero-core-js/lib/myMoneroApi.js'
+
 const Buffer = require('buffer/').Buffer
 
 function normalizeAddress(address: string) {
@@ -85,6 +88,38 @@ export function makeMutex(): Mutex {
       if (resolve != null) resolve()
     }
   }
+}
+
+const asCleanTxLogs = asObject({
+  txid: asString,
+  spendTargets: asOptional(
+    asArray(
+      asObject({
+        currencyCode: asString,
+        nativeAmount: asString,
+        publicAddress: asString,
+        uniqueIdentifier: asOptional(asString)
+      })
+    )
+  ),
+  signedTx: asString
+})
+
+export function cleanTxLogs(tx: EdgeTransaction) {
+  return JSON.stringify(asCleanTxLogs(tx))
+}
+
+const asCleanResultLogs = asObject({
+  moneroAddress: asString,
+  moneroSpendKeyPublic: asString,
+  targetAddress: asString,
+  floatAmount: asNumber,
+  moneroViewKeyPublic: asString,
+  priority: asOptional(asNumber)
+})
+
+export function cleanResultLogs(result: SendFundsParams) {
+  return JSON.stringify(asCleanResultLogs(result))
 }
 
 export { normalizeAddress, addHexPrefix, bufToHex, validateObject, toHex }

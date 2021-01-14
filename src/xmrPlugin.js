@@ -267,8 +267,8 @@ export function makeMoneroPlugin(
         moneroEngine.walletInfo.keys.moneroSpendKeyPublic
     } catch (err) {
       try {
-        opts.log.error(err)
-        opts.log.error('No walletLocalData setup yet: Failure is ok')
+        opts.log(err)
+        opts.log('No walletLocalData setup yet: Failure is ok')
         moneroEngine.walletLocalData = new WalletLocalData(null)
         moneroEngine.walletLocalData.moneroAddress =
           moneroEngine.walletInfo.keys.moneroAddress
@@ -284,7 +284,7 @@ export function makeMoneroPlugin(
         )
       } catch (e) {
         opts.log.error(
-          'Error writing to localDataStore. Engine not started:' + err
+          'Error writing to localDataStore. Engine not started:' + e
         )
       }
     }
