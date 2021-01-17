@@ -4,10 +4,9 @@
  */
 
 import { bns } from 'biggystring'
-import { asArray, asNumber, asObject, asOptional, asString } from 'cleaners'
+import { asArray, asObject, asOptional, asString } from 'cleaners'
 import { type EdgeTransaction, type JsonObject } from 'edge-core-js/types'
 import { validate } from 'jsonschema'
-import { type SendFundsParams } from 'mymonero-core-js/lib/myMoneroApi.js'
 
 const Buffer = require('buffer/').Buffer
 
@@ -110,15 +109,13 @@ export function cleanTxLogs(tx: EdgeTransaction) {
 }
 
 const asCleanResultLogs = asObject({
-  moneroAddress: asString,
-  moneroSpendKeyPublic: asString,
-  targetAddress: asString,
-  floatAmount: asNumber,
-  moneroViewKeyPublic: asString,
-  priority: asOptional(asNumber)
+  txid: asString,
+  networkFee: asString,
+  sentAmount: asString,
+  targetAddress: asString
 })
 
-export function cleanResultLogs(result: SendFundsParams) {
+export function cleanResultLogs(result: any) {
   return JSON.stringify(asCleanResultLogs(result))
 }
 
