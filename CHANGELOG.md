@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.2.9 (2021-01-17)
+
+- Add additional logging and context for logs
+- Upgrade to eslint-config-standard-kit v0.15.1
+
 # 0.2.8 (2021-01-05)
 
 - Update logging levels
