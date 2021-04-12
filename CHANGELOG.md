@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.2.10 (2021-04-12)
+
+- Update image URL
+
 # 0.2.9 (2021-01-17)
 
 - Add additional logging and context for logs
