@@ -44,6 +44,7 @@ for (const fixture of fixtures) {
 
   const emitter = new EventEmitter()
   const callbacks: EdgeCurrencyEngineCallbacks = {
+    onAddressChanged() {},
     onAddressesChecked(progressRatio) {
       // console.log('onAddressesCheck', progressRatio)
       emitter.emit('onAddressesCheck', progressRatio)
