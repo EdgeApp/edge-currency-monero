@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.3.0 (2021-05-24)
+
+- Import native code directly from react-native-mymonero-core. Before, this plugin relied on "magic" methods passed in via the global object.
+
 # 0.2.10 (2021-04-12)
 
 - Update image URL
