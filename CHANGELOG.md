@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.3.1 (2021-05-25)
+
+- Fix float amount precision
+- Fix recorded native amount and fee
+
 # 0.3.0 (2021-05-24)
 
 - Import native code directly from react-native-mymonero-core. Before, this plugin relied on "magic" methods passed in via the global object.
