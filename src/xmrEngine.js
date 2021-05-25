@@ -249,10 +249,12 @@ class MoneroEngine {
   processMoneroTransaction(tx: Object) {
     const ourReceiveAddresses: string[] = []
 
-    // const nativeNetworkFee:string = bns.mul(tx.gasPrice, tx.gasUsed)
-    const nativeNetworkFee: string = '0' // Can't know the fee right now. Limitation of monero
+    const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
 
-    const netNativeAmount: string = bns.sub(tx.total_received, tx.total_sent)
+    const netNativeAmount: string = bns.add(
+      bns.sub(tx.total_received, tx.total_sent),
+      nativeNetworkFee
+    )
     if (netNativeAmount.slice(0, 1) !== '-') {
       ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
     }
@@ -767,7 +769,7 @@ class MoneroEngine {
       const amountFloatString: string = bns.div(
         nativeAmount,
         '1000000000000',
-        8
+        12
       )
       // Todo: Yikes. Why does mymonero-core-js take a float, not a string? -paulvp
       const amountFloat = parseFloat(amountFloatString)
@@ -807,7 +809,7 @@ class MoneroEngine {
       date,
       currencyCode, // currencyCode
       blockHeight: 0, // blockHeight
-      nativeAmount, // nativeAmount
+      nativeAmount: bns.sub(nativeAmount, result.networkFee), // nativeAmount
       networkFee: result.networkFee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: '', // signedTx
