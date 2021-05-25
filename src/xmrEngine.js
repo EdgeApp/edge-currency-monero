@@ -180,7 +180,8 @@ class MoneroEngine {
     } else {
       this.addressesChecked = true
       this.edgeTxLibCallbacks.onAddressesChecked(1)
-      this.walletLocalData.lastAddressQueryHeight = this.walletLocalData.blockHeight
+      this.walletLocalData.lastAddressQueryHeight =
+        this.walletLocalData.blockHeight
     }
   }
 
@@ -291,8 +292,8 @@ class MoneroEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray: EdgeTransaction[] = this.walletLocalData
-        .transactionsObj[PRIMARY_CURRENCY]
+      const transactionsArray: EdgeTransaction[] =
+        this.walletLocalData.transactionsObj[PRIMARY_CURRENCY]
       const edgeTx = transactionsArray[idx]
 
       if (edgeTransaction.blockHeight) {
@@ -638,9 +639,8 @@ class MoneroEngine {
         numEntries + startIndex
       )
     } else {
-      returnArray = this.walletLocalData.transactionsObj[currencyCode].slice(
-        startIndex
-      )
+      returnArray =
+        this.walletLocalData.transactionsObj[currencyCode].slice(startIndex)
     }
     return returnArray
   }
