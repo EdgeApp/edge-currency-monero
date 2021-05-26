@@ -2,7 +2,6 @@
 
 import { type EdgeCurrencyInfo } from 'edge-core-js/types'
 
-import { imageServerUrl } from './constants.js'
 import type { MoneroSettings } from './xmrTypes.js'
 
 const otherSettings: MoneroSettings = {
@@ -35,7 +34,5 @@ export const currencyInfo: EdgeCurrencyInfo = {
       symbol: '‎ɱ'
     }
   ],
-  symbolImage: `${imageServerUrl}/monero-logo-solo-64.png`, // Base64 encoded png image of the currency symbol (optional)
-  symbolImageDarkMono: `${imageServerUrl}/monero-logo-solo-64.png`, // Base64 encoded png image of the currency symbol (optional)
   metaTokens: []
 }
