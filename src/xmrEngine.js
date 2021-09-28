@@ -797,8 +797,12 @@ class MoneroEngine {
         })
       )
     } catch (e) {
-      this.log.error(`makeSpend error: ${e}`)
-      throw e
+      // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
+      this.log.error(e.message)
+      const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
+      const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
+      const msgFormatted = e.message.replace(regex, subst)
+      throw new Error(msgFormatted)
     }
 
     const date = Date.now() / 1000
