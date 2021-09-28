@@ -177,9 +177,11 @@ class MoneroEngine {
     if (numTx !== totalTxs) {
       const progress = numTx / totalTxs
       this.edgeTxLibCallbacks.onAddressesChecked(progress)
+    } else if (totalTxs === 0) {
+      this.edgeTxLibCallbacks.onAddressesChecked(0)
     } else {
-      this.addressesChecked = true
       this.edgeTxLibCallbacks.onAddressesChecked(1)
+      this.addressesChecked = true
       this.walletLocalData.lastAddressQueryHeight =
         this.walletLocalData.blockHeight
     }
@@ -859,7 +861,6 @@ class MoneroEngine {
       this.log.error(`makeSpend error: ${e}`)
       throw e
     }
-
     const date = Date.now() / 1000
     nativeAmount = '-' + nativeAmount
 

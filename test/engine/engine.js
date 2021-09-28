@@ -249,7 +249,7 @@ for (const fixture of fixtures) {
 
   describe('Start engine', function () {
     it('Get BlockHeight', function (done) {
-      this.timeout(10000)
+      this.timeout(0)
       // request.get(
       //   'https://api.etherscan.io/api?module=proxy&action=eth_blockNumber',
       //   (err, res, body) => {
@@ -258,7 +258,13 @@ for (const fixture of fixtures) {
         const thirdPartyHeight = 1578127
         assert(height >= thirdPartyHeight, 'Block height')
         assert(engine.getBlockHeight() >= thirdPartyHeight, 'Block height')
-        done() // Can be "done" since the promise resolves before the event fires but just be on the safe side
+        emitter.on('onAddressesCheck', progress => {
+          console.log('onAddressesCheck', progress)
+          if (progress === 1) {
+            done()
+          }
+        })
+        // done() // Can be "done" since the promise resolves before the event fires but just be on the safe side
       })
       engine.startEngine().catch(e => {
         console.log('startEngine error', e, e.message)
