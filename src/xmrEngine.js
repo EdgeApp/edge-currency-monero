@@ -666,6 +666,61 @@ class MoneroEngine {
     return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo))
   }
 
+  // async sweepPrivateKeys(
+  //   edgeSpendInfo: EdgeSpendInfo,
+  //   options?: any = {}
+  // ): Promise<EdgeTransaction> {
+  //   const { privateKeys = [] } = edgeSpendInfo
+  //   if (!privateKeys.length) throw new Error('No private keys given')
+  //   let success, failure
+  //   const end = new Promise((resolve, reject) => {
+  //     success = resolve
+  //     failure = reject
+  //   })
+  //   const engineStateCallbacks: EngineStateCallbacks = {
+  //     onAddressesChecked: (ratio: number) => {
+  //       if (ratio === 1) {
+  //         // TODO -- this is a hack to get the sweep to work on bitcoin
+  //         // we need to figure out how to do this properly with monero
+
+  //         // engineState.disconnect()
+  //         // options.subtractFee = true
+  //         // const utxos = engineState.getUTXOs()
+  //         // if (!utxos || !utxos.length) {
+  //         //   failure(new Error('Private key has no funds'))
+  //         // }
+  //         const freshAddress = this.getFreshAddress()
+  //         const publicAddress = freshAddress.publicAddress
+  //         const nativeAmount = engineState.getBalance()
+  //         // options.utxos = utxos
+  //         edgeSpendInfo.spendTargets = [{ publicAddress, nativeAmount }]
+  //         this.makeSpend(edgeSpendInfo, options)
+  //           .then(tx => success(tx))
+  //           .catch(e => failure(e))
+  //       }
+  //     }
+  //   }
+
+  //   const engineState = new EngineState({
+  //     files: { txs: '', addresses: '', keys: '' },
+  //     callbacks: engineStateCallbacks,
+  //     io: this.io,
+  //     localFolder: this.walletLocalFolder,
+  //     encryptedLocalFolder: this.walletLocalEncryptedFolder,
+  //     pluginState: this.pluginState,
+  //     walletId: this.prunedWalletId
+  //   })
+
+  //   await engineState.load()
+  //   const addresses = await Address.getAllAddresses(privateKeys, this.network)
+  //   addresses.forEach(({ displayAddress, scriptHash }) =>
+  //     engineState.addAddress(scriptHash, displayAddress)
+  //   )
+  //   engineState.connect()
+
+  //   return end
+  // }
+
   // synchronous
   async makeSpendInner(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
     // Validate the spendInfo
@@ -713,21 +768,25 @@ class MoneroEngine {
     }
 
     let nativeAmount = '0'
-    if (typeof edgeSpendInfo.spendTargets[0].nativeAmount === 'string') {
-      nativeAmount = edgeSpendInfo.spendTargets[0].nativeAmount
-    } else {
-      throw new Error('Error: no amount specified')
-    }
-
-    if (bns.eq(nativeAmount, '0')) {
-      throw new NoAmountSpecifiedError()
-    }
-
-    if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
-      if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
-        throw new PendingFundsError()
+    // @flow-disable-next-line
+    const { isMaxSpend = false } = edgeSpendInfo?.otherParams ?? {}
+    if (!isMaxSpend) {
+      if (typeof edgeSpendInfo.spendTargets[0].nativeAmount === 'string') {
+        nativeAmount = edgeSpendInfo.spendTargets[0].nativeAmount
       } else {
-        throw new InsufficientFundsError()
+        throw new Error('Error: no amount specified')
+      }
+
+      if (bns.eq(nativeAmount, '0')) {
+        throw new NoAmountSpecifiedError()
+      }
+
+      if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
+        if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
+          throw new PendingFundsError()
+        } else {
+          throw new InsufficientFundsError()
+        }
       }
     }
 
@@ -783,7 +842,7 @@ class MoneroEngine {
         floatAmount: amountFloat,
         moneroViewKeyPublic: this.walletLocalData.moneroViewKeyPublic,
         nettype: 'mainnet', // 'mainnet' only for now
-        isSweepTx: false,
+        isSweepTx: isMaxSpend,
         paymentId: uniqueIdentifier || '',
         priority,
         doBroadcast: false
