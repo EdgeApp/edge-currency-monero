@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.3.4 (2022-01-11)
+
+- Fix git urls
+
 # 0.3.3 (2021-09-28)
 
 - Reformat spendable balance error into 3 lines
