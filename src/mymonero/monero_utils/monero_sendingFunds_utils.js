@@ -28,14 +28,13 @@
 //
 "use strict";
 //
-const monero_config = require("./monero_config");
-const monero_amount_format_utils = require("./monero_amount_format_utils");
+const monero_config = require("@mymonero/mymonero-money-format/monero_config");
+const monero_amount_format_utils = require("@mymonero/mymonero-money-format");
 const monero_paymentID_utils = require("./monero_paymentID_utils");
-const JSBigInt = require("../cryptonote_utils/biginteger").BigInteger;
+const JSBigInt = require("@mymonero/mymonero-bigint").BigInteger;
 //
 const hostAPI_net_service_utils = require("../hostAPI/net_service_utils");
 //
-let monero_utils
 
 function _mixinToRingsize(mixin) {
 	return mixin + 1;
@@ -47,10 +46,6 @@ function thisFork_minMixin() {
 function thisFork_minRingSize() {
 	return _mixinToRingsize(thisFork_minMixin());
 }
-function initMoneroUtils (moneroUtils) {
-	monero_utils = moneroUtils
-}
-exports.initMoneroUtils = initMoneroUtils
 exports.thisFork_minMixin = thisFork_minMixin;
 exports.thisFork_minRingSize = thisFork_minRingSize;
 //
@@ -103,6 +98,7 @@ const SendFunds_ProcessStep_MessageSuffix = {
 exports.SendFunds_ProcessStep_MessageSuffix = SendFunds_ProcessStep_MessageSuffix;
 //
 function SendFunds( // TODO: migrate this to take a map of args
+	monero_utils,
 	target_address, // currency-ready wallet address, but not an OA address (resolve before calling)
 	nettype,
 	amount_orZeroWhenSweep, // number - value will be ignoring for sweep

@@ -42,10 +42,12 @@
     "*.js": "eslint"
   },
   "dependencies": {
+    "@mymonero/mymonero-bigint": "^1.4.2",
+    "@mymonero/mymonero-money-format": "^1.4.2",
+    "@mymonero/mymonero-nettype": "^1.4.2",
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
-    "mymonero-core-js": "https://github.com/EdgeApp/mymonero-core-js.git#matthew/txPrivateKey",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
@@ -69,9 +71,11 @@
     "husky": "^4.3.0",
     "lint-staged": "^10.5.3",
     "mocha": "^4.0.0",
+    "mymonero-core-js": "https://github.com/EdgeApp/mymonero-core-js.git#1.1.2",
     "node-fetch": "^2.1.2",
     "nyc": "^11.3.0",
     "prettier": "^2.2.0",
+    "react-native-mymonero-core": "^0.1.2",
     "rimraf": "^2.6.2",
     "sucrase": "^3.9.5",
     "webpack": "^4.29.3",

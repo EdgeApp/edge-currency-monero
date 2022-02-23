@@ -1,14 +1,15 @@
 // @flow
 
-const nettypeUtils = require('../cryptonote_utils/nettype.js')
-const parserUtils = require('../hostAPI/response_parser_utils.js')
-const sendingFundsUtils = require('../monero_utils/monero_sendingFunds_utils.js')
-const HostedMoneroAPIClient = require('../HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js')
+import type { MyMoneroCoreBridge } from 'react-native-mymonero-core'
+
+const nettypeUtils = require('@mymonero/mymonero-nettype')
+const parserUtils = require('./hostAPI/response_parser_utils.js')
+const sendingFundsUtils = require('./monero_utils/monero_sendingFunds_utils.js')
+const HostedMoneroAPIClient = require('./HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js')
 const {
 	BackgroundResponseParser
-} = require('../HostedMoneroAPIClient/BackgroundResponseParser.web.js')
+} = require('./HostedMoneroAPIClient/BackgroundResponseParser.web.js')
 
-let _moneroUtils
 const MAINNET = nettypeUtils.network_type.MAINNET
 
 export type MyMoneroApiOptions = {
@@ -16,9 +17,7 @@ export type MyMoneroApiOptions = {
 	appUserAgentVersion: string,
 	apiKey: string,
 	apiServer: string,
-	fetch: Function,
-	request: Function,
-	randomBytes: Function
+	fetch: Function
 }
 
 export type MyMoneroWallet = {
@@ -63,12 +62,12 @@ class MyMoneroApi {
 	hostedMoneroAPIClient: Object
 	moneroUtils: Object
 
-	constructor(options: MyMoneroApiOptions) {
+	constructor(moneroUtils: MyMoneroCoreBridge, options: MyMoneroApiOptions) {
 		this.options = options
 		this.keyImageCache = {}
-		this.moneroUtils = _moneroUtils
+		this.moneroUtils = moneroUtils
 		const backgroundAPIResponseParser = new BackgroundResponseParser(
-			_moneroUtils
+			this.moneroUtils
 		)
 		this.hostedMoneroAPIClientContext = {
 			backgroundAPIResponseParser,
@@ -251,6 +250,7 @@ class MyMoneroApi {
 				this.hostedMoneroAPIClientContext.isDebug = true
 			}
 			sendingFundsUtils.SendFunds(
+				this.moneroUtils,
 				targetAddress,
 				moneroNettype,
 				floatAmount,
@@ -303,8 +303,4 @@ class MyMoneroApi {
 	}
 }
 
-const myMoneroApiFactory = (moneroUtils: Object) => {
-	_moneroUtils = moneroUtils
-	return MyMoneroApi
-}
-module.exports = { myMoneroApiFactory }
+module.exports = MyMoneroApi
