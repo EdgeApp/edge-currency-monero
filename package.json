@@ -78,7 +78,7 @@
     "webpack-cli": "^3.2.3"
   },
   "peerDependencies": {
-    "react-native-mymonero-core": "^0.1.0"
+    "react-native-mymonero-core": "^0.1.2"
   },
   "react-native": "./lib/xmrIndex.js"
 }
