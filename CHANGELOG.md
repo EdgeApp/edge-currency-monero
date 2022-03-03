@@ -1,5 +1,10 @@
 # edge-currency-monero
 
+# 0.4.0 (2022-01-11)
+
+- added: Move the forked code out of mymonero-core-js directly into this repo.
+- changed: Require react-native-mymonero-core ^0.1.2.
+
 # 0.3.4 (2022-01-11)
 
 - Fix git urls
