@@ -22,11 +22,11 @@ import {
   NoAmountSpecifiedError,
   PendingFundsError
 } from 'edge-core-js/types'
-import type {
-  QueryParams,
-  SendFundsParams
-} from 'mymonero-core-js/lib/myMoneroApi.js'
 
+import {
+  type QueryParams,
+  type SendFundsParams
+} from './mymonero/MyMoneroApi.js'
 import {
   cleanResultLogs,
   cleanTxLogs,

@@ -16,9 +16,10 @@ import {
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
-import { initMonero } from 'mymonero-core-js'
+import type { MyMoneroCoreBridge } from 'react-native-mymonero-core'
 import { parse, serialize } from 'uri-js'
 
+import MyMoneroApi from './mymonero/MyMoneroApi.js'
 import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
 import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
@@ -45,20 +46,10 @@ function getParameterByName(param, url) {
 async function makeMoneroTools(
   io: EdgeIo,
   log: EdgeLog,
-  initOptions: InitOptions
+  initOptions: InitOptions,
+  myMoneroApi: MyMoneroApi
 ): Promise<EdgeCurrencyTools> {
-  const { MyMoneroApi } = await initMonero()
-
   log(`Creating Currency Plugin for monero`)
-  const options = {
-    appUserAgentProduct: 'tester',
-    appUserAgentVersion: '0.0.1',
-    apiKey: initOptions.apiKey,
-    apiServer: 'https://edge.mymonero.com:8443',
-    fetch: io.fetch,
-    randomBytes: io.random
-  }
-  const myMoneroApi = new MyMoneroApi(options)
 
   const moneroPlugin: EdgeCurrencyTools = {
     pluginName: 'monero',
@@ -225,16 +216,22 @@ export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
   const { io, nativeIo, initOptions = { apiKey: '' } } = opts
+  const moneroUtils: MyMoneroCoreBridge = nativeIo['edge-currency-monero']
 
-  if (nativeIo['edge-currency-monero']) {
-    const { callMyMonero } = nativeIo['edge-currency-monero']
-    global.moneroCore = { methodByString: callMyMonero }
+  const options = {
+    appUserAgentProduct: 'tester',
+    appUserAgentVersion: '0.0.1',
+    apiKey: initOptions.apiKey,
+    apiServer: 'https://edge.mymonero.com:8443',
+    fetch: io.fetch,
+    randomBytes: io.random
   }
+  const myMoneroApi = new MyMoneroApi(moneroUtils, options)
 
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     if (toolsPromise != null) return toolsPromise
-    toolsPromise = makeMoneroTools(io, opts.log, initOptions)
+    toolsPromise = makeMoneroTools(io, opts.log, initOptions, myMoneroApi)
     return toolsPromise
   }
 
@@ -247,8 +244,7 @@ export function makeMoneroPlugin(
       tools,
       io,
       walletInfo,
-      // $FlowFixMe
-      tools.myMoneroApi,
+      myMoneroApi,
       opts
     )
     await moneroEngine.init()

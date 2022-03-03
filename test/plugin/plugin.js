@@ -13,6 +13,7 @@ import fetch from 'node-fetch'
 
 import edgeCorePlugins from '../../src/xmrIndex.js'
 import { fakeLog } from '../fakeLog.js'
+import { nativeIo } from '../nodeNativeIo.js'
 import fixtures from './fixtures.json'
 
 /**
@@ -55,7 +56,7 @@ for (const fixture of fixtures) {
     initOptions: {},
     io: fakeIo,
     log: fakeLog,
-    nativeIo: {},
+    nativeIo,
     pluginDisklet: fakeIo.disklet
   }
   const factory = edgeCorePlugins[fixture.pluginName]
