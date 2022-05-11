@@ -96,10 +96,9 @@ class MoneroEngine {
     // this.customTokens = []
     this.timers = {}
 
-    if (opts.userSettings != null) {
-      this.currentSettings = opts.userSettings
-    } else {
-      this.currentSettings = this.currencyInfo.defaultSettings
+    this.currentSettings = {
+      ...opts.userSettings,
+      ...this.currencyInfo.defaultSettings
     }
 
     // Hard coded for testing
