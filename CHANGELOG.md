@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.4.1 (2022-05-11)
+
+- Fix syncing when the user settings are empty
+
 # 0.4.0 (2022-01-11)
 
 - added: Move the forked code out of mymonero-core-js directly into this repo.
