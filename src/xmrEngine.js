@@ -22,15 +22,11 @@ import {
   NoAmountSpecifiedError,
   PendingFundsError
 } from 'edge-core-js/types'
+import type { CreatedTransaction } from 'react-native-mymonero-core'
 
+import type { MyMoneroApi } from './MyMoneroApi.js'
 import {
-  type QueryParams,
-  type SendFundsParams
-} from './mymonero/MyMoneroApi.js'
-import {
-  cleanResultLogs,
   cleanTxLogs,
-  getOtherParams,
   makeMutex,
   normalizeAddress,
   validateObject
@@ -60,8 +56,7 @@ class MoneroEngine {
   transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
   allTokens: EdgeMetaToken[]
-  keyImageCache: Object
-  myMoneroApi: Object
+  myMoneroApi: MyMoneroApi
   currentSettings: any
   timers: any
   walletId: string
@@ -73,7 +68,7 @@ class MoneroEngine {
     currencyPlugin: EdgeCurrencyTools,
     io_: any,
     walletInfo: EdgeWalletInfo,
-    myMoneroApi: Object,
+    myMoneroApi: MyMoneroApi,
     opts: EdgeCurrencyEngineOptions
   ) {
     const { walletLocalDisklet, callbacks } = opts
@@ -85,7 +80,6 @@ class MoneroEngine {
     this.addressesChecked = false
     this.walletLocalDataDirty = false
     this.transactionsChangedArray = []
-    this.keyImageCache = {}
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
     this.currencyInfo = currencyInfo
@@ -127,48 +121,6 @@ class MoneroEngine {
     }
   }
 
-  async fetchPost(url: string, options: Object) {
-    const opts = Object.assign(
-      {},
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        }
-      },
-      options
-    )
-
-    const response = await this.io.fetch(url, opts)
-    if (!response.ok) {
-      const cleanUrl = url.replace(global.moneroApiKey, 'private')
-      throw new Error(
-        `The server returned error code ${response.status} for ${cleanUrl}`
-      )
-    }
-    return response.json()
-  }
-
-  async fetchPostMyMonero(cmd: string, params: Object = {}) {
-    const body = Object.assign(
-      {},
-      {
-        api_key: this.myMoneroApi.options.apiKey,
-        address: this.walletLocalData.moneroAddress,
-        view_key: this.walletLocalData.moneroViewKeyPrivate,
-        create_account: true
-      },
-      params
-    )
-
-    const options = {
-      body: JSON.stringify(body)
-    }
-    const url = `${this.currentSettings.otherSettings.mymoneroApiServers[0]}/${cmd}`
-    return this.fetchPost(url, options)
-  }
-
   updateOnAddressesChecked(numTx: number, totalTxs: number) {
     if (this.addressesChecked) {
       return
@@ -189,7 +141,12 @@ class MoneroEngine {
   // **********************************************
   async loginInnerLoop() {
     try {
-      const result = await this.fetchPostMyMonero('login')
+      const result = await this.myMoneroApi.login({
+        address: this.walletLocalData.moneroAddress,
+        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+      })
       if ('new_address' in result && !this.loggedIn) {
         this.loggedIn = true
         this.walletLocalData.hasLoggedIn = true
@@ -212,14 +169,12 @@ class MoneroEngine {
   // ***************************************************
   async checkAddressInnerLoop() {
     try {
-      const params: QueryParams = {
-        moneroAddress: this.walletLocalData.moneroAddress,
-        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
-        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
-        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
-      }
-
-      const addrResult = await this.myMoneroApi.getAddressInfo(params)
+      const addrResult = await this.myMoneroApi.getAddressInfo({
+        address: this.walletLocalData.moneroAddress,
+        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+      })
 
       if (this.walletLocalData.blockHeight !== addrResult.blockHeight) {
         this.walletLocalData.blockHeight = addrResult.blockHeight // Convert to decimal
@@ -328,13 +283,12 @@ class MoneroEngine {
     // }
 
     try {
-      const params: QueryParams = {
-        moneroAddress: this.walletLocalData.moneroAddress,
-        moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
-        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
-        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
-      }
-      const transactions = await this.myMoneroApi.getTransactions(params)
+      const transactions = await this.myMoneroApi.getTransactions({
+        address: this.walletLocalData.moneroAddress,
+        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+      })
 
       this.log('Fetched transactions count: ' + transactions.length)
 
@@ -696,6 +650,7 @@ class MoneroEngine {
     }
 
     // Monero can only have one output
+    // TODO: The new SDK fixes this!
     if (edgeSpendInfo.spendTargets.length !== 1) {
       throw new Error('Error: only one output allowed')
     }
@@ -730,22 +685,6 @@ class MoneroEngine {
       }
     }
 
-    let uniqueIdentifier = null
-    if (
-      edgeSpendInfo.spendTargets[0].otherParams &&
-      edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier
-    ) {
-      if (
-        typeof edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier ===
-        'string'
-      ) {
-        uniqueIdentifier =
-          edgeSpendInfo.spendTargets[0].otherParams.uniqueIdentifier
-      } else {
-        throw new Error('Error invalid payment id')
-      }
-    }
-
     let priority = 2
     // Fee estimates
     if (edgeSpendInfo.networkFeeOption) {
@@ -762,38 +701,27 @@ class MoneroEngine {
       }
     }
 
-    let result
-    let sendParams: SendFundsParams
+    let result: CreatedTransaction
     try {
       const amountFloatString: string = bns.div(
         nativeAmount,
         '1000000000000',
         12
       )
-      // Todo: Yikes. Why does mymonero-core-js take a float, not a string? -paulvp
-      const amountFloat = parseFloat(amountFloatString)
 
-      sendParams = {
-        moneroAddress: this.walletLocalData.moneroAddress,
-        moneroSpendKeyPrivate: '',
-        moneroSpendKeyPublic: this.walletInfo.keys.moneroSpendKeyPublic,
-        moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate,
-        targetAddress: publicAddress,
-        floatAmount: amountFloat,
-        moneroViewKeyPublic: this.walletLocalData.moneroViewKeyPublic,
-        nettype: 'mainnet', // 'mainnet' only for now
-        isSweepTx: false,
-        paymentId: uniqueIdentifier || '',
-        priority,
-        doBroadcast: false
-      }
-      result = await this.myMoneroApi.sendFunds(
-        Object.assign({}, sendParams, {
-          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
-          onStatus: (code: number) => {
-            this.log.warn(`makeSpend:SendFunds - onStatus:${code.toString()}`)
-          }
-        })
+      result = await this.myMoneroApi.createTransaction(
+        {
+          address: this.walletLocalData.moneroAddress,
+          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        },
+        {
+          amount: amountFloatString,
+          isSweepTx: false, // TODO: The new SDK supports max-spend
+          priority,
+          targetAddress: publicAddress
+        }
       )
     } catch (e) {
       // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
@@ -805,78 +733,45 @@ class MoneroEngine {
     }
 
     const date = Date.now() / 1000
-    nativeAmount = '-' + nativeAmount
 
     const edgeTransaction: EdgeTransaction = {
-      txid: result.txid,
+      txid: result.tx_hash,
       date,
       currencyCode, // currencyCode
       blockHeight: 0, // blockHeight
-      nativeAmount: bns.sub(nativeAmount, result.networkFee), // nativeAmount
-      networkFee: result.networkFee,
+      nativeAmount: '-' + result.total_sent,
+      networkFee: result.used_fee,
       ourReceiveAddresses: [], // ourReceiveAddresses
-      signedTx: '', // signedTx
-      otherParams: {
-        sendParams
-      }
+      signedTx: result.serialized_signed_tx,
+      txSecret: result.tx_key
     }
     this.log.warn(`makeSpend edgeTransaction ${cleanTxLogs(edgeTransaction)}`)
-    this.log.warn(`makeSpend result ${cleanResultLogs(result)}`)
     return edgeTransaction
   }
 
   // asynchronous
   async signTx(edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
-    const otherParams = getOtherParams(edgeTransaction)
-
-    // Monero transactions are signed at broadcast
-    if (otherParams.sendParams) {
-      return edgeTransaction
-    } else {
-      throw new Error('Invalid EdgeTransaction. No otherParams.options')
-    }
+    return edgeTransaction
   }
 
   // asynchronous
   async broadcastTx(
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
-    const otherParams = getOtherParams(edgeTransaction)
-
     try {
-      const sendParams = otherParams.sendParams
-      sendParams.doBroadcast = true
-      const result = await this.myMoneroApi.sendFunds(
-        Object.assign({}, sendParams, {
-          moneroSpendKeyPrivate: this.walletInfo.keys.moneroSpendKeyPrivate,
-          onStatus: (code: number) => {
-            this.log.warn(`broadcastTx:SendFunds - onStatus:${code.toString()}`)
-          }
-        })
-      )
-
-      edgeTransaction.txid = result.txid
-      edgeTransaction.networkFee = result.networkFee
-      edgeTransaction.txSecret = result.tx_key
+      await this.myMoneroApi.broadcastTransaction(edgeTransaction.signedTx)
       this.log.warn(`broadcastTx success ${cleanTxLogs(edgeTransaction)}`)
-      this.log.warn(`broadcastTx success result ${cleanResultLogs(result)}`)
       return edgeTransaction
     } catch (e) {
       this.log.error(
         `broadcastTx failed: ${String(e)} ${cleanTxLogs(edgeTransaction)}`
       )
-      otherParams.sendParams.moneroSpendKeyPrivate = ''
       throw e
     }
   }
 
   // asynchronous
   async saveTx(edgeTransaction: EdgeTransaction) {
-    const otherParams = getOtherParams(edgeTransaction)
-    otherParams.sendParams.moneroSpendKeyPrivate = ''
-    otherParams.sendParams.moneroSpendKeyPublic = ''
-    otherParams.sendParams.moneroViewKeyPrivate = ''
-    otherParams.sendParams.moneroViewKeyPublic = ''
     this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])

@@ -5,7 +5,7 @@
 
 import { bns } from 'biggystring'
 import { asArray, asObject, asOptional, asString } from 'cleaners'
-import { type EdgeTransaction, type JsonObject } from 'edge-core-js/types'
+import { type EdgeTransaction } from 'edge-core-js/types'
 import { validate } from 'jsonschema'
 
 const Buffer = require('buffer/').Buffer
@@ -49,16 +49,6 @@ function toHex(num: string) {
 export function isHex(h: string) {
   const out = /^[0-9A-F]+$/i.test(h)
   return out
-}
-
-/**
- * Safely read `otherParams` from a transaction, throwing if it's missing.
- */
-export function getOtherParams(tx: EdgeTransaction): JsonObject {
-  if (tx.otherParams == null) {
-    throw new TypeError('Transaction is missing otherParams')
-  }
-  return tx.otherParams
 }
 
 type Mutex = <T>(callback: () => Promise<T>) => Promise<T>
@@ -106,17 +96,6 @@ const asCleanTxLogs = asObject({
 
 export function cleanTxLogs(tx: EdgeTransaction) {
   return JSON.stringify(asCleanTxLogs(tx))
-}
-
-const asCleanResultLogs = asObject({
-  txid: asString,
-  networkFee: asString,
-  sentAmount: asString,
-  targetAddress: asString
-})
-
-export function cleanResultLogs(result: any) {
-  return JSON.stringify(asCleanResultLogs(result))
 }
 
 export { normalizeAddress, addHexPrefix, bufToHex, validateObject, toHex }
