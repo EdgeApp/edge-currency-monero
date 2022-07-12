@@ -1,10 +1,7 @@
 // @flow
 
-import {
-  type MyMoneroCoreBridge,
-  monero_utils
-} from 'react-native-mymonero-core'
+import bridge, { type CppBridge } from 'react-native-mymonero-core'
 
-export default function makeCustomIo(): MyMoneroCoreBridge {
-  return monero_utils
+export default function makeCustomIo(): CppBridge {
+  return bridge
 }
