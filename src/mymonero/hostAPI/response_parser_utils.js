@@ -92,96 +92,7 @@ async function Parsed_AddressInfo__async(
 	};
 	return returnValuesByKey;
 }
-async function Parsed_AddressInfo__async__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-) {
-	// -> returnValuesByKey
-	const keyImageCache = monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(
-		address,
-	);
-	return await Parsed_AddressInfo__async(
-		keyImageCache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-}
-async function Parsed_AddressInfo(
-	keyImage_cache,
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn, // (err?, returnValuesByKey) -> Void
-) {
-	const returnValuesByKey = await Parsed_AddressInfo__async(
-		keyImage_cache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-	fn(null, returnValuesByKey);
-}
-async function Parsed_AddressInfo__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn,
-) {
-	// -> returnValuesByKey
-	await Parsed_AddressInfo(
-		monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(address),
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-		fn,
-	);
-}
-exports.Parsed_AddressInfo = Parsed_AddressInfo;
-exports.Parsed_AddressInfo__keyImageManaged = Parsed_AddressInfo__keyImageManaged; // in case you can't send a mutable key image cache dictionary
-exports.Parsed_AddressInfo__async__keyImageManaged = Parsed_AddressInfo__async__keyImageManaged; // in case you can't send a mutable key image cache dictionary
-exports.Parsed_AddressInfo__async = Parsed_AddressInfo__async;
 //
-async function Parsed_AddressTransactions(
-	keyImage_cache,
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn, // (err?, returnValuesByKey) -> Void
-) {
-	const returnValuesByKey = await Parsed_AddressTransactions__async(
-		keyImage_cache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-	fn(null, returnValuesByKey);
-}
 async function Parsed_AddressTransactions__async(
 	keyImage_cache,
 	data,
@@ -286,73 +197,7 @@ async function Parsed_AddressTransactions__async(
 	};
 	return returnValuesByKey;
 }
-async function Parsed_AddressTransactions__async__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-) {
-	const keyImageCache = monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(
-		address,
-	);
-	return await Parsed_AddressTransactions__async(
-		keyImageCache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-}
-async function Parsed_AddressTransactions__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn,
-) {
-	await Parsed_AddressTransactions(
-		monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(address),
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-		fn,
-	);
-}
-exports.Parsed_AddressTransactions = Parsed_AddressTransactions;
-exports.Parsed_AddressTransactions__keyImageManaged = Parsed_AddressTransactions__keyImageManaged;
-exports.Parsed_AddressTransactions__async = Parsed_AddressTransactions__async;
-exports.Parsed_AddressTransactions__async__keyImageManaged = Parsed_AddressTransactions__async__keyImageManaged;
 //
-async function Parsed_UnspentOuts(
-	keyImage_cache,
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn, // (err?, returnValuesByKey)
-) {
-	const returnValuesByKey = await Parsed_UnspentOuts__async(
-		keyImage_cache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-	fn(null, returnValuesByKey);
-}
 async function Parsed_UnspentOuts__async(
 	keyImage_cache,
 	data,
@@ -464,48 +309,7 @@ async function Parsed_UnspentOuts__async(
 	};
 	return returnValuesByKey;
 }
-async function Parsed_UnspentOuts__sync__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-) {
-	const keyImageCache = await monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(
-		address,
-	);
-	return await Parsed_UnspentOuts__async(
-		keyImageCache,
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-	);
-}
-async function Parsed_UnspentOuts__keyImageManaged(
-	data,
-	address,
-	view_key__private,
-	spend_key__public,
-	spend_key__private,
-	monero_utils,
-	fn,
-) {
-	await Parsed_UnspentOuts(
-		await monero_keyImage_cache_utils.Lazy_KeyImageCacheForWalletWith(address),
-		data,
-		address,
-		view_key__private,
-		spend_key__public,
-		spend_key__private,
-		monero_utils,
-		fn,
-	);
-}
-exports.Parsed_UnspentOuts = Parsed_UnspentOuts;
-exports.Parsed_UnspentOuts__keyImageManaged = Parsed_UnspentOuts__keyImageManaged;
+//
+exports.Parsed_UnspentOuts__async = Parsed_AddressInfo__async;
+exports.Parsed_UnspentOuts__async = Parsed_AddressTransactions__async;
 exports.Parsed_UnspentOuts__async = Parsed_UnspentOuts__async;
-exports.Parsed_UnspentOuts__sync__keyImageManaged = Parsed_UnspentOuts__sync__keyImageManaged;

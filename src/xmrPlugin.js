@@ -16,7 +16,7 @@ import {
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
-import type { MyMoneroCoreBridge } from 'react-native-mymonero-core'
+import type { CppBridge } from 'react-native-mymonero-core'
 import { parse, serialize } from 'uri-js'
 
 import MyMoneroApi from './mymonero/MyMoneroApi.js'
@@ -111,10 +111,7 @@ async function makeMoneroTools(
 
       try {
         // verify address is decodable for currency
-        const result = await myMoneroApi.decodeAddress(address)
-        if (result.err_msg === 'Invalid address') {
-          throw new Error('InvalidUriError')
-        }
+        await myMoneroApi.decodeAddress(address)
       } catch (e) {
         throw new Error('InvalidPublicAddressError')
       }
@@ -167,10 +164,7 @@ async function makeMoneroTools(
         throw new Error('InvalidPublicAddressError')
       }
       try {
-        const result = await myMoneroApi.decodeAddress(obj.publicAddress)
-        if (result.err_msg === 'Invalid address') {
-          throw new Error('InvalidUriError')
-        }
+        await myMoneroApi.decodeAddress(obj.publicAddress)
       } catch (e) {
         throw new Error('InvalidPublicAddressError')
       }
@@ -216,7 +210,7 @@ export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
   const { io, nativeIo, initOptions = { apiKey: '' } } = opts
-  const moneroUtils: MyMoneroCoreBridge = nativeIo['edge-currency-monero']
+  const cppBridge: CppBridge = nativeIo['edge-currency-monero']
 
   const options = {
     appUserAgentProduct: 'tester',
@@ -224,9 +218,10 @@ export function makeMoneroPlugin(
     apiKey: initOptions.apiKey,
     apiServer: 'https://edge.mymonero.com:8443',
     fetch: io.fetch,
-    randomBytes: io.random
+    randomBytes: io.random,
+    nettype: 'MAINNET'
   }
-  const myMoneroApi = new MyMoneroApi(moneroUtils, options)
+  const myMoneroApi = new MyMoneroApi(cppBridge, options)
 
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools(): Promise<EdgeCurrencyTools> {

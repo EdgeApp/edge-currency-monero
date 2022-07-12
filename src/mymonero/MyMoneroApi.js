@@ -1,23 +1,20 @@
 // @flow
 
-import type { MyMoneroCoreBridge } from 'react-native-mymonero-core'
+import type { EdgeFetchFunction } from 'edge-core-js'
+import type {
+	CppBridge,
+	DecodedAddress,
+	Nettype,
+	Priority
+} from 'react-native-mymonero-core'
 
-const nettypeUtils = require('@mymonero/mymonero-nettype')
 const parserUtils = require('./hostAPI/response_parser_utils.js')
-const sendingFundsUtils = require('./monero_utils/monero_sendingFunds_utils.js')
-const HostedMoneroAPIClient = require('./HostedMoneroAPIClient/HostedMoneroAPIClient.Lite.js')
-const {
-	BackgroundResponseParser
-} = require('./HostedMoneroAPIClient/BackgroundResponseParser.web.js')
-
-const MAINNET = nettypeUtils.network_type.MAINNET
 
 export type MyMoneroApiOptions = {
-	appUserAgentProduct: string,
-	appUserAgentVersion: string,
 	apiKey: string,
 	apiServer: string,
-	fetch: Function
+	fetch: EdgeFetchFunction,
+	nettype?: Nettype
 }
 
 export type MyMoneroWallet = {
@@ -44,100 +41,82 @@ export type QueryParams = {
 }
 
 export type SendFundsParams = QueryParams & {
-	targetAddress: string,
-	floatAmount: number,
+	moneroAddress: string,
+	moneroSpendKeyPrivate: string,
+	moneroViewKeyPrivate: string,
 	moneroViewKeyPublic: string,
-	nettype?: string, // 'mainnet' only for now
+	floatAmount: number,
 	isSweepTx?: boolean,
-	doBroadcast?: boolean,
-	paymentId?: string | null,
-	priority?: number, // 1-4 (Default is 1. Higher # is higher priority and higher fee )
-	onStatus?: (code: number) => void
+	priority?: Priority, // 1-4 (Default is 1. Higher # is higher priority and higher fee )
+	targetAddress: string
 }
 
 class MyMoneroApi {
-	options: MyMoneroApiOptions
-	keyImageCache: Object
-	hostedMoneroAPIClientContext: Object
-	hostedMoneroAPIClient: Object
-	moneroUtils: Object
+	// Network options:
+	apiKey: string
+	apiUrl: string
+	nettype: Nettype
 
-	constructor(moneroUtils: MyMoneroCoreBridge, options: MyMoneroApiOptions) {
-		this.options = options
+	// Dependency injection:
+	cppBridge: CppBridge
+	fetch: EdgeFetchFunction
+
+	// Maps from key identifiers (a bunch of concatenated stuff) to key images:
+	keyImageCache: { [keyId: string]: string }
+
+	constructor(cppBridge: CppBridge, options: MyMoneroApiOptions) {
+		this.apiKey = options.apiKey
+		this.apiUrl = options.apiServer
+		this.nettype = options.nettype ?? 'MAINNET'
+
+		this.fetch = options.fetch
+		this.cppBridge = cppBridge
+
 		this.keyImageCache = {}
-		this.moneroUtils = moneroUtils
-		const backgroundAPIResponseParser = new BackgroundResponseParser(
-			this.moneroUtils
-		)
-		this.hostedMoneroAPIClientContext = {
-			backgroundAPIResponseParser,
-			HostedMoneroAPIClient_DEBUGONLY_mockSendTransactionSuccess: false,
-			isDebug: false
-		}
-		this.hostedMoneroAPIClient = new HostedMoneroAPIClient(
-			{
-				fetch: options.fetch,
-				// request_conformant_module: options.request,
-				apiKey: options.apiKey,
-				apiServer: options.apiServer,
-				appUserAgent_product: 'agent-product',
-				appUserAgent_version: '0.0.1'
-			},
-			this.hostedMoneroAPIClientContext
-		)
 	}
 
-	async decodeAddress(address: string): Object {
-		return await this.moneroUtils.decode_address(address, MAINNET)
+	async decodeAddress(address: string): Promise<DecodedAddress> {
+		return await this.cppBridge.decodeAddress(address, this.nettype)
 	}
 
-	async createWallet(
-		nettype: any = MAINNET,
-		language: string = 'english'
-	): Promise<MyMoneroWallet> {
-		console.log('createWallet')
-		const result = await this.moneroUtils.newly_created_wallet(
-			language,
-			nettype
-		)
+	async createWallet(language: string = 'english'): Promise<MyMoneroWallet> {
+		const result = await this.cppBridge.generateWallet(language, this.nettype)
 		const out = {
-			mnemonic: result.mnemonic_string,
-			moneroAddress: result.address_string,
-			moneroSpendKeyPrivate: result.sec_spendKey_string,
-			moneroSpendKeyPublic: result.pub_spendKey_string,
-			moneroViewKeyPrivate: result.sec_viewKey_string,
-			moneroViewKeyPublic: result.pub_viewKey_string
+			mnemonic: result.mnemonic,
+			moneroAddress: result.address,
+			moneroSpendKeyPrivate: result.privateSpendKey,
+			moneroSpendKeyPublic: result.publicSpendKey,
+			moneroViewKeyPrivate: result.privateViewKey,
+			moneroViewKeyPublic: result.publicViewKey
 		}
 		return out
 	}
 
 	async createWalletFromMnemonic(
 		mnemonic: string,
-		nettype: any = MAINNET,
 		language: string = 'english'
 	): Promise<MyMoneroWallet> {
-		console.log('createWalletFromMnemonic')
-		const result = await this.moneroUtils.seed_and_keys_from_mnemonic(
+		const result = await this.cppBridge.seedAndKeysFromMnemonic(
 			mnemonic,
-			nettype
+			this.nettype
 		)
 		const out = {
 			mnemonic,
-			moneroAddress: result.address_string,
-			moneroSpendKeyPrivate: result.sec_spendKey_string,
-			moneroSpendKeyPublic: result.pub_spendKey_string,
-			moneroViewKeyPrivate: result.sec_viewKey_string,
-			moneroViewKeyPublic: result.pub_viewKey_string
+			moneroAddress: result.address,
+			moneroSpendKeyPrivate: result.privateSpendKey,
+			moneroSpendKeyPublic: result.publicSpendKey,
+			moneroViewKeyPrivate: result.privateViewKey,
+			moneroViewKeyPublic: result.publicViewKey
 		}
 		return out
 	}
 
 	async getTransactions(queryParams: QueryParams): Promise<Object[]> {
 		const params = {
-			api_key: this.options.apiKey,
 			address: queryParams.moneroAddress,
-			view_key: queryParams.moneroViewKeyPrivate,
-			create_account: true
+			api_key: this.apiKey,
+			create_account: true,
+			view_key: queryParams.moneroViewKeyPrivate
 		}
 		const result = await this.fetchPostMyMonero('get_address_txs', params)
 		const parsedTxs = await parserUtils.Parsed_AddressTransactions__async(
@@ -147,7 +126,7 @@ class MyMoneroApi {
 			queryParams.moneroViewKeyPrivate,
 			queryParams.moneroSpendKeyPublic,
 			queryParams.moneroSpendKeyPrivate,
-			this.moneroUtils
+			this.cppBridge
 		)
 		const transactions = parsedTxs.serialized_transactions
 		return transactions
@@ -155,10 +134,10 @@ class MyMoneroApi {
 
 	async getAddressInfo(queryParams: QueryParams): Promise<BalanceResults> {
 		const params = {
-			api_key: this.options.apiKey,
 			address: queryParams.moneroAddress,
-			view_key: queryParams.moneroViewKeyPrivate,
-			create_account: true
+			api_key: this.apiKey,
+			create_account: true,
+			view_key: queryParams.moneroViewKeyPrivate
 		}
 		const result = await this.fetchPostMyMonero('get_address_info', params)
 		const parsedAddrInfo = await parserUtils.Parsed_AddressInfo__async(
@@ -168,7 +147,7 @@ class MyMoneroApi {
 			queryParams.moneroViewKeyPrivate,
 			queryParams.moneroSpendKeyPublic,
 			queryParams.moneroSpendKeyPrivate,
-			this.moneroUtils
+			this.cppBridge
 		)
 		const out: BalanceResults = {
 			blockHeight: parsedAddrInfo.blockchain_height,
@@ -183,123 +162,107 @@ class MyMoneroApi {
 		const {
 			moneroAddress,
 			moneroSpendKeyPrivate,
-			moneroSpendKeyPublic,
 			moneroViewKeyPrivate,
 			moneroViewKeyPublic,
 			targetAddress,
 			floatAmount,
-			nettype, // 'mainnet' only for now
-			isSweepTx,
-			doBroadcast,
-			paymentId = null,
-			priority = 1,
-			onStatus
+			isSweepTx = false,
+			priority = 1
 		} = params
-		if (nettype && nettype !== 'mainnet') {
-			throw new Error('InvalidNetType')
+
+		// Step 1: Grab the UTXO set:
+		// const params = {
+		// 	address: queryParams.moneroAddress,
+		// 	api_key: this.apiKey,
+		// 	create_account: true,
+		// 	view_key: queryParams.moneroViewKeyPrivate
+		// }
+		// const result = await this.fetchPostMyMonero('get_address_info', params)
+		const unspentOuts = {} // await parserUtils.Parsed_UnspentOuts__async(
+		// 	this.keyImageCache,
+		// 	result,
+		// 	queryParams.moneroAddress,
+		// 	queryParams.moneroViewKeyPrivate,
+		// 	queryParams.moneroSpendKeyPublic,
+		// 	queryParams.moneroSpendKeyPrivate,
+		// 	this.cppBridge
+		// )
+
+		// Step 2: Grab some random outputs to mix in:
+		async function randomOutsCb(count: number): Promise<any> {
+			// const params = {
+			// 	address: queryParams.moneroAddress,
+			// 	api_key: this.apiKey,
+			// 	create_account: true,
+			// 	view_key: queryParams.moneroViewKeyPrivate
+			// }
+			// const result = await this.fetchPostMyMonero('get_address_info', params)
+			// return await parserUtils.Parsed_UnspentOuts__async(
+			// 	this.keyImageCache,
+			// 	result,
+			// 	queryParams.moneroAddress,
+			// 	queryParams.moneroViewKeyPrivate,
+			// 	queryParams.moneroSpendKeyPublic,
+			// 	queryParams.moneroSpendKeyPrivate,
+			// 	this.cppBridge
+			// )
 		}
 
-		const moneroNettype = MAINNET
-		const publicKeys = {
-			view: moneroViewKeyPublic,
-			spend: moneroSpendKeyPublic
-		}
-		const privateKeys = {
-			view: moneroViewKeyPrivate,
-			spend: moneroSpendKeyPrivate
-		}
-
-		return new Promise((resolve, reject) => {
-			const onSuccess = (
-				moneroReady_targetDescription_address,
-				sentAmount,
-				final__payment_id,
-				tx_hash,
-				tx_fee,
-				tx_key,
-				mixin
-			) => {
-				const out = {
-					targetAddress: moneroReady_targetDescription_address,
-					sentAmount: sentAmount.toString(),
-					// final__payment_id,
-					txid: tx_hash,
-					networkFee: tx_fee.toString(),
-					tx_key,
-					mixin
-				}
-				resolve(out)
-			}
-
-			const onError = (error: string) => {
-				reject(new Error(error))
-			}
-
-			const onStatusLocal = (status: number) => {
-				if (onStatus) {
-					onStatus(status)
-				}
-			}
-
-			const isSweep: boolean = !!isSweepTx
-			if (doBroadcast) {
-				this.hostedMoneroAPIClientContext.HostedMoneroAPIClient_DEBUGONLY_mockSendTransactionSuccess = false
-				this.hostedMoneroAPIClientContext.isDebug = false
-			} else {
-				this.hostedMoneroAPIClientContext.HostedMoneroAPIClient_DEBUGONLY_mockSendTransactionSuccess = true
-				this.hostedMoneroAPIClientContext.isDebug = true
-			}
-			sendingFundsUtils.SendFunds(
-				this.moneroUtils,
-				targetAddress,
-				moneroNettype,
-				floatAmount,
-				isSweep,
-				moneroAddress,
-				privateKeys,
-				publicKeys,
-				this.hostedMoneroAPIClient,
-				paymentId,
-				priority,
-				onStatusLocal,
-				onSuccess,
-				onError
-			)
+		// Step 3: Make the transaction:
+		return await this.cppBridge.createTransaction({
+			amount: floatAmount,
+			recipientAddress: targetAddress,
+			priority,
+			address: moneroAddress,
+			privateViewKey: moneroViewKeyPrivate,
+			publicSpendKey: moneroViewKeyPublic,
+			privateSpendKey: moneroSpendKeyPrivate,
+			shouldSweep: isSweepTx,
+			nettype: this.nettype,
+			unspentOuts,
+			randomOutsCb
 		})
+	}
+
+	async broadcastTransaction(tx: any): Promise<void> {
+		// const params = {
+		// 	address: queryParams.moneroAddress,
+		// 	api_key: this.options.apiKey,
+		// 	create_account: true,
+		// 	view_key: queryParams.moneroViewKeyPrivate
+		// }
+		// const result = await this.fetchPostMyMonero('get_address_info', params)
+		// const unspentOuts = {}
+		// const parsedAddrInfo = await parserUtils.Parsed_AddressInfo__async(
+		// 	this.keyImageCache,
+		// 	result,
+		// 	queryParams.moneroAddress,
+		// 	queryParams.moneroViewKeyPrivate,
+		// 	queryParams.moneroSpendKeyPublic,
+		// 	queryParams.moneroSpendKeyPrivate,
+		// 	this.cppBridge
+		// )
 	}
 
 	// Private routines
 	// ----------------
 
-	async fetchPost(url: string, options: Object) {
-		const opts = Object.assign(
-			{},
-			{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Accept: 'application/json'
-				}
+	async fetchPostMyMonero(cmd: string, params: any): any {
+		const url = `${this.apiUrl}/${cmd}`
+		const response = await this.fetch(url, {
+			body: JSON.stringify(params),
+			headers: {
+				'Content-Type': 'application/json',
+				Accept: 'application/json'
 			},
-			options
-		)
-
-		const response = await this.options.fetch(url, opts)
+			method: 'POST'
+		})
 		if (!response.ok) {
-			// const cleanUrl = url.replace(this.moneroApiKey, 'private')
 			throw new Error(
 				`The server returned error code ${response.status} for ${url}`
 			)
 		}
 		return response.json()
-	}
-
-	async fetchPostMyMonero(cmd: string, params: Object = {}) {
-		const options = {
-			body: JSON.stringify(params)
-		}
-		const url = `${this.options.apiServer}/${cmd}`
-		return this.fetchPost(url, options)
 	}
 }
 
