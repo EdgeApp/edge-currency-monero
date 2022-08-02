@@ -497,6 +497,7 @@ class MoneroEngine {
     })
     this.walletLocalData = new WalletLocalData(temp)
     this.walletLocalDataDirty = true
+    this.addressesChecked = false
     await this.saveWalletLoop()
     await this.startEngine()
   }

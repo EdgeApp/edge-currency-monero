@@ -37,7 +37,7 @@ Run `npm run test` to run the unit tests.
 To use the local cloned version of this repo, `cd edge-react-gui` and run
 
     npm run updot edge-currency-monero
-    npm run postinstall
+    npm run prepare
 
 This will copy the necessary files from `edge-currency-monero` into the `edge-react-gui/node_modules/edge-currency-monero` replacing the npm installed version. This needs to be done after any modifications to `edge-currency-monero`
 
