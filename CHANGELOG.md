@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.4.2 (2022-08-03)
+
+- Set `addressesChecked` to `false` on resync
+
 # 0.4.1 (2022-05-11)
 
 - Fix syncing when the user settings are empty
