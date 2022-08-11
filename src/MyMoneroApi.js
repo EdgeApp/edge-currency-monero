@@ -177,30 +177,20 @@ export class MyMoneroApi {
     //   transaction_height: asNumber
     // })
 
-    try {
-      const parsed = await parserUtils.Parsed_AddressInfo__async(
-        this.keyImageCache,
-        result,
-        address,
-        privateViewKey,
-        publicSpendKey,
-        privateSpendKey,
-        this.cppBridge
-      )
-      return {
-        blockHeight: parsed.blockchain_height,
-        totalReceived: parsed.total_received_String,
-        lockedBalance: parsed.locked_balance_String,
-        totalSent: parsed.total_sent_String
-      }
-    } catch (error) {
-      console.log(error)
-    }
+    const parsed = await parserUtils.Parsed_AddressInfo__async(
+      this.keyImageCache,
+      result,
+      address,
+      privateViewKey,
+      publicSpendKey,
+      privateSpendKey,
+      this.cppBridge
+    )
     return {
-      blockHeight: 0,
-      totalReceived: '0',
-      lockedBalance: '0',
-      totalSent: '0'
+      blockHeight: parsed.blockchain_height,
+      totalReceived: parsed.total_received_String,
+      lockedBalance: parsed.locked_balance_String,
+      totalSent: parsed.total_sent_String
     }
   }
 
@@ -210,18 +200,6 @@ export class MyMoneroApi {
   ): Promise<CreatedTransaction> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
     const { amount, isSweepTx = false, priority = 1, targetAddress } = opts
-
-    console.log('mymonero', {
-      address,
-      amount: '0',
-      api_key: this.apiKey,
-      app_name: 'test',
-      app_version: 'test',
-      dust_threshold: '2000000000',
-      mixin: 10,
-      use_dust: true,
-      view_key: privateViewKey
-    })
 
     // Grab the UTXO set:
     const unspentOuts = await this.fetchPostMyMonero('get_unspent_outs', {
