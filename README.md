@@ -1,7 +1,6 @@
 # Edge Monero Currency Plugin
-[![Build Status][travis-image]][travis-url] [![NPM version][npm-image]][npm-url] [![Dependency Status][daviddm-image]][daviddm-url]
 
-[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+[![Build Status](https://app.travis-ci.com/EdgeApp/edge-currency-monero.svg?branch=master)](https://app.travis-ci.com/EdgeApp/edge-currency-monero)
 
 Implements Monero send/receive functionality per the spec for crypto currency plugins for [edge-core-js](https://github.com/EdgeApp/edge-core-js)
 
