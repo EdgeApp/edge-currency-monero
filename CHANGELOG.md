@@ -1,12 +1,16 @@
 # edge-currency-monero
 
+# 0.5.0 (2022-08-11)
+
+- changed: Upgrade to react-native-mymonero-core v0.2.0, with its new API.
+
 # 0.4.2 (2022-08-03)
 
-- Set `addressesChecked` to `false` on resync
+- fixed: Set `addressesChecked` to `false` on resync
 
 # 0.4.1 (2022-05-11)
 
-- Fix syncing when the user settings are empty
+- fixed: Fix syncing when the user settings are empty
 
 # 0.4.0 (2022-01-11)
 
