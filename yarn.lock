@@ -919,6 +919,11 @@
   resolved "https://registry.yarnpkg.com/@mymonero/mymonero-bigint/-/mymonero-bigint-1.4.2.tgz#23174269ffdb983181972f021fb237069d135a7f"
   integrity sha512-JVGPBWT9jeCNaXAW1vnZEHnX+flP8Wl/FC6sq2bwan9nblAkRB59UsAzpOm8VjiPwmUqm073sekLsIpAgUB2IQ==
 
+"@mymonero/mymonero-monero-client@^2.1.10":
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/@mymonero/mymonero-monero-client/-/mymonero-monero-client-2.1.10.tgz#48ec1bbaa7e92e32ce30ec9d1d496899021abcbe"
+  integrity sha512-Viw/6TCYpseIW2qwkMZRQvceFYnXY8DfhwRX8GoiFAWipgV0Y8OjdXBlWHV3BXD8IdpZInfD0DdvxRoMvQEV9g==
+
 "@mymonero/mymonero-money-format@^1.4.2":
   version "1.4.2"
   resolved "https://registry.yarnpkg.com/@mymonero/mymonero-money-format/-/mymonero-money-format-1.4.2.tgz#cf852de67bc02522c64cf4020d6ec3900d87aee4"
@@ -4602,10 +4607,6 @@ ms@2.1.3, ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
 
-"mymonero-core-js@https://github.com/EdgeApp/mymonero-core-js.git#1.1.2":
-  version "1.1.0"
-  resolved "https://github.com/EdgeApp/mymonero-core-js.git#789c1fa71b00fa0579389b7a9f483877745fb06c"
-
 mz@^2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/mz/-/mz-2.7.0.tgz#95008057a56cafadc2bc63dde7f9ff6955948e32"
@@ -5373,10 +5374,10 @@ randomfill@^1.0.3:
     randombytes "^2.0.5"
     safe-buffer "^5.1.0"
 
-react-native-mymonero-core@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/react-native-mymonero-core/-/react-native-mymonero-core-0.1.2.tgz#8b65d0ef5bbefb6fff0a92e364b61d809447dd2f"
-  integrity sha512-mfh70iHKZywIJBfqlT80R7xcePr0b7EtpeXQDhIJSVIPCI0XKtKSpYIFpF2vWc5KitPtmQKAImtVM27pMb4hHA==
+react-native-mymonero-core@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-mymonero-core/-/react-native-mymonero-core-0.2.0.tgz#9ac908f7afa3bbdb3dd48c2beb8f4903c4825fc8"
+  integrity sha512-Qbns5/MSPYCZlqvNCNySAfHJwWR7YY9DW6EKYfaGtzkIHTsKvr0QSanFS6YiadWJk9iPGv7FALpgVtD3wSbj7w==
   dependencies:
     "@mymonero/mymonero-bigint" "^1.4.2"
     "@mymonero/mymonero-money-format" "^1.4.2"
@@ -6832,10 +6833,10 @@ yaml@^1.10.0:
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.2.tgz#2301c5ffbf12b467de8da2333a459e29e7920e4b"
   integrity sha512-r3vXyErRCYJ7wg28yvBY5VSoAF8ZvlcW9/BwUzEtUsjvX/DKs24dIkuwjtuprwJJHsbyUbLApepYTR1BN4uHrg==
 
-yaob@^0.3.6:
-  version "0.3.7"
-  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.7.tgz#f33f6a7869a8cabaec761a31ae577aaee659d9d0"
-  integrity sha512-r48BLEBGUhkUHBVudB4X+JvID4ZczwzPJg0zDynZ3gbBguEwtO7WE+djKQSY1uclVOB6a7Y51oB8OhAyhQNCxg==
+yaob@^0.3.6, yaob@^0.3.7:
+  version "0.3.8"
+  resolved "https://registry.yarnpkg.com/yaob/-/yaob-0.3.8.tgz#a359fd092dbf42d07f82eb2fb0b00bdb87f1c4cc"
+  integrity sha512-6ocTmk7fVAB7TOc8ot7sdt5o+UK3d8qtDtd61IBIVe++V1xGmhP3Y8FYOCrzmo6ywzGJPaDS66orZIwnw5NwEw==
   dependencies:
     rfc4648 "^1.1.0"
 
