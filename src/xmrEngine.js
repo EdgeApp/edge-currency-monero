@@ -209,10 +209,8 @@ export class MoneroEngine {
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
 
-    const netNativeAmount: string = bns.add(
-      bns.sub(tx.total_received, tx.total_sent),
-      nativeNetworkFee
-    )
+    const netNativeAmount: string = bns.sub(tx.total_received, tx.total_sent)
+
     if (netNativeAmount.slice(0, 1) !== '-') {
       ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
     }
@@ -224,7 +222,7 @@ export class MoneroEngine {
 
     const date = Date.parse(tx.timestamp) / 1000
 
-    const edgeTransaction: EdgeTransaction = {
+    let edgeTransaction: EdgeTransaction = {
       txid: tx.hash,
       date,
       currencyCode: 'XMR',
@@ -253,23 +251,19 @@ export class MoneroEngine {
         this.walletLocalData.transactionsObj[PRIMARY_CURRENCY]
       const edgeTx = transactionsArray[idx]
 
-      if (edgeTransaction.blockHeight) {
-        // Only update old transactions if the incoming tx is confirmed
-        // Unconfirmed txs will sometimes have incorrect values
-        if (
-          edgeTx.blockHeight !== edgeTransaction.blockHeight ||
-          edgeTx.networkFee !== edgeTransaction.networkFee ||
-          edgeTx.nativeAmount !== edgeTransaction.nativeAmount
-        ) {
-          this.log(`Update transaction: ${tx.hash} height:${tx.blockNumber}`)
-          this.updateTransaction(PRIMARY_CURRENCY, edgeTransaction, idx)
-          this.edgeTxLibCallbacks.onTransactionsChanged(
-            this.transactionsChangedArray
-          )
-          this.transactionsChangedArray = []
-        } else {
-          // this.log(sprintf('Old transaction. No Update: %s', tx.hash))
+      if (edgeTx.blockHeight !== edgeTransaction.blockHeight) {
+        // The native amounts returned from the API take some time before they're accurate. We can trust the amounts we saved instead.
+        edgeTransaction = {
+          ...edgeTransaction,
+          nativeAmount: edgeTx.nativeAmount
         }
+
+        this.log(`Update transaction: ${tx.hash} height:${tx.blockNumber}`)
+        this.updateTransaction(PRIMARY_CURRENCY, edgeTransaction, idx)
+        this.edgeTxLibCallbacks.onTransactionsChanged(
+          this.transactionsChangedArray
+        )
+        this.transactionsChangedArray = []
       }
     }
   }
