@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.5.1 (2022-08-13)
+
+- fixed: Stop randomly crashing while sending funds.
+
 # 0.5.0 (2022-08-11)
 
 - changed: Upgrade to react-native-mymonero-core v0.2.0, with its new API.
