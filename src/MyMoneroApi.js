@@ -10,7 +10,6 @@ import type {
   Priority,
   SeedAndKeys
 } from 'react-native-mymonero-core'
-import { bridgifyObject, close } from 'yaob'
 
 const parserUtils = require('./mymonero-utils/ResponseParser.js')
 
@@ -224,7 +223,7 @@ export class MyMoneroApi {
     }
 
     // Make the transaction:
-    const args = bridgifyObject({
+    return await this.cppBridge.createTransaction({
       destinations: [
         {
           send_amount: amount,
@@ -241,11 +240,6 @@ export class MyMoneroApi {
       unspentOuts,
       randomOutsCb
     })
-    try {
-      return await this.cppBridge.createTransaction(args)
-    } finally {
-      close(args)
-    }
   }
 
   async broadcastTransaction(tx: string): Promise<void> {

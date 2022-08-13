@@ -16,7 +16,7 @@ import {
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
-import type { CppBridge } from 'react-native-mymonero-core'
+import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 import { parse, serialize } from 'uri-js'
 
 import { MyMoneroApi } from './MyMoneroApi.js'
@@ -211,7 +211,9 @@ export function makeMoneroPlugin(
 ): EdgeCurrencyPlugin {
   const { io, nativeIo, initOptions = { apiKey: '' } } = opts
 
-  const cppBridge: CppBridge = nativeIo['edge-currency-monero']
+  // Grab the raw C++ API and wrap it in argument parsing:
+  const cppModule = nativeIo['edge-currency-monero']
+  const cppBridge = new CppBridge(cppModule)
   const myMoneroApi = new MyMoneroApi(cppBridge, {
     apiKey: initOptions.apiKey,
     apiServer: 'https://edge.mymonero.com:8443',
