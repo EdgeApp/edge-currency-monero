@@ -210,18 +210,14 @@ export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
   const { io, nativeIo, initOptions = { apiKey: '' } } = opts
-  const cppBridge: CppBridge = nativeIo['edge-currency-monero']
 
-  const options = {
-    appUserAgentProduct: 'tester',
-    appUserAgentVersion: '0.0.1',
+  const cppBridge: CppBridge = nativeIo['edge-currency-monero']
+  const myMoneroApi = new MyMoneroApi(cppBridge, {
     apiKey: initOptions.apiKey,
     apiServer: 'https://edge.mymonero.com:8443',
     fetch: io.fetch,
-    randomBytes: io.random,
     nettype: 'MAINNET'
-  }
-  const myMoneroApi = new MyMoneroApi(cppBridge, options)
+  })
 
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
