@@ -209,10 +209,8 @@ export class MoneroEngine {
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
 
-    const netNativeAmount: string = bns.add(
-      bns.sub(tx.total_received, tx.total_sent),
-      nativeNetworkFee
-    )
+    const netNativeAmount: string = bns.sub(tx.total_received, tx.total_sent)
+
     if (netNativeAmount.slice(0, 1) !== '-') {
       ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
     }
