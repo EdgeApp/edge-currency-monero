@@ -1,6 +1,6 @@
 {
   "name": "edge-currency-monero",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Edge Monero currency plugin",
   "homepage": "https://edge.app",
   "repository": {
@@ -76,14 +76,14 @@
     "node-fetch": "^2.1.2",
     "nyc": "^11.3.0",
     "prettier": "^2.2.0",
-    "react-native-mymonero-core": "^0.2.0",
+    "react-native-mymonero-core": "^0.2.2",
     "rimraf": "^2.6.2",
     "sucrase": "^3.9.5",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3"
   },
   "peerDependencies": {
-    "react-native-mymonero-core": "^0.1.2"
+    "react-native-mymonero-core": "^0.2.2"
   },
   "react-native": "./lib/xmrIndex.js"
 }

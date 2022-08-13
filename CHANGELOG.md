@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.5.2 (2022-08-13)
+
+- fixed: incorrect amounts after spend
+
 # 0.5.1 (2022-08-13)
 
 - fixed: Stop randomly crashing while sending funds.

@@ -5374,10 +5374,10 @@ randomfill@^1.0.3:
     randombytes "^2.0.5"
     safe-buffer "^5.1.0"
 
-react-native-mymonero-core@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/react-native-mymonero-core/-/react-native-mymonero-core-0.2.0.tgz#9ac908f7afa3bbdb3dd48c2beb8f4903c4825fc8"
-  integrity sha512-Qbns5/MSPYCZlqvNCNySAfHJwWR7YY9DW6EKYfaGtzkIHTsKvr0QSanFS6YiadWJk9iPGv7FALpgVtD3wSbj7w==
+react-native-mymonero-core@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/react-native-mymonero-core/-/react-native-mymonero-core-0.2.2.tgz#f8a885c634b48541f80d6f49b2edb5d0fbf3d7e6"
+  integrity sha512-I0X6z64m79BgZxNN6IQ6nAukABXGORyCXB8Njbf/kuP+Ca2MSiy5kxbooJuRSv9Sbuba8mxSSs/PRgiiNoLf5w==
   dependencies:
     "@mymonero/mymonero-bigint" "^1.4.2"
     "@mymonero/mymonero-money-format" "^1.4.2"
