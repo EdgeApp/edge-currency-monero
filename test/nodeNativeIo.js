@@ -13,7 +13,7 @@ const bridge: any = {}
 for (const method of [
   'addressAndKeysFromSeed',
   'compareMnemonics',
-  'createTransaction',
+  'createAndSignTx',
   'decodeAddress',
   'estimateTxFee',
   'generateKeyImage',
@@ -24,11 +24,12 @@ for (const method of [
   'isValidKeys',
   'mnemonicFromSeed',
   'newIntegratedAddress',
+  'prepareTx',
   'seedAndKeysFromMnemonic'
 ]) {
   bridge[method] = async function (...args) {
     const bridge = await bridgePromise
-    return bridge[method](...args)
+    return bridge.Module[method](...args)
   }
 }
 

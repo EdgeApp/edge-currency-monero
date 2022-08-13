@@ -22,9 +22,12 @@ import {
   NoAmountSpecifiedError,
   PendingFundsError
 } from 'edge-core-js/types'
-import type { CreatedTransaction } from 'react-native-mymonero-core'
+import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
-import type { MyMoneroApi } from './MyMoneroApi.js'
+import {
+  type CreateTransactionOptions,
+  type MyMoneroApi
+} from './MyMoneroApi.js'
 import {
   cleanTxLogs,
   makeMutex,
@@ -44,7 +47,7 @@ const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
 const makeSpendMutex = makeMutex()
 
-class MoneroEngine {
+export class MoneroEngine {
   walletInfo: EdgeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
   walletLocalDisklet: Disklet
@@ -66,14 +69,14 @@ class MoneroEngine {
 
   constructor(
     currencyPlugin: EdgeCurrencyTools,
-    io_: any,
+    io: EdgeIo,
     walletInfo: EdgeWalletInfo,
     myMoneroApi: MyMoneroApi,
     opts: EdgeCurrencyEngineOptions
   ) {
     const { walletLocalDisklet, callbacks } = opts
 
-    this.io = io_
+    this.io = io
     this.log = opts.log
     this.engineOn = false
     this.loggedIn = false
@@ -622,59 +625,18 @@ class MoneroEngine {
 
   // synchronous
   async makeSpendInner(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    // Validate the spendInfo
-    const valid = validateObject(edgeSpendInfo, {
-      type: 'object',
-      properties: {
-        currencyCode: { type: 'string' },
-        networkFeeOption: { type: 'string' },
-        spendTargets: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              currencyCode: { type: 'string' },
-              publicAddress: { type: 'string' },
-              nativeAmount: { type: 'string' },
-              destMetadata: { type: 'object' },
-              destWallet: { type: 'object' }
-            },
-            required: ['publicAddress']
-          }
-        }
-      },
-      required: ['spendTargets']
-    })
-
-    if (!valid) {
-      throw new Error('Error: invalid ABCSpendInfo')
-    }
-
     // Monero can only have one output
     // TODO: The new SDK fixes this!
     if (edgeSpendInfo.spendTargets.length !== 1) {
       throw new Error('Error: only one output allowed')
     }
 
-    const currencyCode: string = 'XMR'
-    // }
-    edgeSpendInfo.currencyCode = currencyCode
-
-    let publicAddress = ''
-    if (typeof edgeSpendInfo.spendTargets[0].publicAddress === 'string') {
-      publicAddress = edgeSpendInfo.spendTargets[0].publicAddress
-    } else {
-      throw new Error('No valid spendTarget')
+    const [spendTarget] = edgeSpendInfo.spendTargets
+    const { publicAddress, nativeAmount } = spendTarget
+    if (publicAddress == null) {
+      throw new TypeError('Missing destination address')
     }
-
-    let nativeAmount = '0'
-    if (typeof edgeSpendInfo.spendTargets[0].nativeAmount === 'string') {
-      nativeAmount = edgeSpendInfo.spendTargets[0].nativeAmount
-    } else {
-      throw new Error('Error: no amount specified')
-    }
-
-    if (bns.eq(nativeAmount, '0')) {
+    if (nativeAmount == null || bns.eq(nativeAmount, '0')) {
       throw new NoAmountSpecifiedError()
     }
 
@@ -686,30 +648,16 @@ class MoneroEngine {
       }
     }
 
-    let priority = 2
-    // Fee estimates
-    if (edgeSpendInfo.networkFeeOption) {
-      switch (edgeSpendInfo.networkFeeOption) {
-        case 'low':
-          priority = 1
-          break
-        case 'standard':
-          priority = 2
-          break
-        case 'high':
-          priority = 4
-          break
-      }
+    const options: CreateTransactionOptions = {
+      amount: bns.div(nativeAmount, '1000000000000', 12),
+      isSweepTx: false, // TODO: The new SDK supports max-spend
+      priority: translateFee(edgeSpendInfo.networkFeeOption),
+      targetAddress: publicAddress
     }
+    this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 
     let result: CreatedTransaction
     try {
-      const amountFloatString: string = bns.div(
-        nativeAmount,
-        '1000000000000',
-        12
-      )
-
       result = await this.myMoneroApi.createTransaction(
         {
           address: this.walletLocalData.moneroAddress,
@@ -717,12 +665,7 @@ class MoneroEngine {
           privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
           publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
         },
-        {
-          amount: amountFloatString,
-          isSweepTx: false, // TODO: The new SDK supports max-spend
-          priority,
-          targetAddress: publicAddress
-        }
+        options
       )
     } catch (e) {
       // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
@@ -735,10 +678,11 @@ class MoneroEngine {
 
     const date = Date.now() / 1000
 
+    this.log(`Total sent: ${result.total_sent}, Fee: ${result.used_fee}`)
     const edgeTransaction: EdgeTransaction = {
       txid: result.tx_hash,
       date,
-      currencyCode, // currencyCode
+      currencyCode: 'XMR', // currencyCode
       blockHeight: 0, // blockHeight
       nativeAmount: '-' + result.total_sent,
       networkFee: result.used_fee,
@@ -805,4 +749,8 @@ class MoneroEngine {
   }
 }
 
-export { MoneroEngine }
+function translateFee(fee?: string): Priority {
+  if (fee === 'low') return 1
+  if (fee === 'high') return 4
+  return 2
+}
