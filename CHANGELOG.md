@@ -1,8 +1,12 @@
 # edge-currency-monero
 
+# 0.5.3 (2022-08-26)
+
+- changed: Update spending constants to match upstream MyMonero SDK.
+
 # 0.5.2 (2022-08-13)
 
-- fixed: incorrect amounts after spend
+- fixed: Incorrect amounts after spend.
 
 # 0.5.1 (2022-08-13)
 
