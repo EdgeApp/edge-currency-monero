@@ -206,7 +206,7 @@ export class MyMoneroApi {
       amount: '0',
       api_key: this.apiKey,
       dust_threshold: '2000000000',
-      mixin: 10,
+      mixin: 15,
       use_dust: true,
       view_key: privateViewKey
     })
@@ -218,7 +218,7 @@ export class MyMoneroApi {
       return await this.fetchPostMyMonero('get_random_outs', {
         amounts,
         api_key: this.apiKey,
-        count: 11
+        count: 16
       })
     }
 
