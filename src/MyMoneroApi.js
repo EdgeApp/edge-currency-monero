@@ -45,6 +45,7 @@ export type LoginResult = {
 export type CreateTransactionOptions = {
   amount: string,
   isSweepTx?: boolean,
+  paymentId?: string,
   priority?: Priority,
   targetAddress: string
 }
@@ -198,7 +199,13 @@ export class MyMoneroApi {
     opts: CreateTransactionOptions
   ): Promise<CreatedTransaction> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
-    const { amount, isSweepTx = false, priority = 1, targetAddress } = opts
+    const {
+      amount,
+      isSweepTx = false,
+      paymentId,
+      priority = 1,
+      targetAddress
+    } = opts
 
     // Grab the UTXO set:
     const unspentOuts = await this.fetchPostMyMonero('get_unspent_outs', {
@@ -232,6 +239,7 @@ export class MyMoneroApi {
       ],
       priority,
       address,
+      paymentId,
       privateViewKey,
       publicSpendKey,
       privateSpendKey,
