@@ -619,23 +619,30 @@ export class MoneroEngine {
 
   // synchronous
   async makeSpendInner(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    // Monero can only have one output
-    // TODO: The new SDK fixes this!
-    if (edgeSpendInfo.spendTargets.length !== 1) {
-      throw new Error('Error: only one output allowed')
-    }
+    let totalNativeAmount = '0'
+    const { spendTargets } = edgeSpendInfo
+    const targets = spendTargets.map(spendTarget => {
+      const { publicAddress, nativeAmount } = spendTarget
+      if (publicAddress == null) {
+        throw new TypeError('Missing destination address')
+      }
+      if (nativeAmount == null || bns.eq(nativeAmount, '0')) {
+        throw new NoAmountSpecifiedError()
+      }
+      totalNativeAmount = bns.add(totalNativeAmount, nativeAmount)
 
-    const [spendTarget] = edgeSpendInfo.spendTargets
-    const { publicAddress, nativeAmount } = spendTarget
-    if (publicAddress == null) {
-      throw new TypeError('Missing destination address')
-    }
-    if (nativeAmount == null || bns.eq(nativeAmount, '0')) {
+      return {
+        amount: bns.div(nativeAmount, '1000000000000', 12),
+        address: publicAddress
+      }
+    })
+
+    if (bns.eq(totalNativeAmount, '0')) {
       throw new NoAmountSpecifiedError()
     }
 
-    if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
-      if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
+    if (bns.gte(totalNativeAmount, this.walletLocalData.totalBalances.XMR)) {
+      if (bns.gte(this.walletLocalData.lockedXmrBalance, totalNativeAmount)) {
         throw new PendingFundsError()
       } else {
         throw new InsufficientFundsError()
@@ -643,10 +650,9 @@ export class MoneroEngine {
     }
 
     const options: CreateTransactionOptions = {
-      amount: bns.div(nativeAmount, '1000000000000', 12),
+      targets,
       isSweepTx: false, // TODO: The new SDK supports max-spend
-      priority: translateFee(edgeSpendInfo.networkFeeOption),
-      targetAddress: publicAddress
+      priority: translateFee(edgeSpendInfo.networkFeeOption)
     }
     this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 
@@ -705,7 +711,13 @@ export class MoneroEngine {
       this.log.error(
         `broadcastTx failed: ${String(e)} ${cleanTxLogs(edgeTransaction)}`
       )
-      throw e
+      if (e instanceof Error && e.message.includes(' 422 ')) {
+        throw new Error(
+          'The Monero network rejected this transaction. You may need to wait for more confirmations'
+        )
+      } else {
+        throw e
+      }
     }
   }
 
