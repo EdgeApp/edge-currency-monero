@@ -705,7 +705,13 @@ export class MoneroEngine {
       this.log.error(
         `broadcastTx failed: ${String(e)} ${cleanTxLogs(edgeTransaction)}`
       )
-      throw e
+      if (e instanceof Error && e.message.includes(' 422 ')) {
+        throw new Error(
+          'The Monero network rejected this transaction. You may need to wait for more confirmations'
+        )
+      } else {
+        throw e
+      }
     }
   }
 
