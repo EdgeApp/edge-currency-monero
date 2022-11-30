@@ -383,9 +383,6 @@ export class MoneroEngine {
   doInitialCallbacks() {
     for (const currencyCode of this.walletLocalData.enabledTokens) {
       try {
-        this.edgeTxLibCallbacks.onTransactionsChanged(
-          this.walletLocalData.transactionsObj[currencyCode]
-        )
         this.edgeTxLibCallbacks.onBalanceChanged(
           currencyCode,
           this.walletLocalData.totalBalances[currencyCode]
