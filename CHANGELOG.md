@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.5.4 (2022-11-30)
+
+- Reduce transaction changed callbacks on wallet initialization
+
 # 0.5.3 (2022-08-26)
 
 - changed: Update spending constants to match upstream MyMonero SDK.
