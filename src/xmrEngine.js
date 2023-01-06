@@ -231,7 +231,8 @@ export class MoneroEngine {
       networkFee: nativeNetworkFee,
       ourReceiveAddresses,
       signedTx: '',
-      otherParams: {}
+      otherParams: {},
+      walletId: this.walletId
     }
 
     const idx = this.findTransaction(PRIMARY_CURRENCY, tx.hash)
@@ -414,7 +415,7 @@ export class MoneroEngine {
   // Public methods
   // *************************************
 
-  async changeUserSettings(userSettings: Object): Promise<mixed> {
+  async changeUserSettings(userSettings: Object): Promise<void> {
     this.currentSettings = userSettings
   }
 
@@ -594,7 +595,7 @@ export class MoneroEngine {
   }
 
   // synchronous
-  getFreshAddress(options: any): EdgeFreshAddress {
+  async getFreshAddress(options: any): Promise<EdgeFreshAddress> {
     if (this.walletLocalData.hasLoggedIn) {
       return { publicAddress: this.walletLocalData.moneroAddress }
     } else {
@@ -603,10 +604,10 @@ export class MoneroEngine {
   }
 
   // synchronous
-  addGapLimitAddresses(addresses: string[], options: any) {}
+  async addGapLimitAddresses(addresses: string[], options: any) {}
 
   // synchronous
-  isAddressUsed(address: string, options: any) {
+  async isAddressUsed(address: string, options: any) {
     return false
   }
 
@@ -679,7 +680,8 @@ export class MoneroEngine {
       networkFee: result.used_fee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: result.serialized_signed_tx,
-      txSecret: result.tx_key
+      txSecret: result.tx_key,
+      walletId: this.walletId
     }
     this.log.warn(`makeSpend edgeTransaction ${cleanTxLogs(edgeTransaction)}`)
     return edgeTransaction
@@ -733,7 +735,7 @@ export class MoneroEngine {
     return ''
   }
 
-  dumpData(): EdgeDataDump {
+  async dumpData(): Promise<EdgeDataDump> {
     const dataDump: EdgeDataDump = {
       walletId: this.walletId.split(' - ')[0],
       walletType: this.walletInfo.type,
