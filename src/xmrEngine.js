@@ -611,6 +611,31 @@ export class MoneroEngine {
     return false
   }
 
+  async createMyMoneroTransaction(
+    options: CreateTransactionOptions
+  ): Promise<CreatedTransaction> {
+    let result: CreatedTransaction
+    try {
+      result = await this.myMoneroApi.createTransaction(
+        {
+          address: this.walletLocalData.moneroAddress,
+          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        },
+        options
+      )
+    } catch (e) {
+      // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
+      this.log.error(e.message)
+      const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
+      const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
+      const msgFormatted = e.message.replace(regex, subst)
+      throw new Error(msgFormatted)
+    }
+    return result
+  }
+
   async makeSpend(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
     return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo))
   }
@@ -648,25 +673,9 @@ export class MoneroEngine {
     }
     this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 
-    let result: CreatedTransaction
-    try {
-      result = await this.myMoneroApi.createTransaction(
-        {
-          address: this.walletLocalData.moneroAddress,
-          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
-        },
-        options
-      )
-    } catch (e) {
-      // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
-      this.log.error(e.message)
-      const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
-      const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
-      const msgFormatted = e.message.replace(regex, subst)
-      throw new Error(msgFormatted)
-    }
+    const result: CreatedTransaction = await this.createMyMoneroTransaction(
+      options
+    )
 
     const date = Date.now() / 1000
 
