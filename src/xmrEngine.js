@@ -611,12 +611,29 @@ export class MoneroEngine {
     return false
   }
 
+  async getMaxSpendable(edgeSpendInfo: EdgeSpendInfo): Promise<string> {
+    const [spendTarget] = edgeSpendInfo.spendTargets
+    const { publicAddress } = spendTarget
+    if (publicAddress == null) {
+      throw new TypeError('Missing destination address')
+    }
+
+    const options = {
+      amount: '0',
+      isSweepTx: true,
+      priority: translateFee(edgeSpendInfo.networkFeeOption),
+      targetAddress: publicAddress
+    }
+
+    const result = await this.createMyMoneroTransaction(options)
+    return result.final_total_wo_fee
+  }
+
   async createMyMoneroTransaction(
     options: CreateTransactionOptions
   ): Promise<CreatedTransaction> {
-    let result: CreatedTransaction
     try {
-      result = await this.myMoneroApi.createTransaction(
+      return await this.myMoneroApi.createTransaction(
         {
           address: this.walletLocalData.moneroAddress,
           privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
@@ -633,7 +650,6 @@ export class MoneroEngine {
       const msgFormatted = e.message.replace(regex, subst)
       throw new Error(msgFormatted)
     }
-    return result
   }
 
   async makeSpend(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
@@ -667,7 +683,7 @@ export class MoneroEngine {
 
     const options: CreateTransactionOptions = {
       amount: bns.div(nativeAmount, '1000000000000', 12),
-      isSweepTx: false, // TODO: The new SDK supports max-spend
+      isSweepTx: false,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
       targetAddress: publicAddress
     }
