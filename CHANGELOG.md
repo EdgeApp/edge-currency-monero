@@ -1,5 +1,11 @@
 # edge-currency-monero
 
+# 0.5.5 (2023-01-10)
+
+- Add `getMaxSpendable`
+- Upgrade edge-core-js to v0.19.36
+- Upgrade react-native-mymonero-core to v0.2.7
+
 # 0.5.4 (2022-11-30)
 
 - Reduce transaction changed callbacks on wallet initialization
