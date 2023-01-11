@@ -24,7 +24,7 @@
   ],
   "scripts": {
     "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
-    "fix": "npm run lint -- --fix",
+    "fix": "npm run lint -- --fix && yarn-deduplicate",
     "flow": "flow",
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run build",
@@ -60,7 +60,7 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.5",
     "chai": "^4.1.2",
-    "edge-core-js": "^0.17.33",
+    "edge-core-js": "^0.19.36",
     "eslint": "^7.14.0",
     "eslint-config-standard-kit": "0.15.1",
     "eslint-plugin-flowtype": "^5.2.0",
@@ -76,14 +76,15 @@
     "node-fetch": "^2.1.2",
     "nyc": "^11.3.0",
     "prettier": "^2.2.0",
-    "react-native-mymonero-core": "^0.2.4",
+    "react-native-mymonero-core": "^0.2.7",
     "rimraf": "^2.6.2",
     "sucrase": "^3.9.5",
     "webpack": "^4.29.3",
-    "webpack-cli": "^3.2.3"
+    "webpack-cli": "^3.2.3",
+    "yarn-deduplicate": "^6.0.1"
   },
   "peerDependencies": {
-    "react-native-mymonero-core": "^0.2.2"
+    "react-native-mymonero-core": "^0.2.7"
   },
   "react-native": "./lib/xmrIndex.js"
 }

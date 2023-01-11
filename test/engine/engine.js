@@ -65,6 +65,10 @@ for (const fixture of fixtures) {
     onTransactionsChanged(transactionList) {
       // console.log('onTransactionsChanged:', transactionList)
       emitter.emit('onTransactionsChanged', transactionList)
+    },
+    onStakingStatusChanged() {},
+    onWcNewContractCall(payload) {
+      emitter.emit('wcNewContractCall', payload)
     }
   }
 
@@ -72,6 +76,8 @@ for (const fixture of fixtures) {
   const walletLocalFolder = downgradeDisklet(walletLocalDisklet)
   const currencyEngineOptions: EdgeCurrencyEngineOptions = {
     callbacks,
+    customTokens: {},
+    enabledTokenIds: [],
     log: fakeLog,
     walletLocalDisklet,
     walletLocalEncryptedDisklet: walletLocalDisklet,

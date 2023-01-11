@@ -231,7 +231,8 @@ export class MoneroEngine {
       networkFee: nativeNetworkFee,
       ourReceiveAddresses,
       signedTx: '',
-      otherParams: {}
+      otherParams: {},
+      walletId: this.walletId
     }
 
     const idx = this.findTransaction(PRIMARY_CURRENCY, tx.hash)
@@ -414,7 +415,7 @@ export class MoneroEngine {
   // Public methods
   // *************************************
 
-  async changeUserSettings(userSettings: Object): Promise<mixed> {
+  async changeUserSettings(userSettings: Object): Promise<void> {
     this.currentSettings = userSettings
   }
 
@@ -594,7 +595,7 @@ export class MoneroEngine {
   }
 
   // synchronous
-  getFreshAddress(options: any): EdgeFreshAddress {
+  async getFreshAddress(options: any): Promise<EdgeFreshAddress> {
     if (this.walletLocalData.hasLoggedIn) {
       return { publicAddress: this.walletLocalData.moneroAddress }
     } else {
@@ -603,11 +604,52 @@ export class MoneroEngine {
   }
 
   // synchronous
-  addGapLimitAddresses(addresses: string[], options: any) {}
+  async addGapLimitAddresses(addresses: string[], options: any) {}
 
   // synchronous
-  isAddressUsed(address: string, options: any) {
+  async isAddressUsed(address: string, options: any) {
     return false
+  }
+
+  async getMaxSpendable(edgeSpendInfo: EdgeSpendInfo): Promise<string> {
+    const [spendTarget] = edgeSpendInfo.spendTargets
+    const { publicAddress } = spendTarget
+    if (publicAddress == null) {
+      throw new TypeError('Missing destination address')
+    }
+
+    const options = {
+      amount: '0',
+      isSweepTx: true,
+      priority: translateFee(edgeSpendInfo.networkFeeOption),
+      targetAddress: publicAddress
+    }
+
+    const result = await this.createMyMoneroTransaction(options)
+    return result.final_total_wo_fee
+  }
+
+  async createMyMoneroTransaction(
+    options: CreateTransactionOptions
+  ): Promise<CreatedTransaction> {
+    try {
+      return await this.myMoneroApi.createTransaction(
+        {
+          address: this.walletLocalData.moneroAddress,
+          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
+          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        },
+        options
+      )
+    } catch (e) {
+      // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
+      this.log.error(e.message)
+      const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
+      const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
+      const msgFormatted = e.message.replace(regex, subst)
+      throw new Error(msgFormatted)
+    }
   }
 
   async makeSpend(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
@@ -641,31 +683,15 @@ export class MoneroEngine {
 
     const options: CreateTransactionOptions = {
       amount: bns.div(nativeAmount, '1000000000000', 12),
-      isSweepTx: false, // TODO: The new SDK supports max-spend
+      isSweepTx: false,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
       targetAddress: publicAddress
     }
     this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 
-    let result: CreatedTransaction
-    try {
-      result = await this.myMoneroApi.createTransaction(
-        {
-          address: this.walletLocalData.moneroAddress,
-          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
-        },
-        options
-      )
-    } catch (e) {
-      // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
-      this.log.error(e.message)
-      const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
-      const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
-      const msgFormatted = e.message.replace(regex, subst)
-      throw new Error(msgFormatted)
-    }
+    const result: CreatedTransaction = await this.createMyMoneroTransaction(
+      options
+    )
 
     const date = Date.now() / 1000
 
@@ -679,7 +705,8 @@ export class MoneroEngine {
       networkFee: result.used_fee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: result.serialized_signed_tx,
-      txSecret: result.tx_key
+      txSecret: result.tx_key,
+      walletId: this.walletId
     }
     this.log.warn(`makeSpend edgeTransaction ${cleanTxLogs(edgeTransaction)}`)
     return edgeTransaction
@@ -733,7 +760,7 @@ export class MoneroEngine {
     return ''
   }
 
-  dumpData(): EdgeDataDump {
+  async dumpData(): Promise<EdgeDataDump> {
     const dataDump: EdgeDataDump = {
       walletId: this.walletId.split(' - ')[0],
       walletType: this.walletInfo.type,
