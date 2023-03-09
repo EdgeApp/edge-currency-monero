@@ -65,10 +65,10 @@ export class MoneroEngine {
   walletId: string
   io: EdgeIo
   log: EdgeLog
-  currencyPlugin: EdgeCurrencyTools
+  currencyTools: EdgeCurrencyTools
 
   constructor(
-    currencyPlugin: EdgeCurrencyTools,
+    currencyTools: EdgeCurrencyTools,
     io: EdgeIo,
     walletInfo: EdgeWalletInfo,
     myMoneroApi: MyMoneroApi,
@@ -86,7 +86,7 @@ export class MoneroEngine {
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
     this.currencyInfo = currencyInfo
-    this.currencyPlugin = currencyPlugin
+    this.currencyTools = currencyTools
     this.myMoneroApi = myMoneroApi
 
     this.allTokens = currencyInfo.metaTokens.slice(0)
@@ -116,7 +116,7 @@ export class MoneroEngine {
       typeof this.walletInfo.keys.moneroViewKeyPublic !== 'string' ||
       typeof this.walletInfo.keys.moneroSpendKeyPublic !== 'string'
     ) {
-      const pubKeys = await this.currencyPlugin.derivePublicKey(this.walletInfo)
+      const pubKeys = await this.currencyTools.derivePublicKey(this.walletInfo)
       this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
       this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
       this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
