@@ -17,7 +17,11 @@ import { makeMoneroTools } from './MoneroTools.js'
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
-import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
+import {
+  asSafeWalletInfo,
+  DATA_STORE_FILE,
+  WalletLocalData
+} from './xmrTypes.js'
 
 export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
@@ -45,11 +49,13 @@ export function makeMoneroPlugin(
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ): Promise<EdgeCurrencyEngine> {
+    const safeWalletInfo = asSafeWalletInfo(walletInfo)
+
     const tools: EdgeCurrencyTools = await makeCurrencyTools()
     const moneroEngine = new MoneroEngine(
       tools,
       io,
-      walletInfo,
+      safeWalletInfo,
       myMoneroApi,
       opts
     )

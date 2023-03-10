@@ -25,7 +25,8 @@ import fixtures from './fixtures.json'
 // const DATA_STORE_FOLDER = 'txEngineFolderBTC'
 
 for (const fixture of fixtures) {
-  let keys
+  let safeInfo: EdgeWalletInfo
+  let unsafeInfo: EdgeWalletInfo
   let engine: EdgeCurrencyEngine
   let tools: EdgeCurrencyTools
 
@@ -66,6 +67,7 @@ for (const fixture of fixtures) {
       // console.log('onTransactionsChanged:', transactionList)
       emitter.emit('onTransactionsChanged', transactionList)
     },
+    onUnactivatedTokenIdsChanged() {},
     onStakingStatusChanged() {},
     onWcNewContractCall(payload) {
       emitter.emit('wcNewContractCall', payload)
@@ -93,13 +95,22 @@ for (const fixture of fixtures) {
         fixture['Test Currency code']
       )
       tools = await plugin.makeCurrencyTools()
-      keys = await tools.createPrivateKey(WALLET_TYPE)
-      const info: EdgeWalletInfo = {
+
+      const unsafeKeys = await tools.createPrivateKey(WALLET_TYPE)
+      unsafeInfo = {
         id: '1',
         type: WALLET_TYPE,
-        keys
+        keys: unsafeKeys
       }
-      keys = { ...keys, ...(await tools.derivePublicKey(info)) }
+
+      const safeKeys = await tools.derivePublicKey(unsafeInfo)
+      safeInfo = {
+        id: '1',
+        type: WALLET_TYPE,
+        keys: safeKeys
+      }
+
+      Object.assign(unsafeKeys, { ...unsafeKeys, ...safeKeys })
     })
   })
 
@@ -125,45 +136,46 @@ for (const fixture of fixtures) {
     // })
 
     it('Make Engine', function () {
-      const info: EdgeWalletInfo = {
-        id: '1',
-        type: WALLET_TYPE,
-        keys
-      }
-      return plugin.makeCurrencyEngine(info, currencyEngineOptions).then(e => {
-        engine = e
-        assert.equal(typeof engine.startEngine, 'function', 'startEngine')
-        assert.equal(typeof engine.killEngine, 'function', 'killEngine')
-        // assert.equal(typeof engine.enableTokens, 'function', 'enableTokens')
-        assert.equal(typeof engine.getBlockHeight, 'function', 'getBlockHeight')
-        assert.equal(typeof engine.getBalance, 'function', 'getBalance')
-        assert.equal(
-          typeof engine.getNumTransactions,
-          'function',
-          'getNumTransactions'
-        )
-        assert.equal(
-          typeof engine.getTransactions,
-          'function',
-          'getTransactions'
-        )
-        assert.equal(
-          typeof engine.getFreshAddress,
-          'function',
-          'getFreshAddress'
-        )
-        assert.equal(
-          typeof engine.addGapLimitAddresses,
-          'function',
-          'addGapLimitAddresses'
-        )
-        assert.equal(typeof engine.isAddressUsed, 'function', 'isAddressUsed')
-        assert.equal(typeof engine.makeSpend, 'function', 'makeSpend')
-        assert.equal(typeof engine.signTx, 'function', 'signTx')
-        assert.equal(typeof engine.broadcastTx, 'function', 'broadcastTx')
-        assert.equal(typeof engine.saveTx, 'function', 'saveTx')
-        return true
-      })
+      return plugin
+        .makeCurrencyEngine(safeInfo, currencyEngineOptions)
+        .then(e => {
+          engine = e
+          assert.equal(typeof engine.startEngine, 'function', 'startEngine')
+          assert.equal(typeof engine.killEngine, 'function', 'killEngine')
+          // assert.equal(typeof engine.enableTokens, 'function', 'enableTokens')
+          assert.equal(
+            typeof engine.getBlockHeight,
+            'function',
+            'getBlockHeight'
+          )
+          assert.equal(typeof engine.getBalance, 'function', 'getBalance')
+          assert.equal(
+            typeof engine.getNumTransactions,
+            'function',
+            'getNumTransactions'
+          )
+          assert.equal(
+            typeof engine.getTransactions,
+            'function',
+            'getTransactions'
+          )
+          assert.equal(
+            typeof engine.getFreshAddress,
+            'function',
+            'getFreshAddress'
+          )
+          assert.equal(
+            typeof engine.addGapLimitAddresses,
+            'function',
+            'addGapLimitAddresses'
+          )
+          assert.equal(typeof engine.isAddressUsed, 'function', 'isAddressUsed')
+          assert.equal(typeof engine.makeSpend, 'function', 'makeSpend')
+          assert.equal(typeof engine.signTx, 'function', 'signTx')
+          assert.equal(typeof engine.broadcastTx, 'function', 'broadcastTx')
+          assert.equal(typeof engine.saveTx, 'function', 'saveTx')
+          return true
+        })
     })
   })
 
@@ -256,6 +268,7 @@ for (const fixture of fixtures) {
 
   describe('Start engine', function () {
     it('Get BlockHeight', function (done) {
+      let finished = false
       this.timeout(10000)
       // request.get(
       //   'https://api.etherscan.io/api?module=proxy&action=eth_blockNumber',
@@ -265,11 +278,21 @@ for (const fixture of fixtures) {
         const thirdPartyHeight = 1578127
         assert(height >= thirdPartyHeight, 'Block height')
         assert(engine.getBlockHeight() >= thirdPartyHeight, 'Block height')
+        finished = true
         done() // Can be "done" since the promise resolves before the event fires but just be on the safe side
       })
       engine.startEngine().catch(e => {
         console.log('startEngine error', e, e.message)
       })
+      const sync = async () => {
+        if (engine.syncNetwork != null) {
+          const delay = await engine.syncNetwork({
+            privateKeys: unsafeInfo.keys
+          })
+          if (!finished) setTimeout(() => sync(), delay)
+        }
+      }
+      sync().catch(console.error)
       //   }
       // )
     })
