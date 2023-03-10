@@ -35,7 +35,11 @@ import {
   validateObject
 } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
-import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
+import {
+  DATA_STORE_FILE,
+  makeSafeWalletInfo,
+  WalletLocalData
+} from './xmrTypes.js'
 
 const ADDRESS_POLL_MILLISECONDS = 7000
 const TRANSACTIONS_POLL_MILLISECONDS = 4000
@@ -110,17 +114,13 @@ export class MoneroEngine {
   }
 
   async init() {
-    if (
-      typeof this.walletInfo.keys.moneroAddress !== 'string' ||
-      typeof this.walletInfo.keys.moneroViewKeyPrivate !== 'string' ||
-      typeof this.walletInfo.keys.moneroViewKeyPublic !== 'string' ||
-      typeof this.walletInfo.keys.moneroSpendKeyPublic !== 'string'
-    ) {
-      const pubKeys = await this.currencyTools.derivePublicKey(this.walletInfo)
-      this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
-      this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
-      this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
-      this.walletInfo.keys.moneroSpendKeyPublic = pubKeys.moneroSpendKeyPublic
+    const safeWalletInfo = await makeSafeWalletInfo(
+      this.currencyTools,
+      this.walletInfo
+    )
+    this.walletInfo.keys = {
+      ...this.walletInfo.keys,
+      ...safeWalletInfo.keys
     }
   }
 
