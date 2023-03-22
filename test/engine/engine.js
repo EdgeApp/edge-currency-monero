@@ -99,7 +99,7 @@ for (const fixture of fixtures) {
         type: WALLET_TYPE,
         keys
       }
-      keys = await tools.derivePublicKey(info)
+      keys = { ...keys, ...(await tools.derivePublicKey(info)) }
     })
   })
 
