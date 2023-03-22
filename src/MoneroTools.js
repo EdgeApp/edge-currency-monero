@@ -13,6 +13,7 @@ import { parse, serialize } from 'uri-js'
 
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { currencyInfo } from './xmrInfo.js'
+import { type PrivateKeys, type PublicKeys } from './xmrTypes.js'
 
 type InitOptions = {
   apiKey: string
@@ -51,11 +52,12 @@ export async function makeMoneroTools(
 
       if (type === 'monero') {
         const result = await myMoneroApi.generateWallet()
-        return {
+        const privateKeys: PrivateKeys = {
           moneroKey: result.mnemonic,
           moneroSpendKeyPrivate: result.privateSpendKey,
           moneroSpendKeyPublic: result.publicSpendKey
         }
+        return privateKeys
       } else {
         throw new Error('InvalidWalletType')
       }
@@ -67,12 +69,13 @@ export async function makeMoneroTools(
         const result = await myMoneroApi.seedAndKeysFromMnemonic(
           walletInfo.keys.moneroKey
         )
-        return {
+        const publicKeys: PublicKeys = {
           moneroAddress: result.address,
           moneroViewKeyPrivate: result.privateViewKey,
           moneroViewKeyPublic: result.publicViewKey,
           moneroSpendKeyPublic: result.publicSpendKey
         }
+        return publicKeys
       } else {
         throw new Error('InvalidWalletType')
       }

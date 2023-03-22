@@ -3,7 +3,8 @@
  */
 // @flow
 
-import { type EdgeTransaction } from 'edge-core-js/types'
+import { asObject, asString } from 'cleaners'
+import { type EdgeTransaction } from 'edge-core-js'
 
 import { currencyInfo } from './xmrInfo.js'
 
@@ -90,3 +91,18 @@ export class WalletLocalData {
     }
   }
 }
+
+export const asPrivateKeys = asObject({
+  moneroKey: asString,
+  moneroSpendKeyPrivate: asString,
+  moneroSpendKeyPublic: asString
+})
+export type PrivateKeys = $Call<typeof asPrivateKeys>
+
+export const asPublicKeys = asObject({
+  moneroAddress: asString,
+  moneroViewKeyPrivate: asString,
+  moneroViewKeyPublic: asString,
+  moneroSpendKeyPublic: asString
+})
+export type PublicKeys = $Call<typeof asPublicKeys>
