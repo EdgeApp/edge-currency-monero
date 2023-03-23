@@ -48,8 +48,7 @@
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
     "jsonschema": "^1.1.1",
-    "uri-js": "^3.0.2",
-    "yaob": "^0.3.7"
+    "uri-js": "^3.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
