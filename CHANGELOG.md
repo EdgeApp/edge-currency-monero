@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 0.6.0 (2023-03-28)
+
+- changed: Allow engine to run without private keys
+
 # 0.5.5 (2023-01-10)
 
 - Add `getMaxSpendable`
