@@ -11,6 +11,7 @@ import {
   type EdgeCurrencyInfo,
   type EdgeCurrencyTools,
   type EdgeDataDump,
+  type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
   type EdgeIo,
   type EdgeLog,
@@ -18,6 +19,7 @@ import {
   type EdgeSpendInfo,
   type EdgeTransaction,
   type EdgeWalletInfo,
+  type JsonObject,
   InsufficientFundsError,
   NoAmountSpecifiedError,
   PendingFundsError
@@ -35,10 +37,16 @@ import {
   validateObject
 } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
-import { DATA_STORE_FILE, WalletLocalData } from './xmrTypes.js'
+import {
+  type PrivateKeys,
+  type SafeWalletInfo,
+  asPrivateKeys,
+  DATA_STORE_FILE,
+  makeSafeWalletInfo,
+  WalletLocalData
+} from './xmrTypes.js'
 
-const ADDRESS_POLL_MILLISECONDS = 7000
-const TRANSACTIONS_POLL_MILLISECONDS = 4000
+const SYNC_INTERVAL_MILLISECONDS = 5000
 const SAVE_DATASTORE_MILLISECONDS = 10000
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = '8' // ~ 2 minutes
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = (4 * 60 * 24 * 7) // ~ one week
@@ -48,7 +56,7 @@ const PRIMARY_CURRENCY = currencyInfo.currencyCode
 const makeSpendMutex = makeMutex()
 
 export class MoneroEngine {
-  walletInfo: EdgeWalletInfo
+  walletInfo: SafeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
   walletLocalDisklet: Disklet
   engineOn: boolean
@@ -65,12 +73,12 @@ export class MoneroEngine {
   walletId: string
   io: EdgeIo
   log: EdgeLog
-  currencyPlugin: EdgeCurrencyTools
+  currencyTools: EdgeCurrencyTools
 
   constructor(
-    currencyPlugin: EdgeCurrencyTools,
+    currencyTools: EdgeCurrencyTools,
     io: EdgeIo,
-    walletInfo: EdgeWalletInfo,
+    walletInfo: SafeWalletInfo,
     myMoneroApi: MyMoneroApi,
     opts: EdgeCurrencyEngineOptions
   ) {
@@ -86,7 +94,7 @@ export class MoneroEngine {
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
     this.currencyInfo = currencyInfo
-    this.currencyPlugin = currencyPlugin
+    this.currencyTools = currencyTools
     this.myMoneroApi = myMoneroApi
 
     this.allTokens = currencyInfo.metaTokens.slice(0)
@@ -110,17 +118,13 @@ export class MoneroEngine {
   }
 
   async init() {
-    if (
-      typeof this.walletInfo.keys.moneroAddress !== 'string' ||
-      typeof this.walletInfo.keys.moneroViewKeyPrivate !== 'string' ||
-      typeof this.walletInfo.keys.moneroViewKeyPublic !== 'string' ||
-      typeof this.walletInfo.keys.moneroSpendKeyPublic !== 'string'
-    ) {
-      const pubKeys = await this.currencyPlugin.derivePublicKey(this.walletInfo)
-      this.walletInfo.keys.moneroAddress = pubKeys.moneroAddress
-      this.walletInfo.keys.moneroViewKeyPrivate = pubKeys.moneroViewKeyPrivate
-      this.walletInfo.keys.moneroViewKeyPublic = pubKeys.moneroViewKeyPublic
-      this.walletInfo.keys.moneroSpendKeyPublic = pubKeys.moneroSpendKeyPublic
+    const safeWalletInfo = await makeSafeWalletInfo(
+      this.currencyTools,
+      this.walletInfo
+    )
+    this.walletInfo.keys = {
+      ...this.walletInfo.keys,
+      ...safeWalletInfo.keys
     }
   }
 
@@ -142,24 +146,17 @@ export class MoneroEngine {
   // **********************************************
   // Login to mymonero.com server
   // **********************************************
-  async loginInnerLoop() {
+  async loginIfNewAddress(privateKeys: PrivateKeys) {
     try {
       const result = await this.myMoneroApi.login({
         address: this.walletLocalData.moneroAddress,
         privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        privateSpendKey: privateKeys.moneroSpendKeyPrivate,
+        publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
       if ('new_address' in result && !this.loggedIn) {
         this.loggedIn = true
         this.walletLocalData.hasLoggedIn = true
-        clearTimeout(this.timers.loginInnerLoop)
-        delete this.timers.loginInnerLoop
-        this.addToLoop('checkAddressInnerLoop', ADDRESS_POLL_MILLISECONDS)
-        this.addToLoop(
-          'checkTransactionsInnerLoop',
-          TRANSACTIONS_POLL_MILLISECONDS
-        )
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
       }
     } catch (e) {
@@ -170,13 +167,13 @@ export class MoneroEngine {
   // ***************************************************
   // Check address for updated block height and balance
   // ***************************************************
-  async checkAddressInnerLoop() {
+  async checkAddressInnerLoop(privateKeys: PrivateKeys) {
     try {
       const addrResult = await this.myMoneroApi.getAddressInfo({
         address: this.walletLocalData.moneroAddress,
         privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        privateSpendKey: privateKeys.moneroSpendKeyPrivate,
+        publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
 
       if (this.walletLocalData.blockHeight !== addrResult.blockHeight) {
@@ -269,7 +266,7 @@ export class MoneroEngine {
     }
   }
 
-  async checkTransactionsInnerLoop() {
+  async checkTransactionsInnerLoop(privateKeys: PrivateKeys) {
     let checkAddressSuccess = true
 
     // TODO: support partial query by block height once API supports it
@@ -284,8 +281,8 @@ export class MoneroEngine {
       const transactions = await this.myMoneroApi.getTransactions({
         address: this.walletLocalData.moneroAddress,
         privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-        privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-        publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+        privateSpendKey: privateKeys.moneroSpendKeyPrivate,
+        publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
 
       this.log('Fetched transactions count: ' + transactions.length)
@@ -422,7 +419,6 @@ export class MoneroEngine {
   async startEngine() {
     this.engineOn = true
     this.doInitialCallbacks()
-    this.addToLoop('loginInnerLoop', ADDRESS_POLL_MILLISECONDS)
   }
 
   async killEngine() {
@@ -449,6 +445,22 @@ export class MoneroEngine {
     this.addressesChecked = false
     await this.saveWalletLoop()
     await this.startEngine()
+  }
+
+  async syncNetwork(opts: EdgeEnginePrivateKeyOptions): Promise<number> {
+    const xmrPrivateKeys = asPrivateKeys(opts.privateKeys)
+
+    // Login only if not logged in
+    if (!this.loggedIn) {
+      await this.loginIfNewAddress(xmrPrivateKeys)
+    }
+
+    // Always check address
+    await this.checkAddressInnerLoop(xmrPrivateKeys)
+    // Always check transactions
+    await this.checkTransactionsInnerLoop(xmrPrivateKeys)
+
+    return SYNC_INTERVAL_MILLISECONDS
   }
 
   // synchronous
@@ -611,7 +623,13 @@ export class MoneroEngine {
     return false
   }
 
-  async getMaxSpendable(edgeSpendInfo: EdgeSpendInfo): Promise<string> {
+  async getMaxSpendable(
+    edgeSpendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ): Promise<string> {
+    const privateKeys = asPrivateKeys(
+      opts != null ? opts.privateKeys : undefined
+    )
     const [spendTarget] = edgeSpendInfo.spendTargets
     const { publicAddress } = spendTarget
     if (publicAddress == null) {
@@ -625,20 +643,21 @@ export class MoneroEngine {
       targetAddress: publicAddress
     }
 
-    const result = await this.createMyMoneroTransaction(options)
+    const result = await this.createMyMoneroTransaction(options, privateKeys)
     return result.final_total_wo_fee
   }
 
   async createMyMoneroTransaction(
-    options: CreateTransactionOptions
+    options: CreateTransactionOptions,
+    privateKeys: PrivateKeys
   ): Promise<CreatedTransaction> {
     try {
       return await this.myMoneroApi.createTransaction(
         {
           address: this.walletLocalData.moneroAddress,
           privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
-          privateSpendKey: this.walletInfo.keys.moneroSpendKeyPrivate,
-          publicSpendKey: this.walletInfo.keys.moneroSpendKeyPublic
+          privateSpendKey: privateKeys.moneroSpendKeyPrivate,
+          publicSpendKey: privateKeys.moneroSpendKeyPublic
         },
         options
       )
@@ -652,12 +671,21 @@ export class MoneroEngine {
     }
   }
 
-  async makeSpend(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
-    return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo))
+  async makeSpend(
+    edgeSpendInfo: EdgeSpendInfo,
+    opts?: EdgeEnginePrivateKeyOptions
+  ): Promise<EdgeTransaction> {
+    const privateKeys = asPrivateKeys(
+      opts != null ? opts.privateKeys : undefined
+    )
+    return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo, privateKeys))
   }
 
   // synchronous
-  async makeSpendInner(edgeSpendInfo: EdgeSpendInfo): Promise<EdgeTransaction> {
+  async makeSpendInner(
+    edgeSpendInfo: EdgeSpendInfo,
+    privateKeys: PrivateKeys
+  ): Promise<EdgeTransaction> {
     // Monero can only have one output
     // TODO: The new SDK fixes this!
     if (edgeSpendInfo.spendTargets.length !== 1) {
@@ -690,7 +718,8 @@ export class MoneroEngine {
     this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 
     const result: CreatedTransaction = await this.createMyMoneroTransaction(
-      options
+      options,
+      privateKeys
     )
 
     const date = Date.now() / 1000
@@ -713,7 +742,10 @@ export class MoneroEngine {
   }
 
   // asynchronous
-  async signTx(edgeTransaction: EdgeTransaction): Promise<EdgeTransaction> {
+  async signTx(
+    edgeTransaction: EdgeTransaction,
+    walletInfo: EdgeWalletInfo
+  ): Promise<EdgeTransaction> {
     return edgeTransaction
   }
 
@@ -746,11 +778,9 @@ export class MoneroEngine {
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])
   }
 
-  getDisplayPrivateSeed() {
-    if (this.walletInfo.keys && this.walletInfo.keys.moneroKey) {
-      return this.walletInfo.keys.moneroKey
-    }
-    return ''
+  getDisplayPrivateSeed(privateKeys: JsonObject): string {
+    const xmrPrivateKeys = asPrivateKeys(privateKeys)
+    return xmrPrivateKeys.moneroKey
   }
 
   getDisplayPublicSeed() {

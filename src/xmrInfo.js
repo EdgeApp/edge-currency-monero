@@ -34,5 +34,8 @@ export const currencyInfo: EdgeCurrencyInfo = {
       symbol: '‎ɱ'
     }
   ],
-  metaTokens: []
+  metaTokens: [],
+
+  unsafeMakeSpend: true,
+  unsafeSyncNetwork: true
 }
