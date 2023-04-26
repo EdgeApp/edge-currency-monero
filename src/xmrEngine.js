@@ -3,7 +3,7 @@
  */
 // @flow
 
-import { bns } from 'biggystring'
+import { div, eq, gte, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   type EdgeCurrencyCodeOptions,
@@ -180,10 +180,7 @@ export class MoneroEngine {
         )
       }
 
-      const nativeBalance = bns.sub(
-        addrResult.totalReceived,
-        addrResult.totalSent
-      )
+      const nativeBalance = sub(addrResult.totalReceived, addrResult.totalSent)
 
       if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
         this.walletLocalData.totalBalances.XMR = nativeBalance
@@ -202,7 +199,7 @@ export class MoneroEngine {
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
 
-    const netNativeAmount: string = bns.sub(tx.total_received, tx.total_sent)
+    const netNativeAmount: string = sub(tx.total_received, tx.total_sent)
 
     if (netNativeAmount.slice(0, 1) !== '-') {
       ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
@@ -614,12 +611,12 @@ export class MoneroEngine {
     if (publicAddress == null) {
       throw new TypeError('Missing destination address')
     }
-    if (nativeAmount == null || bns.eq(nativeAmount, '0')) {
+    if (nativeAmount == null || eq(nativeAmount, '0')) {
       throw new NoAmountSpecifiedError()
     }
 
-    if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
-      if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
+    if (gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
+      if (gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
         throw new PendingFundsError()
       } else {
         throw new InsufficientFundsError()
@@ -627,7 +624,7 @@ export class MoneroEngine {
     }
 
     const options: CreateTransactionOptions = {
-      amount: bns.div(nativeAmount, '1000000000000', 12),
+      amount: div(nativeAmount, '1000000000000', 12),
       isSweepTx: false,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
       targetAddress: publicAddress

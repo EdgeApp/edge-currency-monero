@@ -1,6 +1,6 @@
 // @flow
 
-import { bns } from 'biggystring'
+import { div, mul, toFixed } from 'biggystring'
 import {
   type EdgeCurrencyTools,
   type EdgeEncodeUri,
@@ -115,8 +115,8 @@ export async function makeMoneroTools(
         if (!denom) {
           throw new Error('InternalErrorInvalidCurrencyCode')
         }
-        nativeAmount = bns.mul(amountStr, denom.multiplier)
-        nativeAmount = bns.toFixed(nativeAmount, 0, 0)
+        nativeAmount = mul(amountStr, denom.multiplier)
+        nativeAmount = toFixed(nativeAmount, 0, 0)
         currencyCode = 'XMR'
       }
       const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
@@ -173,7 +173,7 @@ export async function makeMoneroTools(
           if (!denom) {
             throw new Error('InternalErrorInvalidCurrencyCode')
           }
-          const amount = bns.div(nativeAmount, denom.multiplier, 12)
+          const amount = div(nativeAmount, denom.multiplier, 12)
 
           queryString += 'amount=' + amount + '&'
         }
