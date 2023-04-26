@@ -1,6 +1,4 @@
-// @flow
-
-import { type EdgeCurrencyInfo } from 'edge-core-js/types'
+import type { EdgeCurrencyInfo } from 'edge-core-js/types'
 
 import type { MoneroUserSettings } from './moneroTypes.js'
 

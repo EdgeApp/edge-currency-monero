@@ -1,9 +1,6 @@
-// @flow
-
-import type { NativeMyMoneroCore } from 'react-native-mymonero-core'
-
 declare module 'react-native' {
-  declare export var NativeModules: {
+  import type { NativeMyMoneroCore } from 'react-native-mymonero-core'
+  declare const NativeModules: {
     MyMoneroCore: NativeMyMoneroCore
   }
 }

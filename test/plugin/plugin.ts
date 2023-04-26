@@ -1,27 +1,27 @@
-// @flow
-
 import { assert, expect } from 'chai'
 import {
-  type EdgeCorePluginOptions,
-  type EdgeCurrencyPlugin,
-  type EdgeCurrencyTools,
-  type EdgeIo,
-  type EdgeParsedUri,
+  EdgeCorePluginOptions,
+  EdgeCurrencyPlugin,
+  EdgeCurrencyTools,
+  EdgeIo,
+  EdgeParsedUri,
   makeFakeIo
 } from 'edge-core-js'
 import { before, describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import edgeCorePlugins from '../../src/index.js'
-import { fakeLog } from '../fakeLog.js'
-import { nativeIo } from '../nodeNativeIo.js'
-import fixtures from './fixtures.json'
+import edgeCorePlugins from '../../src/index'
+import { fakeLog } from '../fakeLog'
+import { nativeIo } from '../nodeNativeIo'
+import typedFixtures from './fixtures.json'
+
+const fixtures: any = typedFixtures
 
 /**
  * Verifies that a promise rejects with a particular error.
  */
 export async function expectRejection(
-  promise: Promise<mixed>,
+  promise: Promise<unknown>,
   message?: string
 ): Promise<void> {
   return await promise.then(
@@ -60,7 +60,7 @@ for (const fixture of fixtures) {
     nativeIo,
     pluginDisklet: fakeIo.disklet
   }
-  const factory = edgeCorePlugins[fixture.pluginName]
+  const factory = edgeCorePlugins[fixture.pluginName as 'monero']
   const plugin: EdgeCurrencyPlugin = factory(opts)
 
   describe(`Info for Wallet type ${WALLET_TYPE}`, function () {

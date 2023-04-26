@@ -1,5 +1,3 @@
-// @flow
-
 import makeBridge from '@mymonero/mymonero-monero-client'
 import type { EdgeNativeIo } from 'edge-core-js/types'
 import type { NativeMyMoneroCore } from 'react-native-mymonero-core'

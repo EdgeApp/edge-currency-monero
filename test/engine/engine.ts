@@ -1,29 +1,29 @@
-// @flow
-
 import { assert } from 'chai'
 import {
-  type EdgeCorePluginOptions,
-  type EdgeCurrencyEngine,
-  type EdgeCurrencyEngineCallbacks,
-  type EdgeCurrencyEngineOptions,
-  type EdgeCurrencyPlugin,
-  type EdgeCurrencyTools,
-  type EdgeIo,
-  type EdgeTokenId,
-  type EdgeWalletInfo,
   closeEdge,
+  EdgeCorePluginOptions,
+  EdgeCurrencyEngine,
+  EdgeCurrencyEngineCallbacks,
+  EdgeCurrencyEngineOptions,
+  EdgeCurrencyPlugin,
+  EdgeCurrencyTools,
+  EdgeIo,
+  EdgeTokenId,
+  EdgeWalletInfo,
   makeFakeIo
 } from 'edge-core-js'
 import EventEmitter from 'events'
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import edgeCorePlugins from '../../src/index.js'
-import { fakeLog } from '../fakeLog.js'
-import { nativeIo } from '../nodeNativeIo.js'
-import fixtures from './fixtures.json'
+import edgeCorePlugins from '../../src/index'
+import { fakeLog } from '../fakeLog'
+import { nativeIo } from '../nodeNativeIo'
+import typedFixtures from './fixtures.json'
 
 // const DATA_STORE_FOLDER = 'txEngineFolderBTC'
+
+const fixtures: any = typedFixtures
 
 for (const fixture of fixtures) {
   let safeInfo: EdgeWalletInfo
@@ -42,7 +42,7 @@ for (const fixture of fixtures) {
     nativeIo,
     pluginDisklet: fakeIo.disklet
   }
-  const factory = edgeCorePlugins[fixture.pluginName]
+  const factory = edgeCorePlugins[fixture.pluginName as 'monero']
   const plugin: EdgeCurrencyPlugin = factory(opts)
 
   const emitter = new EventEmitter()

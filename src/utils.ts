@@ -1,10 +1,9 @@
 /**
  * Created by paul on 8/26/17.
- * @flow
  */
 
 import { asArray, asObject, asOptional, asString } from 'cleaners'
-import { type EdgeTransaction } from 'edge-core-js/types'
+import type { EdgeTransaction } from 'edge-core-js/types'
 
 export function normalizeAddress(address: string): string {
   return address.toLowerCase().replace('0x', '')

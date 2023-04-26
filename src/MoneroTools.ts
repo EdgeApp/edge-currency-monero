@@ -1,33 +1,30 @@
-// @flow
-
 import { div, mul, toFixed } from 'biggystring'
-import {
-  type EdgeCorePluginOptions,
-  type EdgeDenomination,
-  type EdgeEncodeUri,
-  type EdgeIo,
-  type EdgeLog,
-  type EdgeParsedUri,
-  type EdgeWalletInfo
+import type {
+  EdgeCorePluginOptions,
+  EdgeDenomination,
+  EdgeEncodeUri,
+  EdgeIo,
+  EdgeLog,
+  EdgeParsedUri,
+  EdgeWalletInfo
 } from 'edge-core-js/types'
-import { type CppBridge as CppBridgeType } from 'react-native-mymonero-core'
-import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
+import type {
+  CppBridge as CppBridgeType,
+  NativeMyMoneroCore
+} from 'react-native-mymonero-core'
+import CppBridge from 'react-native-mymonero-core/src/CppBridge'
 import { parse, serialize } from 'uri-js'
 
-import { currencyInfo } from './moneroInfo.js'
-import {
-  type MoneroNetworkInfo,
-  type PrivateKeys,
-  type PublicKeys
-} from './moneroTypes.js'
+import { currencyInfo } from './moneroInfo'
+import type { MoneroNetworkInfo, PrivateKeys, PublicKeys } from './moneroTypes'
 
-function getDenomInfo(denom: string): EdgeDenomination | void {
+function getDenomInfo(denom: string): EdgeDenomination | undefined {
   return currencyInfo.denominations.find(element => {
     return element.name === denom
   })
 }
 
-function getParameterByName(param: string, url: string): string | void {
+function getParameterByName(param: string, url: string): string | undefined {
   const name = param.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
   const results = regex.exec(url)
@@ -48,7 +45,7 @@ export class MoneroTools {
     const { io, log, nativeIo } = env
 
     // Grab the raw C++ API and wrap it in argument parsing:
-    const cppModule = nativeIo['edge-currency-monero']
+    const cppModule = nativeIo['edge-currency-monero'] as NativeMyMoneroCore
     this.cppBridge = new CppBridge(cppModule)
 
     this.io = io
@@ -93,8 +90,8 @@ export class MoneroTools {
   async parseUri(uri: string): Promise<EdgeParsedUri> {
     const parsedUri = parse(uri)
     let address: string
-    let nativeAmount: string | void
-    let currencyCode: string | void
+    let nativeAmount: string | undefined
+    let currencyCode: string | undefined
 
     if (
       typeof parsedUri.scheme !== 'undefined' &&

@@ -1,8 +1,14 @@
-// @flow
-
 import 'regenerator-runtime/runtime'
 
-import { makeMoneroPlugin } from './moneroPlugin.js'
+import type { EdgeCorePlugins } from 'edge-core-js/types'
+
+import { makeMoneroPlugin } from './moneroPlugin'
+
+declare global {
+  interface Window {
+    addEdgeCorePlugins?: (plugins: EdgeCorePlugins) => void
+  }
+}
 
 const edgeCorePlugins = {
   monero: makeMoneroPlugin

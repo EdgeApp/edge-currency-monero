@@ -1,4 +1,5 @@
 /build/
 /coverage/
 /lib/
-/src/mymonero-utils/
+/src/mymonero-utils/mymonero-keyimage-cache.js
+/src/mymonero-utils/ResponseParser.js

@@ -21,13 +21,13 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow,imports && webpack",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t typescript,imports && webpack",
     "fix": "eslint . --fix && yarn-deduplicate",
-    "flow": "flow",
     "lint": "eslint .",
-    "precommit": "lint-staged && flow && npm test && npm run build",
+    "precommit": "lint-staged && tsc && npm test && npm run build",
     "prepare": "husky install && npm run build",
-    "test": "mocha -r sucrase/register -n no-experimental-fetch './test/**/*.js'"
+    "test": "mocha -r sucrase/register -n no-experimental-fetch './test/**/*.ts'",
+    "types": "tsc"
   },
   "lint-staged": {
     "*.{js,ts}": "eslint"
@@ -43,9 +43,12 @@
   "devDependencies": {
     "@babel/core": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
-    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-typescript": "^7.23.3",
     "@babel/runtime": "^7.0.0",
     "@mymonero/mymonero-monero-client": "^2.1.20",
+    "@types/chai": "^4.3.4",
+    "@types/mocha": "^10.0.1",
+    "@types/node-fetch": "^2.6.3",
     "@typescript-eslint/eslint-plugin": "^4.8.2",
     "@typescript-eslint/parser": "^4.8.2",
     "babel-eslint": "^10.1.0",
@@ -68,7 +71,7 @@
     "react-native-mymonero-core": "^0.3.0",
     "rimraf": "^2.6.2",
     "sucrase": "^3.9.5",
-    "typescript": "^4.9.5",
+    "typescript": "~4.4.0",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
     "yarn-deduplicate": "^6.0.1"

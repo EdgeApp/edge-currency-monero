@@ -1,51 +1,50 @@
 /**
  * Created by paul on 7/7/17.
  */
-// @flow
 
 import { div, eq, gte, lt, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
-  type EdgeCorePluginOptions,
-  type EdgeCurrencyCodeOptions,
-  type EdgeCurrencyEngine,
-  type EdgeCurrencyEngineCallbacks,
-  type EdgeCurrencyEngineOptions,
-  type EdgeCurrencyInfo,
-  type EdgeDataDump,
-  type EdgeEnginePrivateKeyOptions,
-  type EdgeFreshAddress,
-  type EdgeGetReceiveAddressOptions,
-  type EdgeIo,
-  type EdgeLog,
-  type EdgeMemo,
-  type EdgeMetaToken,
-  type EdgeSpendInfo,
-  type EdgeToken,
-  type EdgeTransaction,
-  type EdgeWalletInfo,
-  type JsonObject,
+  EdgeCorePluginOptions,
+  EdgeCurrencyCodeOptions,
+  EdgeCurrencyEngine,
+  EdgeCurrencyEngineCallbacks,
+  EdgeCurrencyEngineOptions,
+  EdgeCurrencyInfo,
+  EdgeDataDump,
+  EdgeEnginePrivateKeyOptions,
+  EdgeFreshAddress,
+  EdgeGetReceiveAddressOptions,
+  EdgeIo,
+  EdgeLog,
+  EdgeMemo,
+  EdgeMetaToken,
+  EdgeSpendInfo,
+  EdgeToken,
+  EdgeTransaction,
+  EdgeWalletInfo,
   InsufficientFundsError,
+  JsonObject,
   NoAmountSpecifiedError,
   PendingFundsError
 } from 'edge-core-js/types'
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
-import { currencyInfo } from './moneroInfo.js'
-import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
-import { MoneroTools } from './MoneroTools.js'
+import { currencyInfo } from './moneroInfo'
+import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData'
+import { MoneroTools } from './MoneroTools'
 import {
-  type MoneroUserSettings,
-  type PrivateKeys,
-  type SafeWalletInfo,
   asMoneroInitOptions,
   asMoneroUserSettings,
   asPrivateKeys,
   asSafeWalletInfo,
-  makeSafeWalletInfo
-} from './moneroTypes.js'
-import { type CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi.js'
-import { cleanTxLogs, normalizeAddress } from './utils.js'
+  makeSafeWalletInfo,
+  MoneroUserSettings,
+  PrivateKeys,
+  SafeWalletInfo
+} from './moneroTypes'
+import { CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi'
+import { cleanTxLogs, normalizeAddress } from './utils'
 
 const SYNC_INTERVAL_MILLISECONDS = 5000
 const SAVE_DATASTORE_MILLISECONDS = 10000
@@ -54,7 +53,7 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 
 const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
-export class MoneroEngine {
+export class MoneroEngine implements EdgeCurrencyEngine {
   apiKey: string
   walletInfo: SafeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
@@ -62,7 +61,7 @@ export class MoneroEngine {
   engineOn: boolean
   loggedIn: boolean
   addressesChecked: boolean
-  walletLocalData: MoneroLocalData
+  walletLocalData!: MoneroLocalData
   walletLocalDataDirty: boolean
   transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
@@ -93,7 +92,7 @@ export class MoneroEngine {
     this.addressesChecked = false
     this.walletLocalDataDirty = false
     this.transactionsChangedArray = []
-    this.walletInfo = walletInfo
+    this.walletInfo = walletInfo as any // We derive the public keys at init
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
     this.currencyTools = tools
@@ -173,6 +172,7 @@ export class MoneroEngine {
       if ('new_address' in result && !this.loggedIn) {
         this.loggedIn = true
         this.walletLocalData.hasLoggedIn = true
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
       }
     } catch (e) {
@@ -228,6 +228,7 @@ export class MoneroEngine {
     }
 
     let blockHeight = tx.height
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (tx.mempool) {
       blockHeight = 0
     }
@@ -263,6 +264,7 @@ export class MoneroEngine {
 
     const idx = this.findTransaction(PRIMARY_CURRENCY, tx.hash)
     if (idx === -1) {
+      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       this.log(`New transaction: ${tx.hash}`)
 
       // New transaction not in database
@@ -285,6 +287,7 @@ export class MoneroEngine {
           nativeAmount: edgeTx.nativeAmount
         }
 
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         this.log(`Update transaction: ${tx.hash} height:${tx.blockNumber}`)
         this.updateTransaction(PRIMARY_CURRENCY, edgeTransaction, idx)
         this.edgeTxLibCallbacks.onTransactionsChanged(
@@ -418,7 +421,7 @@ export class MoneroEngine {
 
   async addToLoop(func: string, timer: number): Promise<void> {
     try {
-      // $FlowFixMe
+      // @ts-expect-error
       await this[func]()
     } catch (e) {
       this.log.error('Error in Loop:', func, e)
@@ -426,6 +429,7 @@ export class MoneroEngine {
     if (this.engineOn) {
       this.timers[func] = setTimeout(() => {
         if (this.engineOn) {
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
           this.addToLoop(func, timer)
         }
       }, timer)
@@ -608,7 +612,7 @@ export class MoneroEngine {
         },
         options
       )
-    } catch (e) {
+    } catch (e: any) {
       // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
       this.log.error(e.message)
       const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
@@ -733,6 +737,7 @@ export class MoneroEngine {
     const dataDump: EdgeDataDump = {
       walletId: this.walletId,
       walletType: this.walletInfo.type,
+      // @ts-expect-error
       pluginType: this.currencyInfo.pluginId,
       data: {
         walletLocalData: this.walletLocalData
