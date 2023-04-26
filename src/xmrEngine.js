@@ -456,15 +456,12 @@ export class MoneroEngine {
     return SYNC_INTERVAL_MILLISECONDS
   }
 
-  // synchronous
   getBlockHeight(): number {
     return parseInt(this.walletLocalData.blockHeight)
   }
 
-  // asynchronous
   async enableTokens(tokens: string[]) {}
 
-  // asynchronous
   async disableTokens(tokens: string[]) {}
 
   async getEnabledTokens(): Promise<string[]> {
@@ -473,12 +470,10 @@ export class MoneroEngine {
 
   async addCustomToken(tokenObj: any) {}
 
-  // synchronous
   getTokenStatus(token: string) {
     return false
   }
 
-  // synchronous
   getBalance(options: any): string {
     let currencyCode = PRIMARY_CURRENCY
 
@@ -505,7 +500,6 @@ export class MoneroEngine {
     }
   }
 
-  // synchronous
   getNumTransactions(options: any): number {
     let currencyCode = PRIMARY_CURRENCY
 
@@ -529,7 +523,6 @@ export class MoneroEngine {
     }
   }
 
-  // asynchronous
   async getTransactions(options: any): Promise<EdgeTransaction[]> {
     let currencyCode: string = PRIMARY_CURRENCY
 
@@ -591,7 +584,6 @@ export class MoneroEngine {
     return returnArray
   }
 
-  // synchronous
   async getFreshAddress(options: any): Promise<EdgeFreshAddress> {
     if (this.walletLocalData.hasLoggedIn) {
       return { publicAddress: this.walletLocalData.moneroAddress }
@@ -600,10 +592,8 @@ export class MoneroEngine {
     }
   }
 
-  // synchronous
   async addGapLimitAddresses(addresses: string[], options: any) {}
 
-  // synchronous
   async isAddressUsed(address: string, options: any) {
     return false
   }
@@ -715,7 +705,6 @@ export class MoneroEngine {
     return edgeTransaction
   }
 
-  // asynchronous
   async signTx(
     edgeTransaction: EdgeTransaction,
     walletInfo: EdgeWalletInfo
@@ -723,7 +712,6 @@ export class MoneroEngine {
     return edgeTransaction
   }
 
-  // asynchronous
   async broadcastTx(
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
@@ -745,7 +733,6 @@ export class MoneroEngine {
     }
   }
 
-  // asynchronous
   async saveTx(edgeTransaction: EdgeTransaction) {
     this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
