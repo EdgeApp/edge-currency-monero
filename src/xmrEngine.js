@@ -461,14 +461,6 @@ export class MoneroEngine {
     return parseInt(this.walletLocalData.blockHeight)
   }
 
-  enableTokensSync(tokens: string[]) {
-    for (const token of tokens) {
-      if (this.walletLocalData.enabledTokens.indexOf(token) === -1) {
-        this.walletLocalData.enabledTokens.push(token)
-      }
-    }
-  }
-
   // asynchronous
   async enableTokens(tokens: string[]) {}
 
