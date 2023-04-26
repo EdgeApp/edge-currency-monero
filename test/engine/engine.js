@@ -1,7 +1,6 @@
 // @flow
 
 import { assert } from 'chai'
-import { downgradeDisklet } from 'disklet'
 import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyEngine,
@@ -75,7 +74,6 @@ for (const fixture of fixtures) {
   }
 
   const walletLocalDisklet = fakeIo.disklet
-  const walletLocalFolder = downgradeDisklet(walletLocalDisklet)
   const currencyEngineOptions: EdgeCurrencyEngineOptions = {
     callbacks,
     customTokens: {},
@@ -83,8 +81,6 @@ for (const fixture of fixtures) {
     log: fakeLog,
     walletLocalDisklet,
     walletLocalEncryptedDisklet: walletLocalDisklet,
-    walletLocalEncryptedFolder: walletLocalFolder,
-    walletLocalFolder,
     userSettings: undefined
   }
 
