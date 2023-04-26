@@ -5,6 +5,7 @@ import {
   type EdgeCorePluginOptions,
   type EdgeCurrencyPlugin,
   type EdgeCurrencyTools,
+  type EdgeIo,
   type EdgeParsedUri,
   makeFakeIo
 } from 'edge-core-js'
@@ -22,7 +23,7 @@ import fixtures from './fixtures.json'
 export function expectRejection(
   promise: Promise<mixed>,
   message?: string
-): Promise<mixed> {
+): Promise<void> {
   return promise.then(
     ok => {
       throw new Error('Expecting this promise to reject')
@@ -36,13 +37,13 @@ export function expectRejection(
 for (const fixture of fixtures) {
   let tools: EdgeCurrencyTools
 
-  const WALLET_TYPE = fixture.WALLET_TYPE
+  const WALLET_TYPE: string = fixture.WALLET_TYPE
   const keyName = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Key'
   const address = WALLET_TYPE.split('wallet:')[1].split('-')[0] + 'Address'
 
   let randomIndex = 0
   const len = fixture.key
-  const fakeIo = {
+  const fakeIo: EdgeIo = {
     ...makeFakeIo(),
     random: size => {
       if (randomIndex + size > len) {

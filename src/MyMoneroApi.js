@@ -260,7 +260,7 @@ export class MyMoneroApi {
   // Private routines
   // ----------------
 
-  async fetchPostMyMonero(cmd: string, params: any): any {
+  async fetchPostMyMonero(cmd: string, params: any): Promise<any> {
     const url = `${this.apiUrl}/${cmd}`
     const response = await this.fetch(url, {
       body: JSON.stringify(params),

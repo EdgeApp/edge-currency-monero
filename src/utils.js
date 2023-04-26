@@ -25,6 +25,6 @@ const asCleanTxLogs = asObject({
   signedTx: asString
 })
 
-export function cleanTxLogs(tx: EdgeTransaction) {
+export function cleanTxLogs(tx: EdgeTransaction): string {
   return JSON.stringify(asCleanTxLogs(tx))
 }

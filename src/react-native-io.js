@@ -1,5 +1,8 @@
-import { NativeModules } from 'react-native'
+// @flow
 
-export default function makeCustomIo() {
+import { NativeModules } from 'react-native'
+import type { NativeMyMoneroCore } from 'react-native-mymonero-core'
+
+export default function makeCustomIo(): NativeMyMoneroCore {
   return NativeModules.MyMoneroCore
 }

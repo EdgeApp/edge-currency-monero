@@ -3,6 +3,7 @@
 import { div, mul, toFixed } from 'biggystring'
 import {
   type EdgeCurrencyTools,
+  type EdgeDenomination,
   type EdgeEncodeUri,
   type EdgeIo,
   type EdgeLog,
@@ -19,13 +20,13 @@ type InitOptions = {
   apiKey: string
 }
 
-function getDenomInfo(denom: string) {
+function getDenomInfo(denom: string): EdgeDenomination | void {
   return currencyInfo.denominations.find(element => {
     return element.name === denom
   })
 }
 
-function getParameterByName(param, url) {
+function getParameterByName(param: string, url: string): string | null {
   const name = param.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
   const results = regex.exec(url)
