@@ -2,8 +2,11 @@
   "extends": [
     "standard-kit/prettier",
     "standard-kit/prettier/flow",
-    "standard-kit/prettier/node"
+    "standard-kit/prettier/typescript"
   ],
+  "parserOptions": {
+    "project": "tsconfig.json"
+  },
   "plugins": [
     "simple-import-sort"
   ],

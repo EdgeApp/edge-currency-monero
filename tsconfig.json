@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+
+    "esModuleInterop": true,
+    "module": "es2020",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "target": "es2015",
+    "skipLibCheck": true,
+
+    "strict": true
+  },
+  "exclude": ["lib", "bin"]
+}
