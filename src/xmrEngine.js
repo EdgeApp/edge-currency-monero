@@ -88,7 +88,7 @@ export class MoneroEngine {
     this.walletLocalDataDirty = false
     this.transactionsChangedArray = []
     this.walletInfo = walletInfo
-    this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
+    this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
     this.currencyTools = currencyTools
     this.myMoneroApi = myMoneroApi
@@ -703,7 +703,7 @@ export class MoneroEngine {
 
   async dumpData(): Promise<EdgeDataDump> {
     const dataDump: EdgeDataDump = {
-      walletId: this.walletId.split(' - ')[0],
+      walletId: this.walletId,
       walletType: this.walletInfo.type,
       pluginType: this.currencyInfo.pluginId,
       data: {
