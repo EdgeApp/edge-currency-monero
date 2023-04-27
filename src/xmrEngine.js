@@ -684,7 +684,7 @@ export class MoneroEngine {
   }
 
   async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
-    this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
+    await this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])
   }
