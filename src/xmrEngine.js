@@ -627,9 +627,7 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<string> {
-    const privateKeys = asPrivateKeys(
-      opts != null ? opts.privateKeys : undefined
-    )
+    const privateKeys = asPrivateKeys(opts?.privateKeys)
     const [spendTarget] = edgeSpendInfo.spendTargets
     const { publicAddress } = spendTarget
     if (publicAddress == null) {
@@ -675,9 +673,7 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<EdgeTransaction> {
-    const privateKeys = asPrivateKeys(
-      opts != null ? opts.privateKeys : undefined
-    )
+    const privateKeys = asPrivateKeys(opts?.privateKeys)
     return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo, privateKeys))
   }
 
