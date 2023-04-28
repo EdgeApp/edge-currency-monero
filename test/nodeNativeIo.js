@@ -1,7 +1,8 @@
 // @flow
 
 import makeBridge from '@mymonero/mymonero-monero-client'
-import { type EdgeNativeIo } from 'edge-core-js/types'
+import type { EdgeNativeIo } from 'edge-core-js/types'
+import type { NativeMyMoneroCore } from 'react-native-mymonero-core'
 
 const bridgePromise = makeBridge({})
 
@@ -9,28 +10,28 @@ const bridgePromise = makeBridge({})
  * We are emulating the `react-native-mymonero-core` API
  * using the `@mymonero/mymonero-monero-client` WASM module.
  */
-const bridge: any = {}
-for (const method of [
-  'addressAndKeysFromSeed',
-  'compareMnemonics',
-  'createAndSignTx',
-  'decodeAddress',
-  'estimateTxFee',
-  'generateKeyImage',
-  'generatePaymentId',
-  'generateWallet',
-  'isIntegratedAddress',
-  'isSubaddress',
-  'isValidKeys',
-  'mnemonicFromSeed',
-  'newIntegratedAddress',
-  'prepareTx',
-  'seedAndKeysFromMnemonic'
-]) {
-  bridge[method] = async function (...args) {
-    const bridge = await bridgePromise
-    return bridge.Module[method](...args)
-  }
+const bridge: NativeMyMoneroCore = {
+  callMyMonero(name, jsonArguments: string[]) {
+    return bridgePromise.then(bridge => bridge.Module[name](...jsonArguments))
+  },
+
+  methodNames: [
+    'addressAndKeysFromSeed',
+    'compareMnemonics',
+    'createAndSignTx',
+    'decodeAddress',
+    'estimateTxFee',
+    'generateKeyImage',
+    'generatePaymentId',
+    'generateWallet',
+    'isIntegratedAddress',
+    'isSubaddress',
+    'isValidKeys',
+    'mnemonicFromSeed',
+    'newIntegratedAddress',
+    'prepareTx',
+    'seedAndKeysFromMnemonic'
+  ]
 }
 
 export const nativeIo: EdgeNativeIo = {

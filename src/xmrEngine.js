@@ -30,12 +30,7 @@ import {
   type CreateTransactionOptions,
   type MyMoneroApi
 } from './MyMoneroApi.js'
-import {
-  cleanTxLogs,
-  makeMutex,
-  normalizeAddress,
-  validateObject
-} from './utils.js'
+import { cleanTxLogs, normalizeAddress, validateObject } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
 import {
   type PrivateKeys,
@@ -52,8 +47,6 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = (4 * 60 * 24 * 7) // ~ one week
 
 const PRIMARY_CURRENCY = currencyInfo.currencyCode
-
-const makeSpendMutex = makeMutex()
 
 export class MoneroEngine {
   walletInfo: SafeWalletInfo
@@ -627,9 +620,7 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<string> {
-    const privateKeys = asPrivateKeys(
-      opts != null ? opts.privateKeys : undefined
-    )
+    const privateKeys = asPrivateKeys(opts?.privateKeys)
     const [spendTarget] = edgeSpendInfo.spendTargets
     const { publicAddress } = spendTarget
     if (publicAddress == null) {
@@ -675,17 +666,8 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<EdgeTransaction> {
-    const privateKeys = asPrivateKeys(
-      opts != null ? opts.privateKeys : undefined
-    )
-    return makeSpendMutex(() => this.makeSpendInner(edgeSpendInfo, privateKeys))
-  }
+    const privateKeys = asPrivateKeys(opts?.privateKeys)
 
-  // synchronous
-  async makeSpendInner(
-    edgeSpendInfo: EdgeSpendInfo,
-    privateKeys: PrivateKeys
-  ): Promise<EdgeTransaction> {
     // Monero can only have one output
     // TODO: The new SDK fixes this!
     if (edgeSpendInfo.spendTargets.length !== 1) {
