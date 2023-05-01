@@ -3,9 +3,10 @@
  */
 // @flow
 
-import { bns } from 'biggystring'
+import { div, eq, gte, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
+  type EdgeCurrencyCodeOptions,
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
@@ -13,12 +14,14 @@ import {
   type EdgeDataDump,
   type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
+  type EdgeGetReceiveAddressOptions,
+  type EdgeGetTransactionsOptions,
   type EdgeIo,
   type EdgeLog,
   type EdgeMetaToken,
   type EdgeSpendInfo,
+  type EdgeToken,
   type EdgeTransaction,
-  type EdgeWalletInfo,
   type JsonObject,
   InsufficientFundsError,
   NoAmountSpecifiedError,
@@ -30,7 +33,7 @@ import {
   type CreateTransactionOptions,
   type MyMoneroApi
 } from './MyMoneroApi.js'
-import { cleanTxLogs, normalizeAddress, validateObject } from './utils.js'
+import { cleanTxLogs, normalizeAddress } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
 import {
   type PrivateKeys,
@@ -85,7 +88,7 @@ export class MoneroEngine {
     this.walletLocalDataDirty = false
     this.transactionsChangedArray = []
     this.walletInfo = walletInfo
-    this.walletId = walletInfo.id ? `${walletInfo.id} - ` : ''
+    this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
     this.currencyTools = currencyTools
     this.myMoneroApi = myMoneroApi
@@ -110,7 +113,7 @@ export class MoneroEngine {
     )
   }
 
-  async init() {
+  async init(): Promise<void> {
     const safeWalletInfo = await makeSafeWalletInfo(
       this.currencyTools,
       this.walletInfo
@@ -121,7 +124,7 @@ export class MoneroEngine {
     }
   }
 
-  updateOnAddressesChecked(numTx: number, totalTxs: number) {
+  updateOnAddressesChecked(numTx: number, totalTxs: number): void {
     if (this.addressesChecked) {
       return
     }
@@ -139,7 +142,7 @@ export class MoneroEngine {
   // **********************************************
   // Login to mymonero.com server
   // **********************************************
-  async loginIfNewAddress(privateKeys: PrivateKeys) {
+  async loginIfNewAddress(privateKeys: PrivateKeys): Promise<void> {
     try {
       const result = await this.myMoneroApi.login({
         address: this.walletLocalData.moneroAddress,
@@ -160,7 +163,7 @@ export class MoneroEngine {
   // ***************************************************
   // Check address for updated block height and balance
   // ***************************************************
-  async checkAddressInnerLoop(privateKeys: PrivateKeys) {
+  async checkAddressInnerLoop(privateKeys: PrivateKeys): Promise<void> {
     try {
       const addrResult = await this.myMoneroApi.getAddressInfo({
         address: this.walletLocalData.moneroAddress,
@@ -177,10 +180,7 @@ export class MoneroEngine {
         )
       }
 
-      const nativeBalance = bns.sub(
-        addrResult.totalReceived,
-        addrResult.totalSent
-      )
+      const nativeBalance = sub(addrResult.totalReceived, addrResult.totalSent)
 
       if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
         this.walletLocalData.totalBalances.XMR = nativeBalance
@@ -194,12 +194,12 @@ export class MoneroEngine {
     }
   }
 
-  processMoneroTransaction(tx: Object) {
+  processMoneroTransaction(tx: any): void {
     const ourReceiveAddresses: string[] = []
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
 
-    const netNativeAmount: string = bns.sub(tx.total_received, tx.total_sent)
+    const netNativeAmount: string = sub(tx.total_received, tx.total_sent)
 
     if (netNativeAmount.slice(0, 1) !== '-') {
       ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
@@ -259,9 +259,7 @@ export class MoneroEngine {
     }
   }
 
-  async checkTransactionsInnerLoop(privateKeys: PrivateKeys) {
-    let checkAddressSuccess = true
-
+  async checkTransactionsInnerLoop(privateKeys: PrivateKeys): Promise<void> {
     // TODO: support partial query by block height once API supports it
     // const endBlock:number = 999999999
     // let startBlock:number = 0
@@ -292,12 +290,10 @@ export class MoneroEngine {
       this.updateOnAddressesChecked(transactions.length, transactions.length)
     } catch (e) {
       this.log.error('checkTransactionsInnerLoop', e)
-      checkAddressSuccess = false
     }
-    return checkAddressSuccess
   }
 
-  findTransaction(currencyCode: string, txid: string) {
+  findTransaction(currencyCode: string, txid: string): any {
     if (
       typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
     ) {
@@ -310,11 +306,11 @@ export class MoneroEngine {
     })
   }
 
-  sortTxByDate(a: EdgeTransaction, b: EdgeTransaction) {
+  sortTxByDate(a: EdgeTransaction, b: EdgeTransaction): number {
     return b.date - a.date
   }
 
-  addTransaction(currencyCode: string, edgeTransaction: EdgeTransaction) {
+  addTransaction(currencyCode: string, edgeTransaction: EdgeTransaction): void {
     // Add or update tx in transactionsObj
     const idx = this.findTransaction(currencyCode, edgeTransaction.txid)
 
@@ -345,7 +341,7 @@ export class MoneroEngine {
     currencyCode: string,
     edgeTransaction: EdgeTransaction,
     idx: number
-  ) {
+  ): void {
     // Update the transaction
     this.walletLocalData.transactionsObj[currencyCode][idx] = edgeTransaction
     this.walletLocalDataDirty = true
@@ -358,7 +354,7 @@ export class MoneroEngine {
   // *************************************
   // Save the wallet data store
   // *************************************
-  async saveWalletLoop() {
+  async saveWalletLoop(): Promise<void> {
     if (this.walletLocalDataDirty) {
       try {
         this.log('walletLocalDataDirty. Saving...')
@@ -371,7 +367,7 @@ export class MoneroEngine {
     }
   }
 
-  doInitialCallbacks() {
+  doInitialCallbacks(): void {
     for (const currencyCode of this.walletLocalData.enabledTokens) {
       try {
         this.edgeTxLibCallbacks.onBalanceChanged(
@@ -384,7 +380,7 @@ export class MoneroEngine {
     }
   }
 
-  async addToLoop(func: string, timer: number) {
+  async addToLoop(func: string, timer: number): Promise<void> {
     try {
       // $FlowFixMe
       await this[func]()
@@ -398,7 +394,6 @@ export class MoneroEngine {
         }
       }, timer)
     }
-    return true
   }
 
   // *************************************
@@ -409,12 +404,12 @@ export class MoneroEngine {
     this.currentSettings = userSettings
   }
 
-  async startEngine() {
+  async startEngine(): Promise<void> {
     this.engineOn = true
     this.doInitialCallbacks()
   }
 
-  async killEngine() {
+  async killEngine(): Promise<void> {
     // Set status flag to false
     this.engineOn = false
     this.loggedIn = false
@@ -456,52 +451,26 @@ export class MoneroEngine {
     return SYNC_INTERVAL_MILLISECONDS
   }
 
-  // synchronous
   getBlockHeight(): number {
     return parseInt(this.walletLocalData.blockHeight)
   }
 
-  enableTokensSync(tokens: string[]) {
-    for (const token of tokens) {
-      if (this.walletLocalData.enabledTokens.indexOf(token) === -1) {
-        this.walletLocalData.enabledTokens.push(token)
-      }
-    }
-  }
+  async enableTokens(tokens: string[]): Promise<void> {}
 
-  // asynchronous
-  async enableTokens(tokens: string[]) {}
-
-  // asynchronous
-  async disableTokens(tokens: string[]) {}
+  async disableTokens(tokens: string[]): Promise<void> {}
 
   async getEnabledTokens(): Promise<string[]> {
     return []
   }
 
-  async addCustomToken(tokenObj: any) {}
+  async addCustomToken(tokenObj: EdgeToken): Promise<void> {}
 
-  // synchronous
-  getTokenStatus(token: string) {
+  getTokenStatus(token: string): boolean {
     return false
   }
 
-  // synchronous
-  getBalance(options: any): string {
-    let currencyCode = PRIMARY_CURRENCY
-
-    if (typeof options !== 'undefined') {
-      const valid = validateObject(options, {
-        type: 'object',
-        properties: {
-          currencyCode: { type: 'string' }
-        }
-      })
-
-      if (valid) {
-        currencyCode = options.currencyCode
-      }
-    }
+  getBalance(options: EdgeCurrencyCodeOptions = {}): string {
+    const { currencyCode = PRIMARY_CURRENCY } = options
 
     if (
       typeof this.walletLocalData.totalBalances[currencyCode] === 'undefined'
@@ -513,20 +482,8 @@ export class MoneroEngine {
     }
   }
 
-  // synchronous
-  getNumTransactions(options: any): number {
-    let currencyCode = PRIMARY_CURRENCY
-
-    const valid = validateObject(options, {
-      type: 'object',
-      properties: {
-        currencyCode: { type: 'string' }
-      }
-    })
-
-    if (valid) {
-      currencyCode = options.currencyCode
-    }
+  getNumTransactions(options: EdgeCurrencyCodeOptions = {}): number {
+    const { currencyCode = PRIMARY_CURRENCY } = options
 
     if (
       typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
@@ -537,70 +494,47 @@ export class MoneroEngine {
     }
   }
 
-  // asynchronous
-  async getTransactions(options: any): Promise<EdgeTransaction[]> {
-    let currencyCode: string = PRIMARY_CURRENCY
+  async getTransactions(
+    options: EdgeGetTransactionsOptions = {}
+  ): Promise<EdgeTransaction[]> {
+    let { currencyCode = PRIMARY_CURRENCY, startIndex = 0 } = options
+    // $FlowFixMe This does not exist in the core types:
+    let numEntries: number = options.numEntries ?? 0
 
-    const valid: boolean = validateObject(options, {
-      type: 'object',
-      properties: {
-        currencyCode: { type: 'string' }
-      }
-    })
-
-    if (valid) {
-      currencyCode = options.currencyCode
-    }
-
-    if (
-      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
-    ) {
+    if (this.walletLocalData.transactionsObj[currencyCode] == null) {
       return []
     }
 
-    let startIndex: number = 0
-    let numEntries: number = 0
-    if (options === null) {
-      return this.walletLocalData.transactionsObj[currencyCode].slice(0)
+    if (
+      startIndex >= this.walletLocalData.transactionsObj[currencyCode].length
+    ) {
+      startIndex = this.walletLocalData.transactionsObj[currencyCode].length - 1
     }
-    if (options.startIndex !== null && options.startIndex > 0) {
-      startIndex = options.startIndex
-      if (
-        startIndex >= this.walletLocalData.transactionsObj[currencyCode].length
-      ) {
-        startIndex =
-          this.walletLocalData.transactionsObj[currencyCode].length - 1
-      }
-    }
-    if (options.numEntries !== null && options.numEntries > 0) {
-      numEntries = options.numEntries
-      if (
-        numEntries + startIndex >
-        this.walletLocalData.transactionsObj[currencyCode].length
-      ) {
-        // Don't read past the end of the transactionsObj
-        numEntries =
-          this.walletLocalData.transactionsObj[currencyCode].length - startIndex
-      }
+    if (
+      numEntries + startIndex >
+      this.walletLocalData.transactionsObj[currencyCode].length
+    ) {
+      // Don't read past the end of the transactionsObj
+      numEntries =
+        this.walletLocalData.transactionsObj[currencyCode].length - startIndex
     }
 
-    // Copy the appropriate entries from the arrayTransactions
-    let returnArray = []
-
-    if (numEntries) {
-      returnArray = this.walletLocalData.transactionsObj[currencyCode].slice(
+    // Copy the appropriate entries from the arrayTransactions:
+    if (numEntries > 0) {
+      return this.walletLocalData.transactionsObj[currencyCode].slice(
         startIndex,
         numEntries + startIndex
       )
     } else {
-      returnArray =
-        this.walletLocalData.transactionsObj[currencyCode].slice(startIndex)
+      return this.walletLocalData.transactionsObj[currencyCode].slice(
+        startIndex
+      )
     }
-    return returnArray
   }
 
-  // synchronous
-  async getFreshAddress(options: any): Promise<EdgeFreshAddress> {
+  async getFreshAddress(
+    options: EdgeGetReceiveAddressOptions
+  ): Promise<EdgeFreshAddress> {
     if (this.walletLocalData.hasLoggedIn) {
       return { publicAddress: this.walletLocalData.moneroAddress }
     } else {
@@ -608,11 +542,9 @@ export class MoneroEngine {
     }
   }
 
-  // synchronous
-  async addGapLimitAddresses(addresses: string[], options: any) {}
+  async addGapLimitAddresses(addresses: string[]): Promise<void> {}
 
-  // synchronous
-  async isAddressUsed(address: string, options: any) {
+  async isAddressUsed(address: string): Promise<boolean> {
     return false
   }
 
@@ -679,12 +611,12 @@ export class MoneroEngine {
     if (publicAddress == null) {
       throw new TypeError('Missing destination address')
     }
-    if (nativeAmount == null || bns.eq(nativeAmount, '0')) {
+    if (nativeAmount == null || eq(nativeAmount, '0')) {
       throw new NoAmountSpecifiedError()
     }
 
-    if (bns.gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
-      if (bns.gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
+    if (gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
+      if (gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
         throw new PendingFundsError()
       } else {
         throw new InsufficientFundsError()
@@ -692,7 +624,7 @@ export class MoneroEngine {
     }
 
     const options: CreateTransactionOptions = {
-      amount: bns.div(nativeAmount, '1000000000000', 12),
+      amount: div(nativeAmount, '1000000000000', 12),
       isSweepTx: false,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
       targetAddress: publicAddress
@@ -723,15 +655,13 @@ export class MoneroEngine {
     return edgeTransaction
   }
 
-  // asynchronous
   async signTx(
     edgeTransaction: EdgeTransaction,
-    walletInfo: EdgeWalletInfo
+    privateKeys: JsonObject
   ): Promise<EdgeTransaction> {
     return edgeTransaction
   }
 
-  // asynchronous
   async broadcastTx(
     edgeTransaction: EdgeTransaction
   ): Promise<EdgeTransaction> {
@@ -753,9 +683,8 @@ export class MoneroEngine {
     }
   }
 
-  // asynchronous
-  async saveTx(edgeTransaction: EdgeTransaction) {
-    this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
+  async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
+    await this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
 
     this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])
   }
@@ -765,7 +694,7 @@ export class MoneroEngine {
     return xmrPrivateKeys.moneroKey
   }
 
-  getDisplayPublicSeed() {
+  getDisplayPublicSeed(): string {
     if (this.walletInfo.keys && this.walletInfo.keys.moneroViewKeyPrivate) {
       return this.walletInfo.keys.moneroViewKeyPrivate
     }
@@ -774,7 +703,7 @@ export class MoneroEngine {
 
   async dumpData(): Promise<EdgeDataDump> {
     const dataDump: EdgeDataDump = {
-      walletId: this.walletId.split(' - ')[0],
+      walletId: this.walletId,
       walletType: this.walletInfo.type,
       pluginType: this.currencyInfo.pluginId,
       data: {

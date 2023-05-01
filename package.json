@@ -47,7 +47,6 @@
     "@mymonero/mymonero-nettype": "^1.4.2",
     "biggystring": "^3.0.0",
     "buffer": "^5.0.6",
-    "jsonschema": "^1.1.1",
     "uri-js": "^3.0.2"
   },
   "devDependencies": {
