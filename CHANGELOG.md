@@ -1,8 +1,14 @@
 # edge-currency-monero
 
+# 1.0.0 (2023-03-28)
+
+- fixed: Return the correct `walletId` on `EdgeTransaction` instances.
+- fixed: Add a missing `await` to `saveTx`, ensuring the transaction is on-disk.
+- changed: Upgrade to react-native-mymonero-core v0.3.0.
+
 # 0.6.0 (2023-03-28)
 
-- changed: Allow engine to run without private keys
+- changed: Allow engine to run without private keys. This requires edge-core-js v0.19.47 or greater.
 
 # 0.5.5 (2023-01-10)
 
