@@ -17,7 +17,7 @@ import type {
   Priority
 } from 'react-native-mymonero-core'
 
-const parserUtils = require('./mymonero-utils/ResponseParser.js')
+import parserUtils from './mymonero-utils/ResponseParser.js'
 
 export type MyMoneroApiOptions = {
   apiKey: string,
@@ -145,7 +145,7 @@ export class MyMoneroApi {
     this.keyImageCache = {}
   }
 
-  changeServer(apiUrl: string, apiKey: string) {
+  changeServer(apiUrl: string, apiKey: string): void {
     this.apiKey = apiKey
     this.apiUrl = apiUrl
   }
@@ -292,6 +292,6 @@ export class MyMoneroApi {
         `The server returned error code ${response.status} for ${url}`
       )
     }
-    return response.json()
+    return await response.json()
   }
 }

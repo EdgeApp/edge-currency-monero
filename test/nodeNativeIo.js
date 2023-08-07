@@ -4,7 +4,7 @@ import makeBridge from '@mymonero/mymonero-monero-client'
 import type { EdgeNativeIo } from 'edge-core-js/types'
 import type { NativeMyMoneroCore } from 'react-native-mymonero-core'
 
-const bridgePromise: Promise<any> = makeBridge({})
+const bridgePromise: Promise<any> = makeBridge()
 
 /**
  * We are emulating the `react-native-mymonero-core` API

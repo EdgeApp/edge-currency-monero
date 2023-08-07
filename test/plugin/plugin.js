@@ -80,7 +80,6 @@ for (const fixture of fixtures) {
 
     it('Create valid key', async function () {
       const keys = await tools.createPrivateKey(WALLET_TYPE)
-      assert.equal(!keys, false)
       assert.equal(typeof keys[keyName], 'string')
       const length1 = keys.moneroSpendKeyPrivate.length
       const length2 = keys.moneroSpendKeyPublic.length

@@ -112,7 +112,10 @@ export class MoneroEngine {
       ...currencyInfo.defaultSettings,
       ...asMoneroUserSettings(userSettings)
     }
-    if (this.currentSettings.enableCustomServers) {
+    if (
+      this.currentSettings.enableCustomServers &&
+      this.currentSettings.moneroLightwalletServer != null
+    ) {
       this.myMoneroApi.changeServer(
         this.currentSettings.moneroLightwalletServer,
         ''
@@ -206,7 +209,9 @@ export class MoneroEngine {
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
       this.log.error(
-        'Error fetching address info: ' + this.walletInfo.keys.moneroAddress + e
+        `Error fetching address info: ${
+          this.walletInfo.keys.moneroAddress
+        } ${String(e)}`
       )
     }
   }
@@ -307,7 +312,7 @@ export class MoneroEngine {
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
 
-      this.log('Fetched transactions count: ' + transactions.length)
+      this.log(`Fetched transactions count: ${transactions.length}`)
 
       // Get transactions
       // Iterate over transactions in address
@@ -436,7 +441,10 @@ export class MoneroEngine {
       ...this.currencyInfo.defaultSettings,
       ...asMoneroUserSettings(userSettings)
     }
-    if (this.currentSettings.enableCustomServers) {
+    if (
+      this.currentSettings.enableCustomServers &&
+      this.currentSettings.moneroLightwalletServer != null
+    ) {
       this.myMoneroApi.changeServer(
         this.currentSettings.moneroLightwalletServer,
         ''
@@ -498,7 +506,7 @@ export class MoneroEngine {
   }
 
   getBlockHeight(): number {
-    return parseInt(this.walletLocalData.blockHeight)
+    return this.walletLocalData.blockHeight
   }
 
   async enableTokens(tokens: string[]): Promise<void> {}
@@ -715,7 +723,7 @@ export class MoneroEngine {
   }
 
   getDisplayPublicSeed(): string {
-    if (this.walletInfo.keys && this.walletInfo.keys.moneroViewKeyPrivate) {
+    if (this.walletInfo.keys?.moneroViewKeyPrivate != null) {
       return this.walletInfo.keys.moneroViewKeyPrivate
     }
     return ''
@@ -763,7 +771,9 @@ export async function makeCurrencyEngine(
         JSON.stringify(engine.walletLocalData)
       )
     } catch (e) {
-      opts.log.error('Error writing to localDataStore. Engine not started:' + e)
+      opts.log.error(
+        `Error writing to localDataStore. Engine not started: ${String(e)}`
+      )
     }
   }
 

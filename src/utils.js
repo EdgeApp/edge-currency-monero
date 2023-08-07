@@ -6,7 +6,7 @@
 import { asArray, asObject, asOptional, asString } from 'cleaners'
 import { type EdgeTransaction } from 'edge-core-js/types'
 
-export function normalizeAddress(address: string) {
+export function normalizeAddress(address: string): string {
   return address.toLowerCase().replace('0x', '')
 }
 

@@ -1,3 +1,5 @@
+/* global  __dirname, module, require */
+
 const path = require('path')
 
 const babelOptions = {
