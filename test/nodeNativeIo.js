@@ -11,8 +11,9 @@ const bridgePromise: Promise<any> = makeBridge({})
  * using the `@mymonero/mymonero-monero-client` WASM module.
  */
 const bridge: NativeMyMoneroCore = {
-  callMyMonero(name, jsonArguments) {
-    return bridgePromise.then(bridge => bridge.Module[name](...jsonArguments))
+  async callMyMonero(name, jsonArguments) {
+    const bridge = await bridgePromise
+    return bridge.Module[name](...jsonArguments)
   },
 
   methodNames: [
