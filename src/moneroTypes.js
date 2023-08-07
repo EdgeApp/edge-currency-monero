@@ -3,7 +3,7 @@
  */
 // @flow
 
-import { asObject, asOptional, asString } from 'cleaners'
+import { asBoolean, asMaybe, asObject, asOptional, asString } from 'cleaners'
 import { type EdgeCurrencyTools, type EdgeWalletInfo } from 'edge-core-js'
 import { type Nettype } from 'react-native-mymonero-core'
 
@@ -16,9 +16,11 @@ export type MoneroNetworkInfo = {
   nettype: Nettype
 }
 
-export type MoneroSettings = {
-  mymoneroApiServers: string[]
-}
+export const asMoneroUserSettings = asObject({
+  enableCustomServers: asMaybe(asBoolean, false),
+  moneroLightwalletServer: asMaybe(asString)
+})
+export type MoneroUserSettings = $Call<typeof asMoneroUserSettings>
 
 export const asPrivateKeys = asObject({
   moneroKey: asString,

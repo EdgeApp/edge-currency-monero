@@ -94,6 +94,11 @@ export class MyMoneroApi {
     this.keyImageCache = {}
   }
 
+  changeServer(apiUrl: string, apiKey: string) {
+    this.apiKey = apiKey
+    this.apiUrl = apiUrl
+  }
+
   /**
    * Authenticates with the MyMonero light-wallet server.
    */
