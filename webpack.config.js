@@ -9,7 +9,7 @@ const babelOptions = {
 
 module.exports = {
   devtool: 'source-map',
-  entry: './src/xmrIndex.js',
+  entry: './src/index.js',
   mode: 'development',
   module: {
     rules: [

@@ -31,11 +31,9 @@ import {
 } from 'edge-core-js/types'
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
+import { currencyInfo } from './moneroInfo.js'
 import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import { MoneroTools } from './MoneroTools.js'
-import { type CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi.js'
-import { cleanTxLogs, normalizeAddress } from './utils.js'
-import { currencyInfo } from './xmrInfo.js'
 import {
   type PrivateKeys,
   type SafeWalletInfo,
@@ -43,7 +41,9 @@ import {
   asPrivateKeys,
   asSafeWalletInfo,
   makeSafeWalletInfo
-} from './xmrTypes.js'
+} from './moneroTypes.js'
+import { type CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi.js'
+import { cleanTxLogs, normalizeAddress } from './utils.js'
 
 const SYNC_INTERVAL_MILLISECONDS = 5000
 const SAVE_DATASTORE_MILLISECONDS = 10000

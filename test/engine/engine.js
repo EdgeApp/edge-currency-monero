@@ -17,7 +17,7 @@ import EventEmitter from 'events'
 import { describe, it } from 'mocha'
 import fetch from 'node-fetch'
 
-import edgeCorePlugins from '../../src/xmrIndex.js'
+import edgeCorePlugins from '../../src/index.js'
 import { fakeLog } from '../fakeLog.js'
 import { nativeIo } from '../nodeNativeIo.js'
 import fixtures from './fixtures.json'
