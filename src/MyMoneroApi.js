@@ -4,11 +4,8 @@ import type { EdgeFetchFunction } from 'edge-core-js'
 import type {
   CppBridge,
   CreatedTransaction,
-  DecodedAddress,
-  GeneratedWallet,
   Nettype,
-  Priority,
-  SeedAndKeys
+  Priority
 } from 'react-native-mymonero-core'
 
 const parserUtils = require('./mymonero-utils/ResponseParser.js')
@@ -51,8 +48,8 @@ export type CreateTransactionOptions = {
 }
 
 /**
- * Brings together the mymonero server, JavaScript utilities,
- * and native C++ methods into a coherent API.
+ * Methods for talking to the Monero Lightwallet API.
+ * See https://github.com/monero-project/meta/blob/master/api/lightwallet_rest.md
  */
 export class MyMoneroApi {
   // Network options:
@@ -76,18 +73,6 @@ export class MyMoneroApi {
     this.cppBridge = cppBridge
 
     this.keyImageCache = {}
-  }
-
-  async decodeAddress(address: string): Promise<DecodedAddress> {
-    return await this.cppBridge.decodeAddress(address, this.nettype)
-  }
-
-  async generateWallet(language: string = 'english'): Promise<GeneratedWallet> {
-    return await this.cppBridge.generateWallet(language, this.nettype)
-  }
-
-  async seedAndKeysFromMnemonic(mnemonic: string): Promise<SeedAndKeys> {
-    return await this.cppBridge.seedAndKeysFromMnemonic(mnemonic, this.nettype)
   }
 
   /**

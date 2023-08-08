@@ -10,15 +10,15 @@ import {
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
+import { type CppBridge as CppBridgeType } from 'react-native-mymonero-core'
 import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 import { parse, serialize } from 'uri-js'
 
-import { MyMoneroApi } from './MyMoneroApi.js'
 import { currencyInfo } from './xmrInfo.js'
 import {
+  type MoneroNetworkInfo,
   type PrivateKeys,
-  type PublicKeys,
-  asMoneroInitOptions
+  type PublicKeys
 } from './xmrTypes.js'
 
 function getDenomInfo(denom: string): EdgeDenomination | void {
@@ -37,34 +37,33 @@ function getParameterByName(param: string, url: string): string | null {
 }
 
 export class MoneroTools {
+  cppBridge: CppBridgeType
   io: EdgeIo
   log: EdgeLog
-  myMoneroApi: MyMoneroApi
+  networkInfo: MoneroNetworkInfo = {
+    defaultServer: 'https://edge.mymonero.com:8443',
+    nettype: 'MAINNET'
+  }
 
   constructor(env: EdgeCorePluginOptions) {
     const { io, log, nativeIo } = env
-    const initOptions = asMoneroInitOptions(env.initOptions ?? {})
 
     // Grab the raw C++ API and wrap it in argument parsing:
     const cppModule = nativeIo['edge-currency-monero']
-    const cppBridge = new CppBridge(cppModule)
-    const myMoneroApi = new MyMoneroApi(cppBridge, {
-      apiKey: initOptions.apiKey,
-      apiServer: 'https://edge.mymonero.com:8443',
-      fetch: io.fetch,
-      nettype: 'MAINNET'
-    })
+    this.cppBridge = new CppBridge(cppModule)
 
     this.io = io
     this.log = log
-    this.myMoneroApi = myMoneroApi
   }
 
   async createPrivateKey(walletType: string) {
     const type = walletType.replace('wallet:', '')
 
     if (type === 'monero') {
-      const result = await this.myMoneroApi.generateWallet()
+      const result = await this.cppBridge.generateWallet(
+        'english',
+        this.networkInfo.nettype
+      )
       const privateKeys: PrivateKeys = {
         moneroKey: result.mnemonic,
         moneroSpendKeyPrivate: result.privateSpendKey,
@@ -79,8 +78,9 @@ export class MoneroTools {
   async derivePublicKey(walletInfo: EdgeWalletInfo) {
     const type = walletInfo.type.replace('wallet:', '')
     if (type === 'monero') {
-      const result = await this.myMoneroApi.seedAndKeysFromMnemonic(
-        walletInfo.keys.moneroKey
+      const result = await this.cppBridge.seedAndKeysFromMnemonic(
+        walletInfo.keys.moneroKey,
+        this.networkInfo.nettype
       )
       const publicKeys: PublicKeys = {
         moneroAddress: result.address,
@@ -117,7 +117,7 @@ export class MoneroTools {
 
     try {
       // verify address is decodable for currency
-      await this.myMoneroApi.decodeAddress(address)
+      await this.cppBridge.decodeAddress(address, this.networkInfo.nettype)
     } catch (e) {
       throw new Error('InvalidPublicAddressError')
     }
@@ -170,7 +170,10 @@ export class MoneroTools {
       throw new Error('InvalidPublicAddressError')
     }
     try {
-      await this.myMoneroApi.decodeAddress(obj.publicAddress)
+      await this.cppBridge.decodeAddress(
+        obj.publicAddress,
+        this.networkInfo.nettype
+      )
     } catch (e) {
       throw new Error('InvalidPublicAddressError')
     }

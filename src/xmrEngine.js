@@ -33,15 +33,13 @@ import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
 import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import { MoneroTools } from './MoneroTools.js'
-import {
-  type CreateTransactionOptions,
-  type MyMoneroApi
-} from './MyMoneroApi.js'
+import { type CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi.js'
 import { cleanTxLogs, normalizeAddress } from './utils.js'
 import { currencyInfo } from './xmrInfo.js'
 import {
   type PrivateKeys,
   type SafeWalletInfo,
+  asMoneroInitOptions,
   asPrivateKeys,
   asSafeWalletInfo,
   makeSafeWalletInfo
@@ -81,6 +79,8 @@ export class MoneroEngine {
     opts: EdgeCurrencyEngineOptions
   ) {
     const { walletLocalDisklet, callbacks } = opts
+    const initOptions = asMoneroInitOptions(env.initOptions ?? {})
+    const { networkInfo } = tools
 
     this.io = env.io
     this.log = opts.log
@@ -93,7 +93,12 @@ export class MoneroEngine {
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
     this.currencyTools = tools
-    this.myMoneroApi = tools.myMoneroApi
+    this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
+      apiKey: initOptions.apiKey,
+      apiServer: networkInfo.defaultServer,
+      fetch: env.io.fetch,
+      nettype: networkInfo.nettype
+    })
 
     this.allTokens = currencyInfo.metaTokens.slice(0)
     // this.customTokens = []

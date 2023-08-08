@@ -5,10 +5,16 @@
 
 import { asObject, asOptional, asString } from 'cleaners'
 import { type EdgeCurrencyTools, type EdgeWalletInfo } from 'edge-core-js'
+import { type Nettype } from 'react-native-mymonero-core'
 
 export const asMoneroInitOptions = asObject({
   apiKey: asOptional(asString, '')
 })
+
+export type MoneroNetworkInfo = {
+  defaultServer: string,
+  nettype: Nettype
+}
 
 export type MoneroSettings = {
   mymoneroApiServers: string[]
