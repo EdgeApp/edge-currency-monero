@@ -6,11 +6,12 @@
 import { div, eq, gte, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
+  type EdgeCorePluginOptions,
   type EdgeCurrencyCodeOptions,
+  type EdgeCurrencyEngine,
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
-  type EdgeCurrencyTools,
   type EdgeDataDump,
   type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
@@ -22,6 +23,7 @@ import {
   type EdgeSpendInfo,
   type EdgeToken,
   type EdgeTransaction,
+  type EdgeWalletInfo,
   type JsonObject,
   InsufficientFundsError,
   NoAmountSpecifiedError,
@@ -30,6 +32,7 @@ import {
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
 import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
+import { MoneroTools } from './MoneroTools.js'
 import {
   type CreateTransactionOptions,
   type MyMoneroApi
@@ -40,6 +43,7 @@ import {
   type PrivateKeys,
   type SafeWalletInfo,
   asPrivateKeys,
+  asSafeWalletInfo,
   makeSafeWalletInfo
 } from './xmrTypes.js'
 
@@ -68,18 +72,17 @@ export class MoneroEngine {
   walletId: string
   io: EdgeIo
   log: EdgeLog
-  currencyTools: EdgeCurrencyTools
+  currencyTools: MoneroTools
 
   constructor(
-    currencyTools: EdgeCurrencyTools,
-    io: EdgeIo,
-    walletInfo: SafeWalletInfo,
-    myMoneroApi: MyMoneroApi,
+    env: EdgeCorePluginOptions,
+    tools: MoneroTools,
+    walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ) {
     const { walletLocalDisklet, callbacks } = opts
 
-    this.io = io
+    this.io = env.io
     this.log = opts.log
     this.engineOn = false
     this.loggedIn = false
@@ -89,8 +92,8 @@ export class MoneroEngine {
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
-    this.currencyTools = currencyTools
-    this.myMoneroApi = myMoneroApi
+    this.currencyTools = tools
+    this.myMoneroApi = tools.myMoneroApi
 
     this.allTokens = currencyInfo.metaTokens.slice(0)
     // this.customTokens = []
@@ -717,4 +720,49 @@ function translateFee(fee?: string): Priority {
   if (fee === 'low') return 1
   if (fee === 'high') return 4
   return 2
+}
+
+export async function makeCurrencyEngine(
+  env: EdgeCorePluginOptions,
+  tools: MoneroTools,
+  walletInfo: EdgeWalletInfo,
+  opts: EdgeCurrencyEngineOptions
+): Promise<EdgeCurrencyEngine> {
+  const safeWalletInfo = asSafeWalletInfo(walletInfo)
+
+  const engine = new MoneroEngine(env, tools, safeWalletInfo, opts)
+  await engine.init()
+  try {
+    const result = await engine.walletLocalDisklet.getText(DATA_STORE_FILE)
+    engine.walletLocalData = new MoneroLocalData(result)
+    engine.walletLocalData.moneroAddress = engine.walletInfo.keys.moneroAddress
+    engine.walletLocalData.moneroViewKeyPrivate =
+      engine.walletInfo.keys.moneroViewKeyPrivate
+    engine.walletLocalData.moneroViewKeyPublic =
+      engine.walletInfo.keys.moneroViewKeyPublic
+    engine.walletLocalData.moneroSpendKeyPublic =
+      engine.walletInfo.keys.moneroSpendKeyPublic
+  } catch (err) {
+    try {
+      opts.log(err)
+      opts.log('No walletLocalData setup yet: Failure is ok')
+      engine.walletLocalData = new MoneroLocalData(null)
+      engine.walletLocalData.moneroAddress =
+        engine.walletInfo.keys.moneroAddress
+      engine.walletLocalData.moneroViewKeyPrivate =
+        engine.walletInfo.keys.moneroViewKeyPrivate
+      engine.walletLocalData.moneroViewKeyPublic =
+        engine.walletInfo.keys.moneroViewKeyPublic
+      engine.walletLocalData.moneroSpendKeyPublic =
+        engine.walletInfo.keys.moneroSpendKeyPublic
+      await engine.walletLocalDisklet.setText(
+        DATA_STORE_FILE,
+        JSON.stringify(engine.walletLocalData)
+      )
+    } catch (e) {
+      opts.log.error('Error writing to localDataStore. Engine not started:' + e)
+    }
+  }
+
+  return engine
 }

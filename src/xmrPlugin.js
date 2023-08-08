@@ -5,81 +5,24 @@
 
 import {
   type EdgeCorePluginOptions,
-  type EdgeCurrencyEngine,
-  type EdgeCurrencyEngineOptions,
-  type EdgeCurrencyPlugin,
-  type EdgeWalletInfo
+  type EdgeCurrencyPlugin
 } from 'edge-core-js/types'
 
-import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import { MoneroTools } from './MoneroTools.js'
-import { MoneroEngine } from './xmrEngine.js'
+import { makeCurrencyEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
-import { asSafeWalletInfo } from './xmrTypes.js'
 
 export function makeMoneroPlugin(
-  opts: EdgeCorePluginOptions
+  env: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
-  const tools = new MoneroTools(opts)
-
-  async function makeCurrencyEngine(
-    walletInfo: EdgeWalletInfo,
-    opts: EdgeCurrencyEngineOptions
-  ): Promise<EdgeCurrencyEngine> {
-    const safeWalletInfo = asSafeWalletInfo(walletInfo)
-
-    const moneroEngine = new MoneroEngine(
-      tools,
-      tools.io,
-      safeWalletInfo,
-      tools.myMoneroApi,
-      opts
-    )
-    await moneroEngine.init()
-    try {
-      const result = await moneroEngine.walletLocalDisklet.getText(
-        DATA_STORE_FILE
-      )
-      moneroEngine.walletLocalData = new MoneroLocalData(result)
-      moneroEngine.walletLocalData.moneroAddress =
-        moneroEngine.walletInfo.keys.moneroAddress
-      moneroEngine.walletLocalData.moneroViewKeyPrivate =
-        moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-      moneroEngine.walletLocalData.moneroViewKeyPublic =
-        moneroEngine.walletInfo.keys.moneroViewKeyPublic
-      moneroEngine.walletLocalData.moneroSpendKeyPublic =
-        moneroEngine.walletInfo.keys.moneroSpendKeyPublic
-    } catch (err) {
-      try {
-        opts.log(err)
-        opts.log('No walletLocalData setup yet: Failure is ok')
-        moneroEngine.walletLocalData = new MoneroLocalData(null)
-        moneroEngine.walletLocalData.moneroAddress =
-          moneroEngine.walletInfo.keys.moneroAddress
-        moneroEngine.walletLocalData.moneroViewKeyPrivate =
-          moneroEngine.walletInfo.keys.moneroViewKeyPrivate
-        moneroEngine.walletLocalData.moneroViewKeyPublic =
-          moneroEngine.walletInfo.keys.moneroViewKeyPublic
-        moneroEngine.walletLocalData.moneroSpendKeyPublic =
-          moneroEngine.walletInfo.keys.moneroSpendKeyPublic
-        await moneroEngine.walletLocalDisklet.setText(
-          DATA_STORE_FILE,
-          JSON.stringify(moneroEngine.walletLocalData)
-        )
-      } catch (e) {
-        opts.log.error(
-          'Error writing to localDataStore. Engine not started:' + e
-        )
-      }
-    }
-
-    const out: EdgeCurrencyEngine = moneroEngine
-    return out
-  }
+  const tools = new MoneroTools(env)
 
   return {
     currencyInfo,
-    makeCurrencyEngine,
+
+    async makeCurrencyEngine(walletInfo, opts) {
+      return await makeCurrencyEngine(env, tools, walletInfo, opts)
+    },
 
     async makeCurrencyTools() {
       return tools
