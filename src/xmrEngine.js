@@ -29,6 +29,7 @@ import {
 } from 'edge-core-js/types'
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
+import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import {
   type CreateTransactionOptions,
   type MyMoneroApi
@@ -39,9 +40,7 @@ import {
   type PrivateKeys,
   type SafeWalletInfo,
   asPrivateKeys,
-  DATA_STORE_FILE,
-  makeSafeWalletInfo,
-  WalletLocalData
+  makeSafeWalletInfo
 } from './xmrTypes.js'
 
 const SYNC_INTERVAL_MILLISECONDS = 5000
@@ -58,7 +57,7 @@ export class MoneroEngine {
   engineOn: boolean
   loggedIn: boolean
   addressesChecked: boolean
-  walletLocalData: WalletLocalData
+  walletLocalData: MoneroLocalData
   walletLocalDataDirty: boolean
   transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
@@ -428,7 +427,7 @@ export class MoneroEngine {
       moneroAddress: this.walletLocalData.moneroAddress,
       moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
     })
-    this.walletLocalData = new WalletLocalData(temp)
+    this.walletLocalData = new MoneroLocalData(temp)
     this.walletLocalDataDirty = true
     this.addressesChecked = false
     await this.saveWalletLoop()

@@ -13,15 +13,12 @@ import {
 } from 'edge-core-js/types'
 import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 
+import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import { makeMoneroTools } from './MoneroTools.js'
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
-import {
-  asSafeWalletInfo,
-  DATA_STORE_FILE,
-  WalletLocalData
-} from './xmrTypes.js'
+import { asSafeWalletInfo } from './xmrTypes.js'
 
 export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
@@ -64,7 +61,7 @@ export function makeMoneroPlugin(
       const result = await moneroEngine.walletLocalDisklet.getText(
         DATA_STORE_FILE
       )
-      moneroEngine.walletLocalData = new WalletLocalData(result)
+      moneroEngine.walletLocalData = new MoneroLocalData(result)
       moneroEngine.walletLocalData.moneroAddress =
         moneroEngine.walletInfo.keys.moneroAddress
       moneroEngine.walletLocalData.moneroViewKeyPrivate =
@@ -77,7 +74,7 @@ export function makeMoneroPlugin(
       try {
         opts.log(err)
         opts.log('No walletLocalData setup yet: Failure is ok')
-        moneroEngine.walletLocalData = new WalletLocalData(null)
+        moneroEngine.walletLocalData = new MoneroLocalData(null)
         moneroEngine.walletLocalData.moneroAddress =
           moneroEngine.walletInfo.keys.moneroAddress
         moneroEngine.walletLocalData.moneroViewKeyPrivate =
