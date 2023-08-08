@@ -8,9 +8,9 @@ import {
   type EdgeCurrencyPlugin
 } from 'edge-core-js/types'
 
+import { makeCurrencyEngine } from './MoneroEngine.js'
+import { currencyInfo } from './moneroInfo.js'
 import { MoneroTools } from './MoneroTools.js'
-import { makeCurrencyEngine } from './xmrEngine.js'
-import { currencyInfo } from './xmrInfo.js'
 
 export function makeMoneroPlugin(
   env: EdgeCorePluginOptions

@@ -13,7 +13,7 @@
     "Paul Puey <paul@edge.app>"
   ],
   "main": "./index.js",
-  "module": "./lib/xmrIndex.js",
+  "module": "./lib/index.js",
   "files": [
     "CHANGELOG.md",
     "index.js",

@@ -14,12 +14,12 @@ import { type CppBridge as CppBridgeType } from 'react-native-mymonero-core'
 import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 import { parse, serialize } from 'uri-js'
 
-import { currencyInfo } from './xmrInfo.js'
+import { currencyInfo } from './moneroInfo.js'
 import {
   type MoneroNetworkInfo,
   type PrivateKeys,
   type PublicKeys
-} from './xmrTypes.js'
+} from './moneroTypes.js'
 
 function getDenomInfo(denom: string): EdgeDenomination | void {
   return currencyInfo.denominations.find(element => {
