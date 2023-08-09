@@ -13,10 +13,6 @@ export class MoneroLocalData {
   lockedXmrBalance: string
   nextNonce: string
   hasLoggedIn: boolean
-  moneroAddress: string
-  moneroViewKeyPrivate: string
-  moneroViewKeyPublic: string
-  moneroSpendKeyPublic: string
   totalBalances: { [currencyCode: string]: string }
   enabledTokens: string[]
   transactionsObj: { [currencyCode: string]: EdgeTransaction[] }
@@ -38,10 +34,6 @@ export class MoneroLocalData {
     } = {}
     this.transactionsObj = transactionsObj
 
-    this.moneroAddress = ''
-    this.moneroViewKeyPrivate = ''
-    this.moneroViewKeyPublic = ''
-    this.moneroSpendKeyPublic = ''
     this.hasLoggedIn = false
     this.enabledTokens = [PRIMARY_CURRENCY]
     if (jsonString !== null) {
@@ -58,18 +50,6 @@ export class MoneroLocalData {
       }
       if (typeof data.lockedXmrBalance === 'string') {
         this.lockedXmrBalance = data.lockedXmrBalance
-      }
-      if (typeof data.moneroAddress === 'string') {
-        this.moneroAddress = data.moneroAddress
-      }
-      if (typeof data.moneroViewKeyPrivate === 'string') {
-        this.moneroViewKeyPrivate = data.moneroViewKeyPrivate
-      }
-      if (typeof data.moneroViewKeyPublic === 'string') {
-        this.moneroViewKeyPublic = data.moneroViewKeyPublic
-      }
-      if (typeof data.moneroSpendKeyPublic === 'string') {
-        this.moneroSpendKeyPublic = data.moneroSpendKeyPublic
       }
       if (typeof data.totalBalances !== 'undefined') {
         this.totalBalances = data.totalBalances
