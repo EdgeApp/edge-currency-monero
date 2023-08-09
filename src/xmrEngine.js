@@ -152,8 +152,8 @@ export class MoneroEngine {
   async loginIfNewAddress(privateKeys: PrivateKeys): Promise<void> {
     try {
       const result = await this.myMoneroApi.login({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -173,8 +173,8 @@ export class MoneroEngine {
   async checkAddressInnerLoop(privateKeys: PrivateKeys): Promise<void> {
     try {
       const addrResult = await this.myMoneroApi.getAddressInfo({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -196,7 +196,7 @@ export class MoneroEngine {
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
       this.log.error(
-        'Error fetching address info: ' + this.walletLocalData.moneroAddress + e
+        'Error fetching address info: ' + this.walletInfo.keys.moneroAddress + e
       )
     }
   }
@@ -209,7 +209,7 @@ export class MoneroEngine {
     const netNativeAmount: string = sub(tx.total_received, tx.total_sent)
 
     if (netNativeAmount.slice(0, 1) !== '-') {
-      ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
+      ourReceiveAddresses.push(this.walletInfo.keys.moneroAddress.toLowerCase())
     }
 
     let blockHeight = tx.height
@@ -277,8 +277,8 @@ export class MoneroEngine {
 
     try {
       const transactions = await this.myMoneroApi.getTransactions({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -432,8 +432,8 @@ export class MoneroEngine {
     const temp = JSON.stringify({
       enabledTokens: this.walletLocalData.enabledTokens,
       // networkFees: this.walletLocalData.networkFees,
-      moneroAddress: this.walletLocalData.moneroAddress,
-      moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
+      moneroAddress: this.walletInfo.keys.moneroAddress,
+      moneroViewKeyPrivate: this.walletInfo.keys.moneroViewKeyPrivate
     })
     this.walletLocalData = new MoneroLocalData(temp)
     this.walletLocalDataDirty = true
@@ -542,11 +542,7 @@ export class MoneroEngine {
   async getFreshAddress(
     options: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
-    if (this.walletLocalData.hasLoggedIn) {
-      return { publicAddress: this.walletLocalData.moneroAddress }
-    } else {
-      return { publicAddress: '' }
-    }
+    return { publicAddress: this.walletInfo.keys.moneroAddress }
   }
 
   async addGapLimitAddresses(addresses: string[]): Promise<void> {}
@@ -584,8 +580,8 @@ export class MoneroEngine {
     try {
       return await this.myMoneroApi.createTransaction(
         {
-          address: this.walletLocalData.moneroAddress,
-          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+          address: this.walletInfo.keys.moneroAddress,
+          privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
           privateSpendKey: privateKeys.moneroSpendKeyPrivate,
           publicSpendKey: privateKeys.moneroSpendKeyPublic
         },
@@ -740,26 +736,11 @@ export async function makeCurrencyEngine(
   try {
     const result = await engine.walletLocalDisklet.getText(DATA_STORE_FILE)
     engine.walletLocalData = new MoneroLocalData(result)
-    engine.walletLocalData.moneroAddress = engine.walletInfo.keys.moneroAddress
-    engine.walletLocalData.moneroViewKeyPrivate =
-      engine.walletInfo.keys.moneroViewKeyPrivate
-    engine.walletLocalData.moneroViewKeyPublic =
-      engine.walletInfo.keys.moneroViewKeyPublic
-    engine.walletLocalData.moneroSpendKeyPublic =
-      engine.walletInfo.keys.moneroSpendKeyPublic
   } catch (err) {
     try {
       opts.log(err)
       opts.log('No walletLocalData setup yet: Failure is ok')
       engine.walletLocalData = new MoneroLocalData(null)
-      engine.walletLocalData.moneroAddress =
-        engine.walletInfo.keys.moneroAddress
-      engine.walletLocalData.moneroViewKeyPrivate =
-        engine.walletInfo.keys.moneroViewKeyPrivate
-      engine.walletLocalData.moneroViewKeyPublic =
-        engine.walletInfo.keys.moneroViewKeyPublic
-      engine.walletLocalData.moneroSpendKeyPublic =
-        engine.walletInfo.keys.moneroSpendKeyPublic
       await engine.walletLocalDisklet.setText(
         DATA_STORE_FILE,
         JSON.stringify(engine.walletLocalData)
