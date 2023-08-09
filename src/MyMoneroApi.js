@@ -1,6 +1,7 @@
 // @flow
 
 import {
+  type Cleaner,
   asArray,
   asBoolean,
   asNumber,
@@ -50,9 +51,14 @@ export type CreateTransactionOptions = {
   targetAddress: string
 }
 
+const asNumberBoolean: Cleaner<boolean> = raw => {
+  if (typeof raw === 'number') return Boolean(raw)
+  return asBoolean(raw)
+}
+
 const asLoginResult = asObject({
-  generated_locally: asOptional(asBoolean), // Flag from initial account creation
-  new_address: asBoolean, // Whether account was just created
+  generated_locally: asOptional(asNumberBoolean), // Flag from initial account creation
+  new_address: asNumberBoolean, // Whether account was just created
   start_height: asOptional(asNumber), // Account scanning start block
   view_key: asOptional(asString) // View key bytes
 })
@@ -108,6 +114,7 @@ export class MyMoneroApi {
       address: address,
       api_key: this.apiKey,
       create_account: true,
+      generated_locally: true,
       view_key: privateViewKey
     })
 
@@ -131,11 +138,11 @@ export class MyMoneroApi {
       transaction_height: asOptional(asNumber),
       transactions: asArray(
         asObject({
-          coinbase: asBoolean, // True if tx is coinbase
+          coinbase: asNumberBoolean, // True if tx is coinbase
           hash: asString, // Bytes of tx hash
           height: asNumber, // Block height
           id: asNumber, // Index of tx in blockchain
-          mempool: asBoolean, // True if tx is in mempool
+          mempool: asNumberBoolean, // True if tx is in mempool
           mixin: asNumber, // Mixin of the receive
           payment_id: asOptional(asString), // Bytes of tx payment id
           spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
@@ -170,7 +177,7 @@ export class MyMoneroApi {
     const asAddressInfo = asObject({
       blockchain_height: asNumber, // Current blockchain height
       locked_funds: asString, // Sum of unspendable XMR
-      rates: asObject(asNumber), // Rates
+      rates: asOptional(asObject(asNumber)), // Rates
       scanned_block_height: asNumber, // Current scan progress
       scanned_height: asNumber, // Current tx scan progress
       spent_outputs: asOptional(asArray(asSpentOutput)), // Possible spend info
