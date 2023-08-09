@@ -18,12 +18,13 @@ import { makeMoneroTools } from './MoneroTools.js'
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
-import { asSafeWalletInfo } from './xmrTypes.js'
+import { asMoneroInitOptions, asSafeWalletInfo } from './xmrTypes.js'
 
 export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
-  const { io, nativeIo, initOptions = { apiKey: '' } } = opts
+  const { io, nativeIo } = opts
+  const initOptions = asMoneroInitOptions(opts.initOptions ?? {})
 
   // Grab the raw C++ API and wrap it in argument parsing:
   const cppModule = nativeIo['edge-currency-monero']
@@ -38,7 +39,7 @@ export function makeMoneroPlugin(
   let toolsPromise: Promise<EdgeCurrencyTools>
   function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
     if (toolsPromise != null) return toolsPromise
-    toolsPromise = makeMoneroTools(io, opts.log, initOptions, myMoneroApi)
+    toolsPromise = makeMoneroTools(opts.log, myMoneroApi)
     return toolsPromise
   }
 

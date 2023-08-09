@@ -5,7 +5,6 @@ import {
   type EdgeCurrencyTools,
   type EdgeDenomination,
   type EdgeEncodeUri,
-  type EdgeIo,
   type EdgeLog,
   type EdgeParsedUri,
   type EdgeWalletInfo
@@ -15,10 +14,6 @@ import { parse, serialize } from 'uri-js'
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { currencyInfo } from './xmrInfo.js'
 import { type PrivateKeys, type PublicKeys } from './xmrTypes.js'
-
-type InitOptions = {
-  apiKey: string
-}
 
 function getDenomInfo(denom: string): EdgeDenomination | void {
   return currencyInfo.denominations.find(element => {
@@ -36,9 +31,7 @@ function getParameterByName(param: string, url: string): string | null {
 }
 
 export async function makeMoneroTools(
-  io: EdgeIo,
   log: EdgeLog,
-  initOptions: InitOptions,
   myMoneroApi: MyMoneroApi
 ): Promise<EdgeCurrencyTools> {
   log(`Creating Currency Plugin for monero`)

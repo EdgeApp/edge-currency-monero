@@ -3,8 +3,12 @@
  */
 // @flow
 
-import { asObject, asString } from 'cleaners'
+import { asObject, asOptional, asString } from 'cleaners'
 import { type EdgeCurrencyTools, type EdgeWalletInfo } from 'edge-core-js'
+
+export const asMoneroInitOptions = asObject({
+  apiKey: asOptional(asString, '')
+})
 
 export type MoneroSettings = {
   mymoneroApiServers: string[]
