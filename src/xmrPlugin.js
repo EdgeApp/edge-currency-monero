@@ -8,40 +8,19 @@ import {
   type EdgeCurrencyEngine,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyPlugin,
-  type EdgeCurrencyTools,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
-import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 
 import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
-import { makeMoneroTools } from './MoneroTools.js'
-import { MyMoneroApi } from './MyMoneroApi.js'
+import { MoneroTools } from './MoneroTools.js'
 import { MoneroEngine } from './xmrEngine.js'
 import { currencyInfo } from './xmrInfo.js'
-import { asMoneroInitOptions, asSafeWalletInfo } from './xmrTypes.js'
+import { asSafeWalletInfo } from './xmrTypes.js'
 
 export function makeMoneroPlugin(
   opts: EdgeCorePluginOptions
 ): EdgeCurrencyPlugin {
-  const { io, nativeIo } = opts
-  const initOptions = asMoneroInitOptions(opts.initOptions ?? {})
-
-  // Grab the raw C++ API and wrap it in argument parsing:
-  const cppModule = nativeIo['edge-currency-monero']
-  const cppBridge = new CppBridge(cppModule)
-  const myMoneroApi = new MyMoneroApi(cppBridge, {
-    apiKey: initOptions.apiKey,
-    apiServer: 'https://edge.mymonero.com:8443',
-    fetch: io.fetch,
-    nettype: 'MAINNET'
-  })
-
-  let toolsPromise: Promise<EdgeCurrencyTools>
-  function makeCurrencyTools(): Promise<EdgeCurrencyTools> {
-    if (toolsPromise != null) return toolsPromise
-    toolsPromise = makeMoneroTools(opts.log, myMoneroApi)
-    return toolsPromise
-  }
+  const tools = new MoneroTools(opts)
 
   async function makeCurrencyEngine(
     walletInfo: EdgeWalletInfo,
@@ -49,12 +28,11 @@ export function makeMoneroPlugin(
   ): Promise<EdgeCurrencyEngine> {
     const safeWalletInfo = asSafeWalletInfo(walletInfo)
 
-    const tools: EdgeCurrencyTools = await makeCurrencyTools()
     const moneroEngine = new MoneroEngine(
       tools,
-      io,
+      tools.io,
       safeWalletInfo,
-      myMoneroApi,
+      tools.myMoneroApi,
       opts
     )
     await moneroEngine.init()
@@ -102,6 +80,9 @@ export function makeMoneroPlugin(
   return {
     currencyInfo,
     makeCurrencyEngine,
-    makeCurrencyTools
+
+    async makeCurrencyTools() {
+      return tools
+    }
   }
 }

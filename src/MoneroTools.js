@@ -2,18 +2,24 @@
 
 import { div, mul, toFixed } from 'biggystring'
 import {
-  type EdgeCurrencyTools,
+  type EdgeCorePluginOptions,
   type EdgeDenomination,
   type EdgeEncodeUri,
+  type EdgeIo,
   type EdgeLog,
   type EdgeParsedUri,
   type EdgeWalletInfo
 } from 'edge-core-js/types'
+import CppBridge from 'react-native-mymonero-core/src/CppBridge.js'
 import { parse, serialize } from 'uri-js'
 
 import { MyMoneroApi } from './MyMoneroApi.js'
 import { currencyInfo } from './xmrInfo.js'
-import { type PrivateKeys, type PublicKeys } from './xmrTypes.js'
+import {
+  type PrivateKeys,
+  type PublicKeys,
+  asMoneroInitOptions
+} from './xmrTypes.js'
 
 function getDenomInfo(denom: string): EdgeDenomination | void {
   return currencyInfo.denominations.find(element => {
@@ -30,165 +36,175 @@ function getParameterByName(param: string, url: string): string | null {
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-export async function makeMoneroTools(
-  log: EdgeLog,
+export class MoneroTools {
+  io: EdgeIo
+  log: EdgeLog
   myMoneroApi: MyMoneroApi
-): Promise<EdgeCurrencyTools> {
-  log(`Creating Currency Plugin for monero`)
 
-  const moneroPlugin: EdgeCurrencyTools = {
-    pluginName: 'monero',
-    currencyInfo,
-    myMoneroApi,
+  constructor(env: EdgeCorePluginOptions) {
+    const { io, log, nativeIo } = env
+    const initOptions = asMoneroInitOptions(env.initOptions ?? {})
 
-    createPrivateKey: async (walletType: string) => {
-      const type = walletType.replace('wallet:', '')
+    // Grab the raw C++ API and wrap it in argument parsing:
+    const cppModule = nativeIo['edge-currency-monero']
+    const cppBridge = new CppBridge(cppModule)
+    const myMoneroApi = new MyMoneroApi(cppBridge, {
+      apiKey: initOptions.apiKey,
+      apiServer: 'https://edge.mymonero.com:8443',
+      fetch: io.fetch,
+      nettype: 'MAINNET'
+    })
 
-      if (type === 'monero') {
-        const result = await myMoneroApi.generateWallet()
-        const privateKeys: PrivateKeys = {
-          moneroKey: result.mnemonic,
-          moneroSpendKeyPrivate: result.privateSpendKey,
-          moneroSpendKeyPublic: result.publicSpendKey
-        }
-        return privateKeys
-      } else {
-        throw new Error('InvalidWalletType')
-      }
-    },
+    this.io = io
+    this.log = log
+    this.myMoneroApi = myMoneroApi
+  }
 
-    derivePublicKey: async (walletInfo: EdgeWalletInfo) => {
-      const type = walletInfo.type.replace('wallet:', '')
-      if (type === 'monero') {
-        const result = await myMoneroApi.seedAndKeysFromMnemonic(
-          walletInfo.keys.moneroKey
-        )
-        const publicKeys: PublicKeys = {
-          moneroAddress: result.address,
-          moneroViewKeyPrivate: result.privateViewKey,
-          moneroViewKeyPublic: result.publicViewKey,
-          moneroSpendKeyPublic: result.publicSpendKey
-        }
-        return publicKeys
-      } else {
-        throw new Error('InvalidWalletType')
-      }
-    },
+  async createPrivateKey(walletType: string) {
+    const type = walletType.replace('wallet:', '')
 
-    parseUri: async (uri: string): Promise<EdgeParsedUri> => {
-      const parsedUri = parse(uri)
-      let address: string
-      let nativeAmount: string | null = null
-      let currencyCode: string | null = null
-
-      if (
-        typeof parsedUri.scheme !== 'undefined' &&
-        parsedUri.scheme !== 'monero'
-      ) {
-        throw new Error('InvalidUriError') // possibly scanning wrong crypto type
+    if (type === 'monero') {
+      const result = await this.myMoneroApi.generateWallet()
+      const privateKeys: PrivateKeys = {
+        moneroKey: result.mnemonic,
+        moneroSpendKeyPrivate: result.privateSpendKey,
+        moneroSpendKeyPublic: result.publicSpendKey
       }
-      if (typeof parsedUri.host !== 'undefined') {
-        address = parsedUri.host
-      } else if (typeof parsedUri.path !== 'undefined') {
-        address = parsedUri.path
-      } else {
-        throw new Error('InvalidUriError')
-      }
-      address = address.replace('/', '') // Remove any slashes
-
-      try {
-        // verify address is decodable for currency
-        await myMoneroApi.decodeAddress(address)
-      } catch (e) {
-        throw new Error('InvalidPublicAddressError')
-      }
-
-      const amountStr = getParameterByName('amount', uri)
-      if (amountStr && typeof amountStr === 'string') {
-        const denom = getDenomInfo('XMR')
-        if (!denom) {
-          throw new Error('InternalErrorInvalidCurrencyCode')
-        }
-        nativeAmount = mul(amountStr, denom.multiplier)
-        nativeAmount = toFixed(nativeAmount, 0, 0)
-        currencyCode = 'XMR'
-      }
-      const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
-      const label = getParameterByName('label', uri)
-      const message = getParameterByName('message', uri)
-      const category = getParameterByName('category', uri)
-
-      const edgeParsedUri: EdgeParsedUri = {
-        publicAddress: address
-      }
-      if (nativeAmount) {
-        edgeParsedUri.nativeAmount = nativeAmount
-      }
-      if (currencyCode) {
-        edgeParsedUri.currencyCode = currencyCode
-      }
-      if (uniqueIdentifier) {
-        edgeParsedUri.uniqueIdentifier = uniqueIdentifier
-      }
-      if (label || message || category) {
-        edgeParsedUri.metadata = {}
-        if (label) {
-          edgeParsedUri.metadata.name = label
-        }
-        if (message) {
-          edgeParsedUri.metadata.notes = message
-        }
-        if (category) {
-          edgeParsedUri.metadata.category = category
-        }
-      }
-
-      return edgeParsedUri
-    },
-
-    encodeUri: async (obj: EdgeEncodeUri): Promise<string> => {
-      if (!obj.publicAddress) {
-        throw new Error('InvalidPublicAddressError')
-      }
-      try {
-        await myMoneroApi.decodeAddress(obj.publicAddress)
-      } catch (e) {
-        throw new Error('InvalidPublicAddressError')
-      }
-      if (!obj.nativeAmount && !obj.label && !obj.message) {
-        return obj.publicAddress
-      } else {
-        let queryString: string = ''
-
-        if (typeof obj.nativeAmount === 'string') {
-          const currencyCode: string = 'XMR'
-          const nativeAmount: string = obj.nativeAmount
-          const denom = getDenomInfo(currencyCode)
-          if (!denom) {
-            throw new Error('InternalErrorInvalidCurrencyCode')
-          }
-          const amount = div(nativeAmount, denom.multiplier, 12)
-
-          queryString += 'amount=' + amount + '&'
-        }
-        if (typeof obj.label === 'string') {
-          queryString += 'label=' + obj.label + '&'
-        }
-        if (typeof obj.message === 'string') {
-          queryString += 'message=' + obj.message + '&'
-        }
-        queryString = queryString.substr(0, queryString.length - 1)
-
-        const serializeObj = {
-          scheme: 'monero',
-          path: obj.publicAddress,
-          query: queryString
-        }
-        const url = serialize(serializeObj)
-        return url
-      }
+      return privateKeys
+    } else {
+      throw new Error('InvalidWalletType')
     }
   }
 
-  return moneroPlugin
+  async derivePublicKey(walletInfo: EdgeWalletInfo) {
+    const type = walletInfo.type.replace('wallet:', '')
+    if (type === 'monero') {
+      const result = await this.myMoneroApi.seedAndKeysFromMnemonic(
+        walletInfo.keys.moneroKey
+      )
+      const publicKeys: PublicKeys = {
+        moneroAddress: result.address,
+        moneroViewKeyPrivate: result.privateViewKey,
+        moneroViewKeyPublic: result.publicViewKey,
+        moneroSpendKeyPublic: result.publicSpendKey
+      }
+      return publicKeys
+    } else {
+      throw new Error('InvalidWalletType')
+    }
+  }
+
+  async parseUri(uri: string): Promise<EdgeParsedUri> {
+    const parsedUri = parse(uri)
+    let address: string
+    let nativeAmount: string | null = null
+    let currencyCode: string | null = null
+
+    if (
+      typeof parsedUri.scheme !== 'undefined' &&
+      parsedUri.scheme !== 'monero'
+    ) {
+      throw new Error('InvalidUriError') // possibly scanning wrong crypto type
+    }
+    if (typeof parsedUri.host !== 'undefined') {
+      address = parsedUri.host
+    } else if (typeof parsedUri.path !== 'undefined') {
+      address = parsedUri.path
+    } else {
+      throw new Error('InvalidUriError')
+    }
+    address = address.replace('/', '') // Remove any slashes
+
+    try {
+      // verify address is decodable for currency
+      await this.myMoneroApi.decodeAddress(address)
+    } catch (e) {
+      throw new Error('InvalidPublicAddressError')
+    }
+
+    const amountStr = getParameterByName('amount', uri)
+    if (amountStr && typeof amountStr === 'string') {
+      const denom = getDenomInfo('XMR')
+      if (!denom) {
+        throw new Error('InternalErrorInvalidCurrencyCode')
+      }
+      nativeAmount = mul(amountStr, denom.multiplier)
+      nativeAmount = toFixed(nativeAmount, 0, 0)
+      currencyCode = 'XMR'
+    }
+    const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
+    const label = getParameterByName('label', uri)
+    const message = getParameterByName('message', uri)
+    const category = getParameterByName('category', uri)
+
+    const edgeParsedUri: EdgeParsedUri = {
+      publicAddress: address
+    }
+    if (nativeAmount) {
+      edgeParsedUri.nativeAmount = nativeAmount
+    }
+    if (currencyCode) {
+      edgeParsedUri.currencyCode = currencyCode
+    }
+    if (uniqueIdentifier) {
+      edgeParsedUri.uniqueIdentifier = uniqueIdentifier
+    }
+    if (label || message || category) {
+      edgeParsedUri.metadata = {}
+      if (label) {
+        edgeParsedUri.metadata.name = label
+      }
+      if (message) {
+        edgeParsedUri.metadata.notes = message
+      }
+      if (category) {
+        edgeParsedUri.metadata.category = category
+      }
+    }
+
+    return edgeParsedUri
+  }
+
+  async encodeUri(obj: EdgeEncodeUri): Promise<string> {
+    if (!obj.publicAddress) {
+      throw new Error('InvalidPublicAddressError')
+    }
+    try {
+      await this.myMoneroApi.decodeAddress(obj.publicAddress)
+    } catch (e) {
+      throw new Error('InvalidPublicAddressError')
+    }
+    if (!obj.nativeAmount && !obj.label && !obj.message) {
+      return obj.publicAddress
+    } else {
+      let queryString: string = ''
+
+      if (typeof obj.nativeAmount === 'string') {
+        const currencyCode: string = 'XMR'
+        const nativeAmount: string = obj.nativeAmount
+        const denom = getDenomInfo(currencyCode)
+        if (!denom) {
+          throw new Error('InternalErrorInvalidCurrencyCode')
+        }
+        const amount = div(nativeAmount, denom.multiplier, 12)
+
+        queryString += 'amount=' + amount + '&'
+      }
+      if (typeof obj.label === 'string') {
+        queryString += 'label=' + obj.label + '&'
+      }
+      if (typeof obj.message === 'string') {
+        queryString += 'message=' + obj.message + '&'
+      }
+      queryString = queryString.substr(0, queryString.length - 1)
+
+      const serializeObj = {
+        scheme: 'monero',
+        path: obj.publicAddress,
+        query: queryString
+      }
+      const url = serialize(serializeObj)
+      return url
+    }
+  }
 }
