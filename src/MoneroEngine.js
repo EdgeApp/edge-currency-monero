@@ -6,11 +6,12 @@
 import { div, eq, gte, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
+  type EdgeCorePluginOptions,
   type EdgeCurrencyCodeOptions,
+  type EdgeCurrencyEngine,
   type EdgeCurrencyEngineCallbacks,
   type EdgeCurrencyEngineOptions,
   type EdgeCurrencyInfo,
-  type EdgeCurrencyTools,
   type EdgeDataDump,
   type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
@@ -22,6 +23,7 @@ import {
   type EdgeSpendInfo,
   type EdgeToken,
   type EdgeTransaction,
+  type EdgeWalletInfo,
   type JsonObject,
   InsufficientFundsError,
   NoAmountSpecifiedError,
@@ -29,20 +31,19 @@ import {
 } from 'edge-core-js/types'
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
-import {
-  type CreateTransactionOptions,
-  type MyMoneroApi
-} from './MyMoneroApi.js'
-import { cleanTxLogs, normalizeAddress } from './utils.js'
-import { currencyInfo } from './xmrInfo.js'
+import { currencyInfo } from './moneroInfo.js'
+import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
+import { MoneroTools } from './MoneroTools.js'
 import {
   type PrivateKeys,
   type SafeWalletInfo,
+  asMoneroInitOptions,
   asPrivateKeys,
-  DATA_STORE_FILE,
-  makeSafeWalletInfo,
-  WalletLocalData
-} from './xmrTypes.js'
+  asSafeWalletInfo,
+  makeSafeWalletInfo
+} from './moneroTypes.js'
+import { type CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi.js'
+import { cleanTxLogs, normalizeAddress } from './utils.js'
 
 const SYNC_INTERVAL_MILLISECONDS = 5000
 const SAVE_DATASTORE_MILLISECONDS = 10000
@@ -58,7 +59,7 @@ export class MoneroEngine {
   engineOn: boolean
   loggedIn: boolean
   addressesChecked: boolean
-  walletLocalData: WalletLocalData
+  walletLocalData: MoneroLocalData
   walletLocalDataDirty: boolean
   transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
@@ -69,18 +70,19 @@ export class MoneroEngine {
   walletId: string
   io: EdgeIo
   log: EdgeLog
-  currencyTools: EdgeCurrencyTools
+  currencyTools: MoneroTools
 
   constructor(
-    currencyTools: EdgeCurrencyTools,
-    io: EdgeIo,
-    walletInfo: SafeWalletInfo,
-    myMoneroApi: MyMoneroApi,
+    env: EdgeCorePluginOptions,
+    tools: MoneroTools,
+    walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ) {
     const { walletLocalDisklet, callbacks } = opts
+    const initOptions = asMoneroInitOptions(env.initOptions ?? {})
+    const { networkInfo } = tools
 
-    this.io = io
+    this.io = env.io
     this.log = opts.log
     this.engineOn = false
     this.loggedIn = false
@@ -90,8 +92,13 @@ export class MoneroEngine {
     this.walletInfo = walletInfo
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
-    this.currencyTools = currencyTools
-    this.myMoneroApi = myMoneroApi
+    this.currencyTools = tools
+    this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
+      apiKey: initOptions.apiKey,
+      apiServer: networkInfo.defaultServer,
+      fetch: env.io.fetch,
+      nettype: networkInfo.nettype
+    })
 
     this.allTokens = currencyInfo.metaTokens.slice(0)
     // this.customTokens = []
@@ -145,8 +152,8 @@ export class MoneroEngine {
   async loginIfNewAddress(privateKeys: PrivateKeys): Promise<void> {
     try {
       const result = await this.myMoneroApi.login({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -166,8 +173,8 @@ export class MoneroEngine {
   async checkAddressInnerLoop(privateKeys: PrivateKeys): Promise<void> {
     try {
       const addrResult = await this.myMoneroApi.getAddressInfo({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -189,7 +196,7 @@ export class MoneroEngine {
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
       this.log.error(
-        'Error fetching address info: ' + this.walletLocalData.moneroAddress + e
+        'Error fetching address info: ' + this.walletInfo.keys.moneroAddress + e
       )
     }
   }
@@ -202,7 +209,7 @@ export class MoneroEngine {
     const netNativeAmount: string = sub(tx.total_received, tx.total_sent)
 
     if (netNativeAmount.slice(0, 1) !== '-') {
-      ourReceiveAddresses.push(this.walletLocalData.moneroAddress.toLowerCase())
+      ourReceiveAddresses.push(this.walletInfo.keys.moneroAddress.toLowerCase())
     }
 
     let blockHeight = tx.height
@@ -270,8 +277,8 @@ export class MoneroEngine {
 
     try {
       const transactions = await this.myMoneroApi.getTransactions({
-        address: this.walletLocalData.moneroAddress,
-        privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+        address: this.walletInfo.keys.moneroAddress,
+        privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
         privateSpendKey: privateKeys.moneroSpendKeyPrivate,
         publicSpendKey: privateKeys.moneroSpendKeyPublic
       })
@@ -422,13 +429,14 @@ export class MoneroEngine {
 
   async resyncBlockchain(): Promise<void> {
     await this.killEngine()
+    this.myMoneroApi.keyImageCache = {}
     const temp = JSON.stringify({
       enabledTokens: this.walletLocalData.enabledTokens,
       // networkFees: this.walletLocalData.networkFees,
-      moneroAddress: this.walletLocalData.moneroAddress,
-      moneroViewKeyPrivate: this.walletLocalData.moneroViewKeyPrivate
+      moneroAddress: this.walletInfo.keys.moneroAddress,
+      moneroViewKeyPrivate: this.walletInfo.keys.moneroViewKeyPrivate
     })
-    this.walletLocalData = new WalletLocalData(temp)
+    this.walletLocalData = new MoneroLocalData(temp)
     this.walletLocalDataDirty = true
     this.addressesChecked = false
     await this.saveWalletLoop()
@@ -535,11 +543,7 @@ export class MoneroEngine {
   async getFreshAddress(
     options: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
-    if (this.walletLocalData.hasLoggedIn) {
-      return { publicAddress: this.walletLocalData.moneroAddress }
-    } else {
-      return { publicAddress: '' }
-    }
+    return { publicAddress: this.walletInfo.keys.moneroAddress }
   }
 
   async addGapLimitAddresses(addresses: string[]): Promise<void> {}
@@ -577,8 +581,8 @@ export class MoneroEngine {
     try {
       return await this.myMoneroApi.createTransaction(
         {
-          address: this.walletLocalData.moneroAddress,
-          privateViewKey: this.walletLocalData.moneroViewKeyPrivate,
+          address: this.walletInfo.keys.moneroAddress,
+          privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
           privateSpendKey: privateKeys.moneroSpendKeyPrivate,
           publicSpendKey: privateKeys.moneroSpendKeyPublic
         },
@@ -718,4 +722,34 @@ function translateFee(fee?: string): Priority {
   if (fee === 'low') return 1
   if (fee === 'high') return 4
   return 2
+}
+
+export async function makeCurrencyEngine(
+  env: EdgeCorePluginOptions,
+  tools: MoneroTools,
+  walletInfo: EdgeWalletInfo,
+  opts: EdgeCurrencyEngineOptions
+): Promise<EdgeCurrencyEngine> {
+  const safeWalletInfo = asSafeWalletInfo(walletInfo)
+
+  const engine = new MoneroEngine(env, tools, safeWalletInfo, opts)
+  await engine.init()
+  try {
+    const result = await engine.walletLocalDisklet.getText(DATA_STORE_FILE)
+    engine.walletLocalData = new MoneroLocalData(result)
+  } catch (err) {
+    try {
+      opts.log(err)
+      opts.log('No walletLocalData setup yet: Failure is ok')
+      engine.walletLocalData = new MoneroLocalData(null)
+      await engine.walletLocalDisklet.setText(
+        DATA_STORE_FILE,
+        JSON.stringify(engine.walletLocalData)
+      )
+    } catch (e) {
+      opts.log.error('Error writing to localDataStore. Engine not started:' + e)
+    }
+  }
+
+  return engine
 }
