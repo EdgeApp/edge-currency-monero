@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# 1.1.0 (2023-08-11)
+
+- added: Support custom servers via `enableCustomServers` and  `moneroLightwalletServer` user settings.
+
 # 1.0.0 (2023-03-28)
 
 - fixed: Return the correct `walletId` on `EdgeTransaction` instances.
