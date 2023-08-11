@@ -28,7 +28,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
     {
       name: 'XMR',
       multiplier: '1000000000000',
-      symbol: '‎ɱ'
+      symbol: 'ɱ'
     }
   ],
   metaTokens: [],
