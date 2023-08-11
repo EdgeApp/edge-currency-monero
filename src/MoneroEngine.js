@@ -429,6 +429,7 @@ export class MoneroEngine {
 
   async resyncBlockchain(): Promise<void> {
     await this.killEngine()
+    this.myMoneroApi.keyImageCache = {}
     const temp = JSON.stringify({
       enabledTokens: this.walletLocalData.enabledTokens,
       // networkFees: this.walletLocalData.networkFees,
