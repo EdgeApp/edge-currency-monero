@@ -35,9 +35,11 @@ import { currencyInfo } from './moneroInfo.js'
 import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData.js'
 import { MoneroTools } from './MoneroTools.js'
 import {
+  type MoneroUserSettings,
   type PrivateKeys,
   type SafeWalletInfo,
   asMoneroInitOptions,
+  asMoneroUserSettings,
   asPrivateKeys,
   asSafeWalletInfo,
   makeSafeWalletInfo
@@ -53,6 +55,7 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 const PRIMARY_CURRENCY = currencyInfo.currencyCode
 
 export class MoneroEngine {
+  apiKey: string
   walletInfo: SafeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
   walletLocalDisklet: Disklet
@@ -65,7 +68,7 @@ export class MoneroEngine {
   currencyInfo: EdgeCurrencyInfo
   allTokens: EdgeMetaToken[]
   myMoneroApi: MyMoneroApi
-  currentSettings: any
+  currentSettings: MoneroUserSettings
   timers: any
   walletId: string
   io: EdgeIo
@@ -78,10 +81,11 @@ export class MoneroEngine {
     walletInfo: EdgeWalletInfo,
     opts: EdgeCurrencyEngineOptions
   ) {
-    const { walletLocalDisklet, callbacks } = opts
+    const { callbacks, userSettings = {}, walletLocalDisklet } = opts
     const initOptions = asMoneroInitOptions(env.initOptions ?? {})
     const { networkInfo } = tools
 
+    this.apiKey = initOptions.apiKey
     this.io = env.io
     this.log = opts.log
     this.engineOn = false
@@ -105,8 +109,14 @@ export class MoneroEngine {
     this.timers = {}
 
     this.currentSettings = {
-      ...opts.userSettings,
-      ...this.currencyInfo.defaultSettings
+      ...currencyInfo.defaultSettings,
+      ...asMoneroUserSettings(userSettings)
+    }
+    if (this.currentSettings.enableCustomServers) {
+      this.myMoneroApi.changeServer(
+        this.currentSettings.moneroLightwalletServer,
+        ''
+      )
     }
 
     // Hard coded for testing
@@ -407,8 +417,22 @@ export class MoneroEngine {
   // Public methods
   // *************************************
 
-  async changeUserSettings(userSettings: Object): Promise<void> {
-    this.currentSettings = userSettings
+  async changeUserSettings(userSettings: JsonObject): Promise<void> {
+    this.currentSettings = {
+      ...this.currencyInfo.defaultSettings,
+      ...asMoneroUserSettings(userSettings)
+    }
+    if (this.currentSettings.enableCustomServers) {
+      this.myMoneroApi.changeServer(
+        this.currentSettings.moneroLightwalletServer,
+        ''
+      )
+    } else {
+      this.myMoneroApi.changeServer(
+        this.currencyTools.networkInfo.defaultServer,
+        this.apiKey
+      )
+    }
   }
 
   async startEngine(): Promise<void> {

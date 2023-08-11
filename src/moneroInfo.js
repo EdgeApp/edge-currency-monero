@@ -2,14 +2,11 @@
 
 import { type EdgeCurrencyInfo } from 'edge-core-js/types'
 
-import type { MoneroSettings } from './moneroTypes.js'
+import type { MoneroUserSettings } from './moneroTypes.js'
 
-const otherSettings: MoneroSettings = {
-  mymoneroApiServers: ['https://edge.mymonero.com:8443']
-}
-
-const defaultSettings: any = {
-  otherSettings
+const defaultSettings: MoneroUserSettings = {
+  enableCustomServers: false,
+  moneroLightwalletServer: 'https://edge.mymonero.com:8443'
 }
 
 export const currencyInfo: EdgeCurrencyInfo = {
@@ -31,7 +28,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
     {
       name: 'XMR',
       multiplier: '1000000000000',
-      symbol: '‎ɱ'
+      symbol: 'ɱ'
     }
   ],
   metaTokens: [],
