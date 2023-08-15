@@ -136,21 +136,24 @@ export class MyMoneroApi {
       start_height: asNumber, // Start height of response
       total_received: asString, // Sum of received outputs
       transaction_height: asOptional(asNumber),
-      transactions: asArray(
-        asObject({
-          coinbase: asNumberBoolean, // True if tx is coinbase
-          hash: asString, // Bytes of tx hash
-          height: asNumber, // Block height
-          id: asNumber, // Index of tx in blockchain
-          mempool: asNumberBoolean, // True if tx is in mempool
-          mixin: asNumber, // Mixin of the receive
-          payment_id: asOptional(asString), // Bytes of tx payment id
-          spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
-          timestamp: asString, // Timestamp of block
-          total_received: asString, // Total XMR received
-          total_sent: asString, // XMR possibly being spent
-          unlock_time: asNumber // Tx unlock time field
-        })
+      transactions: asOptional(
+        asArray(
+          asObject({
+            coinbase: asNumberBoolean, // True if tx is coinbase
+            hash: asString, // Bytes of tx hash
+            height: asNumber, // Block height
+            id: asNumber, // Index of tx in blockchain
+            mempool: asNumberBoolean, // True if tx is in mempool
+            mixin: asNumber, // Mixin of the receive
+            payment_id: asOptional(asString), // Bytes of tx payment id
+            spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
+            timestamp: asString, // Timestamp of block
+            total_received: asString, // Total XMR received
+            total_sent: asString, // XMR possibly being spent
+            unlock_time: asNumber // Tx unlock time field
+          })
+        ),
+        []
       )
     })
 
