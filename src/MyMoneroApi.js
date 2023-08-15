@@ -56,20 +56,65 @@ const asNumberBoolean: Cleaner<boolean> = raw => {
   return asBoolean(raw)
 }
 
-const asLoginResult = asObject({
-  generated_locally: asOptional(asNumberBoolean), // Flag from initial account creation
-  new_address: asNumberBoolean, // Whether account was just created
-  start_height: asOptional(asNumber), // Account scanning start block
-  view_key: asOptional(asString) // View key bytes
-})
-export type LoginResult = $Call<typeof asLoginResult>
-
 const asSpentOutput = asObject({
   amount: asString, // XMR possibly being spent
   key_image: asString, // Bytes of the key image
   mixin: asNumber, // Mixin of the spend
   out_index: asNumber, // Index of source output
   tx_pub_key: asString // Bytes of the tx public key
+})
+
+//
+// Response Cleaners
+//
+
+const asLoginResponse = asObject({
+  generated_locally: asOptional(asNumberBoolean), // Flag from initial account creation
+  new_address: asNumberBoolean, // Whether account was just created
+  start_height: asOptional(asNumber), // Account scanning start block
+  view_key: asOptional(asString) // View key bytes
+})
+export type LoginResult = $Call<typeof asLoginResponse>
+
+const asAddressInfoResponse = asObject({
+  blockchain_height: asNumber, // Current blockchain height
+  locked_funds: asString, // Sum of unspendable XMR
+  rates: asOptional(asObject(asNumber)), // Rates
+  scanned_block_height: asNumber, // Current scan progress
+  scanned_height: asNumber, // Current tx scan progress
+  spent_outputs: asOptional(asArray(asSpentOutput)), // Possible spend info
+  start_height: asNumber, // Start height of response
+  total_received: asString, // Sum of received XMR
+  total_sent: asString, // Sum of possibly spent XMR
+  transaction_height: asNumber // Total txes sent in Monero
+})
+
+const asGetAddressTxsResponse = asObject({
+  blockchain_height: asNumber, // Current blockchain height
+  scanned_block_height: asNumber, // Current scan progress
+  scanned_height: asNumber, // Current tx scan progress
+  start_height: asNumber, // Start height of response
+  total_received: asString, // Sum of received outputs
+  transaction_height: asOptional(asNumber),
+  transactions: asOptional(
+    asArray(
+      asObject({
+        coinbase: asNumberBoolean, // True if tx is coinbase
+        hash: asString, // Bytes of tx hash
+        height: asNumber, // Block height
+        id: asNumber, // Index of tx in blockchain
+        mempool: asNumberBoolean, // True if tx is in mempool
+        mixin: asNumber, // Mixin of the receive
+        payment_id: asOptional(asString), // Bytes of tx payment id
+        spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
+        timestamp: asString, // Timestamp of block
+        total_received: asString, // Total XMR received
+        total_sent: asString, // XMR possibly being spent
+        unlock_time: asNumber // Tx unlock time field
+      })
+    ),
+    []
+  )
 })
 
 /**
@@ -110,7 +155,7 @@ export class MyMoneroApi {
    */
   async login(keys: WalletKeys): Promise<LoginResult> {
     const { address, privateViewKey } = keys
-    const result = await this.fetchPostMyMonero('login', {
+    const response = await this.fetchPostMyMonero('login', {
       address: address,
       api_key: this.apiKey,
       create_account: true,
@@ -118,48 +163,20 @@ export class MyMoneroApi {
       view_key: privateViewKey
     })
 
-    return asLoginResult(result)
+    return asLoginResponse(response)
   }
 
   async getTransactions(keys: WalletKeys): Promise<Object[]> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
-    const result = await this.fetchPostMyMonero('get_address_txs', {
+    const response = await this.fetchPostMyMonero('get_address_txs', {
       address,
       api_key: this.apiKey,
       view_key: privateViewKey
     })
 
-    const asGetAddressTxs = asObject({
-      blockchain_height: asNumber, // Current blockchain height
-      scanned_block_height: asNumber, // Current scan progress
-      scanned_height: asNumber, // Current tx scan progress
-      start_height: asNumber, // Start height of response
-      total_received: asString, // Sum of received outputs
-      transaction_height: asOptional(asNumber),
-      transactions: asOptional(
-        asArray(
-          asObject({
-            coinbase: asNumberBoolean, // True if tx is coinbase
-            hash: asString, // Bytes of tx hash
-            height: asNumber, // Block height
-            id: asNumber, // Index of tx in blockchain
-            mempool: asNumberBoolean, // True if tx is in mempool
-            mixin: asNumber, // Mixin of the receive
-            payment_id: asOptional(asString), // Bytes of tx payment id
-            spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
-            timestamp: asString, // Timestamp of block
-            total_received: asString, // Total XMR received
-            total_sent: asString, // XMR possibly being spent
-            unlock_time: asNumber // Tx unlock time field
-          })
-        ),
-        []
-      )
-    })
-
     const parsed = await parserUtils.Parsed_AddressTransactions__async(
       this.keyImageCache,
-      asGetAddressTxs(result),
+      asGetAddressTxsResponse(response),
       address,
       privateViewKey,
       publicSpendKey,
@@ -171,28 +188,15 @@ export class MyMoneroApi {
 
   async getAddressInfo(keys: WalletKeys): Promise<BalanceResults> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
-    const result = await this.fetchPostMyMonero('get_address_info', {
+    const response = await this.fetchPostMyMonero('get_address_info', {
       address,
       api_key: this.apiKey,
       view_key: privateViewKey
     })
 
-    const asAddressInfo = asObject({
-      blockchain_height: asNumber, // Current blockchain height
-      locked_funds: asString, // Sum of unspendable XMR
-      rates: asOptional(asObject(asNumber)), // Rates
-      scanned_block_height: asNumber, // Current scan progress
-      scanned_height: asNumber, // Current tx scan progress
-      spent_outputs: asOptional(asArray(asSpentOutput)), // Possible spend info
-      start_height: asNumber, // Start height of response
-      total_received: asString, // Sum of received XMR
-      total_sent: asString, // Sum of possibly spent XMR
-      transaction_height: asNumber // Total txes sent in Monero
-    })
-
     const parsed = await parserUtils.Parsed_AddressInfo__async(
       this.keyImageCache,
-      asAddressInfo(result),
+      asAddressInfoResponse(response),
       address,
       privateViewKey,
       publicSpendKey,
