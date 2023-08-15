@@ -1,8 +1,12 @@
 # edge-currency-monero
 
+# 1.1.1 (2023-08-15)
+
+- fixed: Fixed address transaction cleaner broken for wallets with no transaction history.
+
 # 1.1.0 (2023-08-11)
 
-- added: Support custom servers via `enableCustomServers` and  `moneroLightwalletServer` user settings.
+- added: Support custom servers via `enableCustomServers` and `moneroLightwalletServer` user settings.
 
 # 1.0.0 (2023-03-28)
 
