@@ -3,7 +3,7 @@
  */
 // @flow
 
-import { div, eq, gte, sub } from 'biggystring'
+import { div, eq, gte, lt, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   type EdgeCorePluginOptions,
@@ -230,15 +230,18 @@ export class MoneroEngine {
     const date = Date.parse(tx.timestamp) / 1000
 
     let edgeTransaction: EdgeTransaction = {
-      txid: tx.hash,
-      date,
-      currencyCode: 'XMR',
       blockHeight,
+      currencyCode: 'XMR',
+      date,
+      isSend: lt(netNativeAmount, '0'),
+      memos: [],
       nativeAmount: netNativeAmount,
       networkFee: nativeNetworkFee,
+      otherParams: {},
       ourReceiveAddresses,
       signedTx: '',
-      otherParams: {},
+      tokenId: null,
+      txid: tx.hash,
       walletId: this.walletId
     }
 
@@ -626,6 +629,7 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<EdgeTransaction> {
+    const { memos = [] } = edgeSpendInfo
     const privateKeys = asPrivateKeys(opts?.privateKeys)
 
     // Monero can only have one output
@@ -668,14 +672,17 @@ export class MoneroEngine {
 
     this.log(`Total sent: ${result.total_sent}, Fee: ${result.used_fee}`)
     const edgeTransaction: EdgeTransaction = {
-      txid: result.tx_hash,
-      date,
-      currencyCode: 'XMR', // currencyCode
       blockHeight: 0, // blockHeight
+      currencyCode: 'XMR', // currencyCode
+      date,
+      isSend: true,
+      memos,
       nativeAmount: '-' + result.total_sent,
       networkFee: result.used_fee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: result.serialized_signed_tx,
+      tokenId: null,
+      txid: result.tx_hash,
       txSecret: result.tx_key,
       walletId: this.walletId
     }
