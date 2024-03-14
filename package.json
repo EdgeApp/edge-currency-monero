@@ -29,8 +29,7 @@
     "lint": "eslint .",
     "precommit": "lint-staged && flow && npm test && npm run build",
     "prepare": "husky install && npm run build",
-    "test": "mocha -r sucrase/register -n no-experimental-fetch './test/**/*.js'",
-    "updot": "updot"
+    "test": "mocha -r sucrase/register -n no-experimental-fetch './test/**/*.js'"
   },
   "husky": {
     "hooks": {
