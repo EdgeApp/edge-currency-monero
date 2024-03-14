@@ -31,11 +31,6 @@
     "prepare": "husky install && npm run build",
     "test": "mocha -r sucrase/register -n no-experimental-fetch './test/**/*.js'"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run precommit"
-    }
-  },
   "lint-staged": {
     "*.js": "eslint"
   },
