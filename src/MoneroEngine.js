@@ -16,7 +16,6 @@ import {
   type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
   type EdgeGetReceiveAddressOptions,
-  type EdgeGetTransactionsOptions,
   type EdgeIo,
   type EdgeLog,
   type EdgeMetaToken,
@@ -530,41 +529,15 @@ export class MoneroEngine {
   }
 
   async getTransactions(
-    options: EdgeGetTransactionsOptions = {}
+    options: EdgeCurrencyCodeOptions = {}
   ): Promise<EdgeTransaction[]> {
-    let { currencyCode = PRIMARY_CURRENCY, startIndex = 0 } = options
-    // $FlowFixMe This does not exist in the core types:
-    let numEntries: number = options.numEntries ?? 0
+    const { currencyCode = PRIMARY_CURRENCY } = options
 
     if (this.walletLocalData.transactionsObj[currencyCode] == null) {
       return []
     }
 
-    if (
-      startIndex >= this.walletLocalData.transactionsObj[currencyCode].length
-    ) {
-      startIndex = this.walletLocalData.transactionsObj[currencyCode].length - 1
-    }
-    if (
-      numEntries + startIndex >
-      this.walletLocalData.transactionsObj[currencyCode].length
-    ) {
-      // Don't read past the end of the transactionsObj
-      numEntries =
-        this.walletLocalData.transactionsObj[currencyCode].length - startIndex
-    }
-
-    // Copy the appropriate entries from the arrayTransactions:
-    if (numEntries > 0) {
-      return this.walletLocalData.transactionsObj[currencyCode].slice(
-        startIndex,
-        numEntries + startIndex
-      )
-    } else {
-      return this.walletLocalData.transactionsObj[currencyCode].slice(
-        startIndex
-      )
-    }
+    return this.walletLocalData.transactionsObj[currencyCode].slice(0)
   }
 
   async getFreshAddress(
