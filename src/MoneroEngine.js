@@ -18,6 +18,7 @@ import {
   type EdgeGetReceiveAddressOptions,
   type EdgeIo,
   type EdgeLog,
+  type EdgeMemo,
   type EdgeMetaToken,
   type EdgeSpendInfo,
   type EdgeToken,
@@ -228,12 +229,23 @@ export class MoneroEngine {
 
     const date = Date.parse(tx.timestamp) / 1000
 
+    // Expose legacy payment ID's to the GUI. This only applies
+    // to really old transactions, before integrated addresses:
+    const memos: EdgeMemo[] = []
+    if (tx.payment_id != null) {
+      memos.push({
+        memoName: 'payment id',
+        type: 'hex',
+        value: tx.payment_id
+      })
+    }
+
     let edgeTransaction: EdgeTransaction = {
       blockHeight,
       currencyCode: 'XMR',
       date,
       isSend: lt(netNativeAmount, '0'),
-      memos: [],
+      memos,
       nativeAmount: netNativeAmount,
       networkFee: nativeNetworkFee,
       otherParams: {},
