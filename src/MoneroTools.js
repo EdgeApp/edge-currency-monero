@@ -56,42 +56,39 @@ export class MoneroTools {
     this.log = log
   }
 
-  async createPrivateKey(walletType: string) {
-    const type = walletType.replace('wallet:', '')
-
-    if (type === 'monero') {
-      const result = await this.cppBridge.generateWallet(
-        'english',
-        this.networkInfo.nettype
-      )
-      const privateKeys: PrivateKeys = {
-        moneroKey: result.mnemonic,
-        moneroSpendKeyPrivate: result.privateSpendKey,
-        moneroSpendKeyPublic: result.publicSpendKey
-      }
-      return privateKeys
-    } else {
+  async createPrivateKey(walletType: string): Promise<PrivateKeys> {
+    if (walletType !== 'wallet:monero') {
       throw new Error('InvalidWalletType')
     }
+
+    const result = await this.cppBridge.generateWallet(
+      'english',
+      this.networkInfo.nettype
+    )
+    const privateKeys: PrivateKeys = {
+      moneroKey: result.mnemonic,
+      moneroSpendKeyPrivate: result.privateSpendKey,
+      moneroSpendKeyPublic: result.publicSpendKey
+    }
+    return privateKeys
   }
 
-  async derivePublicKey(walletInfo: EdgeWalletInfo) {
-    const type = walletInfo.type.replace('wallet:', '')
-    if (type === 'monero') {
-      const result = await this.cppBridge.seedAndKeysFromMnemonic(
-        walletInfo.keys.moneroKey,
-        this.networkInfo.nettype
-      )
-      const publicKeys: PublicKeys = {
-        moneroAddress: result.address,
-        moneroViewKeyPrivate: result.privateViewKey,
-        moneroViewKeyPublic: result.publicViewKey,
-        moneroSpendKeyPublic: result.publicSpendKey
-      }
-      return publicKeys
-    } else {
+  async derivePublicKey(walletInfo: EdgeWalletInfo): Promise<PublicKeys> {
+    if (walletInfo.type !== 'wallet:monero') {
       throw new Error('InvalidWalletType')
     }
+
+    const result = await this.cppBridge.seedAndKeysFromMnemonic(
+      walletInfo.keys.moneroKey,
+      this.networkInfo.nettype
+    )
+    const publicKeys: PublicKeys = {
+      moneroAddress: result.address,
+      moneroViewKeyPrivate: result.privateViewKey,
+      moneroViewKeyPublic: result.publicViewKey,
+      moneroSpendKeyPublic: result.publicSpendKey
+    }
+    return publicKeys
   }
 
   async parseUri(uri: string): Promise<EdgeParsedUri> {
