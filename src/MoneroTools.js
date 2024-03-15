@@ -27,12 +27,11 @@ function getDenomInfo(denom: string): EdgeDenomination | void {
   })
 }
 
-function getParameterByName(param: string, url: string): string | null {
+function getParameterByName(param: string, url: string): string | void {
   const name = param.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)')
   const results = regex.exec(url)
-  if (!results) return null
-  if (!results[2]) return ''
+  if (results == null || results[2] == null) return
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
@@ -94,8 +93,8 @@ export class MoneroTools {
   async parseUri(uri: string): Promise<EdgeParsedUri> {
     const parsedUri = parse(uri)
     let address: string
-    let nativeAmount: string | null = null
-    let currencyCode: string | null = null
+    let nativeAmount: string | void
+    let currencyCode: string | void
 
     if (
       typeof parsedUri.scheme !== 'undefined' &&
@@ -120,9 +119,9 @@ export class MoneroTools {
     }
 
     const amountStr = getParameterByName('amount', uri)
-    if (amountStr && typeof amountStr === 'string') {
+    if (amountStr != null) {
       const denom = getDenomInfo('XMR')
-      if (!denom) {
+      if (denom == null) {
         throw new Error('InternalErrorInvalidCurrencyCode')
       }
       nativeAmount = mul(amountStr, denom.multiplier)
@@ -137,24 +136,24 @@ export class MoneroTools {
     const edgeParsedUri: EdgeParsedUri = {
       publicAddress: address
     }
-    if (nativeAmount) {
+    if (nativeAmount != null) {
       edgeParsedUri.nativeAmount = nativeAmount
     }
-    if (currencyCode) {
+    if (currencyCode != null) {
       edgeParsedUri.currencyCode = currencyCode
     }
-    if (uniqueIdentifier) {
+    if (uniqueIdentifier != null) {
       edgeParsedUri.uniqueIdentifier = uniqueIdentifier
     }
-    if (label || message || category) {
+    if (label != null || message != null || category != null) {
       edgeParsedUri.metadata = {}
-      if (label) {
+      if (label != null) {
         edgeParsedUri.metadata.name = label
       }
-      if (message) {
+      if (message != null) {
         edgeParsedUri.metadata.notes = message
       }
-      if (category) {
+      if (category != null) {
         edgeParsedUri.metadata.category = category
       }
     }
@@ -163,7 +162,7 @@ export class MoneroTools {
   }
 
   async encodeUri(obj: EdgeEncodeUri): Promise<string> {
-    if (!obj.publicAddress) {
+    if (obj.publicAddress == null) {
       throw new Error('InvalidPublicAddressError')
     }
     try {
@@ -174,7 +173,7 @@ export class MoneroTools {
     } catch (e) {
       throw new Error('InvalidPublicAddressError')
     }
-    if (!obj.nativeAmount && !obj.label && !obj.message) {
+    if (obj.nativeAmount == null && obj.label == null && obj.message == null) {
       return obj.publicAddress
     } else {
       let queryString: string = ''
@@ -183,7 +182,7 @@ export class MoneroTools {
         const currencyCode: string = 'XMR'
         const nativeAmount: string = obj.nativeAmount
         const denom = getDenomInfo(currencyCode)
-        if (!denom) {
+        if (denom == null) {
           throw new Error('InternalErrorInvalidCurrencyCode')
         }
         const amount = div(nativeAmount, denom.multiplier, 12)
