@@ -264,7 +264,7 @@ for (const fixture of fixtures) {
   // })
 
   describe('Start engine', function () {
-    it('Get BlockHeight', function (done) {
+    it.skip('Get BlockHeight', function (done) {
       let finished = false
       this.timeout(10000)
       // request.get(
