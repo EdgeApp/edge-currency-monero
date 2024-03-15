@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# Unreleased
+
+- removed: Only bundle the package in CJS-format, and drop the ESM output.
+
 # 1.1.1 (2023-08-15)
 
 - fixed: Fixed address transaction cleaner broken for wallets with no transaction history.

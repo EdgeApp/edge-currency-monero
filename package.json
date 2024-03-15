@@ -12,8 +12,7 @@
   "contributors": [
     "Paul Puey <paul@edge.app>"
   ],
-  "main": "./index.js",
-  "module": "./lib/index.js",
+  "main": "./lib/index.js",
   "files": [
     "CHANGELOG.md",
     "index.js",
@@ -23,7 +22,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow && webpack",
+    "build": "rimraf lib && sucrase ./src -q -d ./lib -t flow,imports && webpack",
     "fix": "npm run lint -- --fix && yarn-deduplicate",
     "flow": "flow",
     "lint": "eslint .",
