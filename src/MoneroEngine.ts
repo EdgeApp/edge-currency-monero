@@ -43,7 +43,11 @@ import {
   PrivateKeys,
   SafeWalletInfo
 } from './moneroTypes'
-import { CreateTransactionOptions, MyMoneroApi } from './MyMoneroApi'
+import {
+  CreateTransactionOptions,
+  MyMoneroApi,
+  ParsedTransaction
+} from './MyMoneroApi'
 import { cleanTxLogs, normalizeAddress } from './utils'
 
 const SYNC_INTERVAL_MILLISECONDS = 5000
@@ -216,7 +220,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     }
   }
 
-  processMoneroTransaction(tx: any): void {
+  processMoneroTransaction(tx: ParsedTransaction): void {
     const ourReceiveAddresses: string[] = []
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
@@ -228,7 +232,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     }
 
     let blockHeight = tx.height
-    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (tx.mempool) {
       blockHeight = 0
     }
@@ -264,7 +267,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
     const idx = this.findTransaction(PRIMARY_CURRENCY, tx.hash)
     if (idx === -1) {
-      // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
       this.log(`New transaction: ${tx.hash}`)
 
       // New transaction not in database
@@ -287,8 +289,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
           nativeAmount: edgeTx.nativeAmount
         }
 
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-        this.log(`Update transaction: ${tx.hash} height:${tx.blockNumber}`)
+        this.log(`Update transaction: ${tx.hash} height:${tx.height}`)
         this.updateTransaction(PRIMARY_CURRENCY, edgeTransaction, idx)
         this.edgeTxLibCallbacks.onTransactionsChanged(
           this.transactionsChangedArray

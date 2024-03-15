@@ -3,6 +3,8 @@
 // manually define its types here rather than converting the code
 // to TypeScript:
 
+import type { ParsedTransaction } from '../MyMoneroApi'
+
 export async function Parsed_AddressTransactions__async(
   keyImage_cache: { [keyId: string]: string },
   data: any,
@@ -17,7 +19,7 @@ export async function Parsed_AddressTransactions__async(
   account_scan_start_height: any
   transaction_height: any
   blockchain_height: any
-  serialized_transactions: any
+  serialized_transactions: ParsedTransaction[]
 }>
 
 export async function Parsed_AddressInfo__async(
