@@ -2,6 +2,8 @@
 
 # Unreleased
 
+# 1.2.0 (2024-03-20)
+
 - added: Report legacy payment ID's using the new core `memo` transaction property.
 - removed: Only bundle the package in CJS-format, and drop the ESM output.
 - removed: Stop supporting undocumented `getTransaction` options.
