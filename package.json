@@ -15,7 +15,6 @@
   "main": "./lib/index.js",
   "files": [
     "CHANGELOG.md",
-    "index.js",
     "lib/*",
     "LICENSE",
     "package.json",
