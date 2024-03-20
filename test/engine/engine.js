@@ -9,6 +9,7 @@ import {
   type EdgeCurrencyPlugin,
   type EdgeCurrencyTools,
   type EdgeIo,
+  type EdgeTokenId,
   type EdgeWalletInfo,
   closeEdge,
   makeFakeIo
@@ -63,8 +64,9 @@ for (const fixture of fixtures) {
       // console.log('onBlockHeightChange:', height)
       emitter.emit('onBlockHeightChange', height)
     },
+    onNewTokens(tokenIds: string[]) {},
+    onTokenBalanceChanged(tokenId: EdgeTokenId, balance: string) {},
     onTransactionsChanged(transactionList) {
-      // console.log('onTransactionsChanged:', transactionList)
       emitter.emit('onTransactionsChanged', transactionList)
     },
     onUnactivatedTokenIdsChanged() {},

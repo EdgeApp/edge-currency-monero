@@ -3,7 +3,7 @@
  */
 // @flow
 
-import { div, eq, gte, sub } from 'biggystring'
+import { div, eq, gte, lt, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   type EdgeCorePluginOptions,
@@ -16,9 +16,9 @@ import {
   type EdgeEnginePrivateKeyOptions,
   type EdgeFreshAddress,
   type EdgeGetReceiveAddressOptions,
-  type EdgeGetTransactionsOptions,
   type EdgeIo,
   type EdgeLog,
+  type EdgeMemo,
   type EdgeMetaToken,
   type EdgeSpendInfo,
   type EdgeToken,
@@ -229,16 +229,30 @@ export class MoneroEngine {
 
     const date = Date.parse(tx.timestamp) / 1000
 
+    // Expose legacy payment ID's to the GUI. This only applies
+    // to really old transactions, before integrated addresses:
+    const memos: EdgeMemo[] = []
+    if (tx.payment_id != null) {
+      memos.push({
+        memoName: 'payment id',
+        type: 'hex',
+        value: tx.payment_id
+      })
+    }
+
     let edgeTransaction: EdgeTransaction = {
-      txid: tx.hash,
-      date,
-      currencyCode: 'XMR',
       blockHeight,
+      currencyCode: 'XMR',
+      date,
+      isSend: lt(netNativeAmount, '0'),
+      memos,
       nativeAmount: netNativeAmount,
       networkFee: nativeNetworkFee,
+      otherParams: {},
       ourReceiveAddresses,
       signedTx: '',
-      otherParams: {},
+      tokenId: null,
+      txid: tx.hash,
       walletId: this.walletId
     }
 
@@ -527,41 +541,15 @@ export class MoneroEngine {
   }
 
   async getTransactions(
-    options: EdgeGetTransactionsOptions = {}
+    options: EdgeCurrencyCodeOptions = {}
   ): Promise<EdgeTransaction[]> {
-    let { currencyCode = PRIMARY_CURRENCY, startIndex = 0 } = options
-    // $FlowFixMe This does not exist in the core types:
-    let numEntries: number = options.numEntries ?? 0
+    const { currencyCode = PRIMARY_CURRENCY } = options
 
     if (this.walletLocalData.transactionsObj[currencyCode] == null) {
       return []
     }
 
-    if (
-      startIndex >= this.walletLocalData.transactionsObj[currencyCode].length
-    ) {
-      startIndex = this.walletLocalData.transactionsObj[currencyCode].length - 1
-    }
-    if (
-      numEntries + startIndex >
-      this.walletLocalData.transactionsObj[currencyCode].length
-    ) {
-      // Don't read past the end of the transactionsObj
-      numEntries =
-        this.walletLocalData.transactionsObj[currencyCode].length - startIndex
-    }
-
-    // Copy the appropriate entries from the arrayTransactions:
-    if (numEntries > 0) {
-      return this.walletLocalData.transactionsObj[currencyCode].slice(
-        startIndex,
-        numEntries + startIndex
-      )
-    } else {
-      return this.walletLocalData.transactionsObj[currencyCode].slice(
-        startIndex
-      )
-    }
+    return this.walletLocalData.transactionsObj[currencyCode].slice(0)
   }
 
   async getFreshAddress(
@@ -626,6 +614,7 @@ export class MoneroEngine {
     edgeSpendInfo: EdgeSpendInfo,
     opts?: EdgeEnginePrivateKeyOptions
   ): Promise<EdgeTransaction> {
+    const { memos = [] } = edgeSpendInfo
     const privateKeys = asPrivateKeys(opts?.privateKeys)
 
     // Monero can only have one output
@@ -668,14 +657,17 @@ export class MoneroEngine {
 
     this.log(`Total sent: ${result.total_sent}, Fee: ${result.used_fee}`)
     const edgeTransaction: EdgeTransaction = {
-      txid: result.tx_hash,
-      date,
-      currencyCode: 'XMR', // currencyCode
       blockHeight: 0, // blockHeight
+      currencyCode: 'XMR', // currencyCode
+      date,
+      isSend: true,
+      memos,
       nativeAmount: '-' + result.total_sent,
       networkFee: result.used_fee,
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: result.serialized_signed_tx,
+      tokenId: null,
+      txid: result.tx_hash,
       txSecret: result.tx_key,
       walletId: this.walletId
     }
