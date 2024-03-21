@@ -1,13 +1,13 @@
 // @flow
 
 import {
-  type Cleaner,
   asArray,
   asBoolean,
   asNumber,
   asObject,
   asOptional,
-  asString
+  asString,
+  Cleaner
 } from 'cleaners'
 import type { EdgeFetchFunction } from 'edge-core-js'
 import type {
@@ -17,37 +17,37 @@ import type {
   Priority
 } from 'react-native-mymonero-core'
 
-const parserUtils = require('./mymonero-utils/ResponseParser.js')
+import parserUtils from './mymonero-utils/ResponseParser'
 
-export type MyMoneroApiOptions = {
-  apiKey: string,
-  apiServer: string,
-  fetch: EdgeFetchFunction,
+export interface MyMoneroApiOptions {
+  apiKey: string
+  apiServer: string
+  fetch: EdgeFetchFunction
   nettype?: Nettype
 }
 
 /**
  * Keys needed to uniquely identify a wallet for most operations.
  */
-export type WalletKeys = {|
-  address: string,
-  privateSpendKey: string,
-  privateViewKey: string,
+export interface WalletKeys {
+  address: string
+  privateSpendKey: string
+  privateViewKey: string
   publicSpendKey: string
-|}
+}
 
-export type BalanceResults = {
-  blockHeight: number,
-  lockedBalance: string,
-  totalReceived: string,
+export interface BalanceResults {
+  blockHeight: number
+  lockedBalance: string
+  totalReceived: string
   totalSent: string
 }
 
-export type CreateTransactionOptions = {
-  amount: string,
-  isSweepTx?: boolean,
-  paymentId?: string,
-  priority?: Priority,
+export interface CreateTransactionOptions {
+  amount: string
+  isSweepTx?: boolean
+  paymentId?: string
+  priority?: Priority
   targetAddress: string
 }
 
@@ -63,6 +63,28 @@ const asSpentOutput = asObject({
   out_index: asNumber, // Index of source output
   tx_pub_key: asString // Bytes of the tx public key
 })
+export type SpentOutput = ReturnType<typeof asSpentOutput>
+
+export interface ParsedTransaction {
+  // The response parser figures these out:
+  amount: string
+  approx_float_amount: number
+  fee?: string // Never actually populated
+
+  // See asGetAddressTxsResponse for these fields:
+  coinbase: boolean
+  hash: string
+  height: number
+  id: number
+  mempool: boolean
+  mixin: number
+  payment_id?: string
+  spent_outputs?: SpentOutput[]
+  timestamp: string
+  total_received: string
+  total_sent: string
+  unlock_time: number
+}
 
 //
 // Response Cleaners
@@ -74,7 +96,7 @@ const asLoginResponse = asObject({
   start_height: asOptional(asNumber), // Account scanning start block
   view_key: asOptional(asString) // View key bytes
 })
-export type LoginResult = $Call<typeof asLoginResponse>
+export type LoginResult = ReturnType<typeof asLoginResponse>
 
 const asAddressInfoResponse = asObject({
   blockchain_height: asNumber, // Current blockchain height
@@ -145,7 +167,7 @@ export class MyMoneroApi {
     this.keyImageCache = {}
   }
 
-  changeServer(apiUrl: string, apiKey: string) {
+  changeServer(apiUrl: string, apiKey: string): void {
     this.apiKey = apiKey
     this.apiUrl = apiUrl
   }
@@ -166,7 +188,7 @@ export class MyMoneroApi {
     return asLoginResponse(response)
   }
 
-  async getTransactions(keys: WalletKeys): Promise<Object[]> {
+  async getTransactions(keys: WalletKeys): Promise<ParsedTransaction[]> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
     const response = await this.fetchPostMyMonero('get_address_txs', {
       address,
@@ -292,6 +314,6 @@ export class MyMoneroApi {
         `The server returned error code ${response.status} for ${url}`
       )
     }
-    return response.json()
+    return await response.json()
   }
 }

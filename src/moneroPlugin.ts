@@ -1,16 +1,15 @@
 /**
  * Created by paul on 8/8/17.
  */
-// @flow
 
-import {
-  type EdgeCorePluginOptions,
-  type EdgeCurrencyPlugin
+import type {
+  EdgeCorePluginOptions,
+  EdgeCurrencyPlugin
 } from 'edge-core-js/types'
 
-import { makeCurrencyEngine } from './MoneroEngine.js'
-import { currencyInfo } from './moneroInfo.js'
-import { MoneroTools } from './MoneroTools.js'
+import { makeCurrencyEngine } from './MoneroEngine'
+import { currencyInfo } from './moneroInfo'
+import { MoneroTools } from './MoneroTools'
 
 export function makeMoneroPlugin(
   env: EdgeCorePluginOptions

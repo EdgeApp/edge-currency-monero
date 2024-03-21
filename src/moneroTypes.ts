@@ -1,18 +1,17 @@
 /**
  * Created by paul on 8/26/17.
  */
-// @flow
 
 import { asBoolean, asMaybe, asObject, asOptional, asString } from 'cleaners'
-import { type EdgeCurrencyTools, type EdgeWalletInfo } from 'edge-core-js'
-import { type Nettype } from 'react-native-mymonero-core'
+import type { EdgeCurrencyTools, EdgeWalletInfo } from 'edge-core-js'
+import type { Nettype } from 'react-native-mymonero-core'
 
 export const asMoneroInitOptions = asObject({
   apiKey: asOptional(asString, '')
 })
 
-export type MoneroNetworkInfo = {
-  defaultServer: string,
+export interface MoneroNetworkInfo {
+  defaultServer: string
   nettype: Nettype
 }
 
@@ -20,14 +19,14 @@ export const asMoneroUserSettings = asObject({
   enableCustomServers: asMaybe(asBoolean, false),
   moneroLightwalletServer: asMaybe(asString)
 })
-export type MoneroUserSettings = $Call<typeof asMoneroUserSettings>
+export type MoneroUserSettings = ReturnType<typeof asMoneroUserSettings>
 
 export const asPrivateKeys = asObject({
   moneroKey: asString,
   moneroSpendKeyPrivate: asString,
   moneroSpendKeyPublic: asString
 })
-export type PrivateKeys = $Call<typeof asPrivateKeys>
+export type PrivateKeys = ReturnType<typeof asPrivateKeys>
 
 export const asPublicKeys = asObject({
   moneroAddress: asString,
@@ -35,19 +34,20 @@ export const asPublicKeys = asObject({
   moneroViewKeyPublic: asString,
   moneroSpendKeyPublic: asString
 })
-export type PublicKeys = $Call<typeof asPublicKeys>
+export type PublicKeys = ReturnType<typeof asPublicKeys>
 
 export const asSafeWalletInfo = asObject({
   id: asString,
   type: asString,
   keys: asPublicKeys
 })
-export type SafeWalletInfo = $Call<typeof asSafeWalletInfo>
+export type SafeWalletInfo = ReturnType<typeof asSafeWalletInfo>
 
 export const makeSafeWalletInfo = async (
   tools: EdgeCurrencyTools,
   walletInfo: EdgeWalletInfo
 ): Promise<SafeWalletInfo> => {
+  // @ts-expect-error
   const safeWalletInfo: SafeWalletInfo = {}
   if (
     typeof walletInfo.keys.moneroAddress !== 'string' ||
