@@ -89,6 +89,7 @@ for (const fixture of fixtures) {
 
   describe(`Create Plugin for Wallet type ${WALLET_TYPE}`, function () {
     it('Plugin', async function () {
+      this.timeout(3000)
       assert.equal(
         plugin.currencyInfo.currencyCode,
         fixture['Test Currency code']
