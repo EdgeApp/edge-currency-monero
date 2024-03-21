@@ -21,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rimraf lib && sucrase ./src -q -d ./lib -t typescript,imports && webpack",
+    "build": "rimraf lib && sucrase ./src -d ./lib -q -t typescript,imports && cp src/mymonero-utils/*.js lib/mymonero-utils && webpack",
     "fix": "eslint . --fix && yarn-deduplicate",
     "lint": "eslint .",
     "precommit": "lint-staged && tsc && npm test && npm run build",
