@@ -2,6 +2,10 @@
 
 # Unreleased
 
+# 1.3.0 (2024-03-21)
+
+- changed: Switch our codebase from Flow to TypeScript.
+
 # 1.2.0 (2024-03-20)
 
 - added: Report legacy payment ID's using the new core `memo` transaction property.
