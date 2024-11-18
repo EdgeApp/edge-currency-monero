@@ -2,6 +2,8 @@
 
 # Unreleased
 
+- fixed: URI parsing and creation according to the correct format
+
 # 1.3.1 (2024-03-21)
 
 - fixed: Include missing files in the NPM package.

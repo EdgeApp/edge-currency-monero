@@ -162,114 +162,114 @@ for (const fixture of fixtures) {
       assert.equal(parsedUri.nativeAmount, undefined)
       assert.equal(parsedUri.currencyCode, undefined)
     })
-    it('uri address with amount', async function () {
+    it('(BIP21) uri address with amount', async function () {
       const parsedUri = await tools.parseUri(
-        fixture.parseUri['uri address with amount'][0]
+        fixture.parseUri['(BIP21) uri address with amount'][0]
       )
       assert.equal(
         parsedUri.publicAddress,
-        fixture.parseUri['uri address with amount'][1]
+        fixture.parseUri['(BIP21) uri address with amount'][1]
       )
       assert.equal(
         parsedUri.nativeAmount,
-        fixture.parseUri['uri address with amount'][2]
+        fixture.parseUri['(BIP21) uri address with amount'][2]
       )
       assert.equal(
         parsedUri.currencyCode,
-        fixture.parseUri['uri address with amount'][3]
+        fixture.parseUri['(BIP21) uri address with amount'][3]
       )
     })
-    it('uri address with unique identifier', async function () {
+    it('(BIP21) uri address with unique identifier', async function () {
       const parsedUri = await tools.parseUri(
-        fixture.parseUri['uri address with unique identifier'][0]
+        fixture.parseUri['(BIP21) uri address with unique identifier'][0]
       )
       assert.equal(
         parsedUri.publicAddress,
-        fixture.parseUri['uri address with unique identifier'][1]
+        fixture.parseUri['(BIP21) uri address with unique identifier'][1]
       )
       assert.equal(
         parsedUri.uniqueIdentifier,
-        fixture.parseUri['uri address with unique identifier'][2]
+        fixture.parseUri['(BIP21) uri address with unique identifier'][2]
       )
     })
-    it('uri address with unique identifier and without network prefix', async function () {
+    it('(BIP21) uri address with unique identifier and without network prefix', async function () {
       const parsedUri = await tools.parseUri(
         fixture.parseUri[
-          'uri address with unique identifier and without network prefix'
+          '(BIP21) uri address with unique identifier and without network prefix'
         ][0]
       )
       assert.equal(
         parsedUri.publicAddress,
         fixture.parseUri[
-          'uri address with unique identifier and without network prefix'
+          '(BIP21) uri address with unique identifier and without network prefix'
         ][1]
       )
       assert.equal(
         parsedUri.uniqueIdentifier,
         fixture.parseUri[
-          'uri address with unique identifier and without network prefix'
+          '(BIP21) uri address with unique identifier and without network prefix'
         ][2]
       )
     })
-    it('uri address with amount & label', async function () {
+    it('(BIP21) uri address with amount & label', async function () {
       const parsedUri = await tools.parseUri(
-        fixture.parseUri['uri address with amount & label'][0]
+        fixture.parseUri['(BIP21) uri address with amount & label'][0]
       )
       assert.equal(
         parsedUri.publicAddress,
-        fixture.parseUri['uri address with amount & label'][1]
+        fixture.parseUri['(BIP21) uri address with amount & label'][1]
       )
       assert.equal(
         parsedUri.nativeAmount,
-        fixture.parseUri['uri address with amount & label'][2]
+        fixture.parseUri['(BIP21) uri address with amount & label'][2]
       )
       assert.equal(
         parsedUri.currencyCode,
-        fixture.parseUri['uri address with amount & label'][3]
+        fixture.parseUri['(BIP21) uri address with amount & label'][3]
       )
       if (parsedUri.metadata == null) throw new Error('no metadata')
       assert.equal(
         parsedUri.metadata.name,
-        fixture.parseUri['uri address with amount & label'][4]
+        fixture.parseUri['(BIP21) uri address with amount & label'][4]
       )
     })
-    it('uri address with amount, label & message', async function () {
+    it('(BIP21) uri address with amount, label & message', async function () {
       const parsedUri: EdgeParsedUri = await tools.parseUri(
-        fixture.parseUri['uri address with amount & label'][0]
+        fixture.parseUri['(BIP21) uri address with amount & label'][0]
       )
       assert.equal(
         parsedUri.publicAddress,
-        fixture.parseUri['uri address with amount & label'][1]
+        fixture.parseUri['(BIP21) uri address with amount & label'][1]
       )
       assert.equal(
         parsedUri.nativeAmount,
-        fixture.parseUri['uri address with amount & label'][2]
+        fixture.parseUri['(BIP21) uri address with amount & label'][2]
       )
       assert.equal(
         parsedUri.currencyCode,
-        fixture.parseUri['uri address with amount & label'][3]
+        fixture.parseUri['(BIP21) uri address with amount & label'][3]
       )
       if (parsedUri.metadata == null) throw new Error('no metadata')
       assert.equal(
         parsedUri.metadata.name,
-        fixture.parseUri['uri address with amount & label'][4]
+        fixture.parseUri['(BIP21) uri address with amount & label'][4]
       )
     })
-    it('uri address with unsupported param', async function () {
+    it('(BIP21) uri address with unsupported param', async function () {
       const parsedUri = await tools.parseUri(
-        fixture.parseUri['uri address with amount & label'][0]
+        fixture.parseUri['(BIP21) uri address with amount & label'][0]
       )
       assert.equal(
         parsedUri.publicAddress,
-        fixture.parseUri['uri address with amount & label'][1]
+        fixture.parseUri['(BIP21) uri address with amount & label'][1]
       )
       assert.equal(
         parsedUri.nativeAmount,
-        fixture.parseUri['uri address with amount & label'][2]
+        fixture.parseUri['(BIP21) uri address with amount & label'][2]
       )
       assert.equal(
         parsedUri.currencyCode,
-        fixture.parseUri['uri address with amount & label'][3]
+        fixture.parseUri['(BIP21) uri address with amount & label'][3]
       )
     })
   })
