@@ -115,7 +115,10 @@ export class MoneroTools {
       throw new Error('InvalidPublicAddressError')
     }
 
-    const amountStr = getParameterByName('amount', uri)
+    // Prioritize the correct Monero URI format, while falling back to BIP21
+    // formats.
+    const amountStr =
+      getParameterByName('tx_amount', uri) ?? getParameterByName('amount', uri)
     if (amountStr != null) {
       const denom = getDenomInfo('XMR')
       if (denom == null) {
@@ -126,8 +129,12 @@ export class MoneroTools {
       currencyCode = 'XMR'
     }
     const uniqueIdentifier = getParameterByName('tx_payment_id', uri)
-    const label = getParameterByName('label', uri)
-    const message = getParameterByName('message', uri)
+    const label =
+      getParameterByName('recipient_name', uri) ??
+      getParameterByName('label', uri)
+    const message =
+      getParameterByName('tx_description', uri) ??
+      getParameterByName('message', uri)
     const category = getParameterByName('category', uri)
 
     const edgeParsedUri: EdgeParsedUri = {
@@ -184,13 +191,13 @@ export class MoneroTools {
         }
         const amount = div(nativeAmount, denom.multiplier, 12)
 
-        queryString += 'amount=' + amount + '&'
+        queryString += 'tx_amount=' + amount + '&'
       }
       if (typeof obj.label === 'string') {
-        queryString += 'label=' + obj.label + '&'
+        queryString += 'recipient_name=' + obj.label + '&'
       }
       if (typeof obj.message === 'string') {
-        queryString += 'message=' + obj.message + '&'
+        queryString += 'tx_description=' + obj.message + '&'
       }
       queryString = queryString.substr(0, queryString.length - 1)
 

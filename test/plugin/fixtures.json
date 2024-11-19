@@ -18,12 +18,19 @@
       "address only": ["42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt"],
       "invalid address": ["42kFgCShemF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJlSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaK", "0x42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaK"],
       "uri address": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt"],
-      "uri address with amount": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=12345.6789", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "12345678900000000", "XMR"],
+      "(BIP21) uri address with amount": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=12345.6789", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "12345678900000000", "XMR"],
+      "(BIP21) uri address with unique identifier": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_payment_id=helloworldhowdoyoudo1234", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "helloworldhowdoyoudo1234", "XMR"],
+      "(BIP21) uri address with unique identifier and without network prefix": ["42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_payment_id=helloworldhowdoyoudo1234", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "helloworldhowdoyoudo1234", "XMR"],
+      "(BIP21) uri address with amount & label": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=1234.56789&label=Johnny%20Monero", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero"],
+      "(BIP21) uri address with amount, label & message": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=1234.56789&label=Johnny%20Monero&message=Hello%20World,%20I%20miss%20you%20!", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero", "Hello World, I miss you !"],
+      "(BIP21) uri address with unsupported param": ["monero:0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6?unsupported=helloworld&amount=12345.6789", "0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6", "12345678900000000", "XMR"],
+      
+      "uri address with amount": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=12345.6789", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "12345678900000000", "XMR"],
       "uri address with unique identifier": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_payment_id=helloworldhowdoyoudo1234", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "helloworldhowdoyoudo1234", "XMR"],
       "uri address with unique identifier and without network prefix": ["42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_payment_id=helloworldhowdoyoudo1234", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "helloworldhowdoyoudo1234", "XMR"],
-      "uri address with amount & label": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=1234.56789&label=Johnny%20Monero", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero"],
-      "uri address with amount, label & message": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=1234.56789&label=Johnny%20Monero&message=Hello%20World,%20I%20miss%20you%20!", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero", "Hello World, I miss you !"],
-      "uri address with unsupported param": ["monero:0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6?unsupported=helloworld&amount=12345.6789", "0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6", "12345678900000000", "XMR"]
+      "uri address with amount & label": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=1234.56789&recipient_name=Johnny%20Monero", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero"],
+      "uri address with amount, label & message": ["monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=1234.56789&recipient_name=Johnny%20Monero&tx_description=Hello%20World,%20I%20miss%20you%20!", "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt", "1234567890000000", "XMR", "Johnny Monero", "Hello World, I miss you !"],
+      "uri address with unsupported param": ["monero:0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6?unsupported=helloworld&tx_amount=12345.6789", "0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6", "12345678900000000", "XMR"]
     },
     "encodeUri": {
       "address only": [{"publicAddress": "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt"}, "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt"],
@@ -31,20 +38,20 @@
       "address & amount": [{
         "publicAddress": "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt",
         "nativeAmount": "123456780000"
-      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=0.12345678"],
+      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=0.12345678"],
       "address, amount, and label": [{
         "publicAddress": "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt",
         "nativeAmount": "123456780000",
         "currencyCode": "XMR",
         "label": "Johnny Monero"
-      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=0.12345678&label=Johnny%20Monero"],
+      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=0.12345678&recipient_name=Johnny%20Monero"],
       "address, amount, label, & message": [{
         "publicAddress": "42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt",
         "nativeAmount": "123456780000",
         "currencyCode": "XMR",
         "label": "Johnny Monero",
         "message": "Hello World, I miss you !"
-      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?amount=0.12345678&label=Johnny%20Monero&message=Hello%20World,%20I%20miss%20you%20!"],
+      }, "monero:42kFgCShfmF3g9ASassxoZU3mTzUznUiBEStZxsKnocbJAHPQBmJJjSHPYV4oqwJgx6ce9cFXWtDVXD6Dwqhr6eYJovjaKt?tx_amount=0.12345678&recipient_name=Johnny%20Monero&tx_description=Hello%20World,%20I%20miss%20you%20!"],
       "invalid currencyCode": [{
         "publicAddress": "0xE94327D07Fc17907b4DB788E5aDf2ed424adDff6",
         "nativeAmount": "123456780000",
