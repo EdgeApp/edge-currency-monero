@@ -2,6 +2,8 @@
 
 # Unreleased
 
+# 1.3.2 (2024-11-19)
+
 - fixed: URI parsing and creation according to the correct format
 
 # 1.3.1 (2024-03-21)
