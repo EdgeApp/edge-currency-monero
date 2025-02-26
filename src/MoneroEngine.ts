@@ -22,6 +22,7 @@ import {
   EdgeTokenId,
   EdgeTokenIdOptions,
   EdgeTransaction,
+  EdgeTransactionEvent,
   EdgeWalletInfo,
   InsufficientFundsError,
   JsonObject,
@@ -43,10 +44,12 @@ import {
   asMoneroUserSettings,
   asPrivateKeys,
   asSafeWalletInfo,
+  asSeenTxCheckpoint,
   makeSafeWalletInfo,
   MoneroUserSettings,
   PrivateKeys,
-  SafeWalletInfo
+  SafeWalletInfo,
+  wasSeenTxCheckpoint
 } from './moneroTypes'
 import {
   CreateTransactionOptions,
@@ -72,7 +75,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   addressesChecked: boolean
   walletLocalData!: MoneroLocalData
   walletLocalDataDirty: boolean
-  transactionsChangedArray: EdgeTransaction[]
+  transactionEventArray: EdgeTransactionEvent[]
   currencyInfo: EdgeCurrencyInfo
   myMoneroApi: MyMoneroApi
   currentSettings: MoneroUserSettings
@@ -81,6 +84,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   io: EdgeIo
   log: EdgeLog
   currencyTools: MoneroTools
+  seenTxCheckpoint: number | undefined
 
   constructor(
     env: EdgeCorePluginOptions,
@@ -99,7 +103,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     this.loggedIn = false
     this.addressesChecked = false
     this.walletLocalDataDirty = false
-    this.transactionsChangedArray = []
+    this.transactionEventArray = []
     this.walletInfo = walletInfo as any // We derive the public keys at init
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
@@ -110,6 +114,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       fetch: env.io.fetch,
       nettype: networkInfo.nettype
     })
+    this.seenTxCheckpoint = asSeenTxCheckpoint(opts.seenTxCheckpoint)
 
     // this.customTokens = []
     this.timers = {}
@@ -232,7 +237,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     }
   }
 
-  processMoneroTransaction(tx: ParsedTransaction): void {
+  processMoneroTransaction(tx: ParsedTransaction): number {
     const ourReceiveAddresses: string[] = []
 
     const nativeNetworkFee: string = tx.fee != null ? tx.fee : '0'
@@ -285,10 +290,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       // New transaction not in database
       this.addTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction)
 
-      this.edgeTxLibCallbacks.onTransactionsChanged(
-        this.transactionsChangedArray
-      )
-      this.transactionsChangedArray = []
+      this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
+      this.transactionEventArray = []
     } else {
       // Already have this tx in the database. See if anything changed
       const transactionsArray = this.getTxs(PRIMARY_CURRENCY_TOKEN_ID)
@@ -303,12 +306,12 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
         this.log(`Update transaction: ${tx.hash} height:${tx.height}`)
         this.updateTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction, idx)
-        this.edgeTxLibCallbacks.onTransactionsChanged(
-          this.transactionsChangedArray
-        )
-        this.transactionsChangedArray = []
+        this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
+        this.transactionEventArray = []
       }
     }
+
+    return blockHeight
   }
 
   async checkTransactionsInnerLoop(privateKeys: PrivateKeys): Promise<void> {
@@ -321,6 +324,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     // }
 
     try {
+      // Let the seenTxCheckpoint be defined before querying transactions.
+      let seenTxCheckpoint = this.seenTxCheckpoint ?? 0
       const transactions = await this.myMoneroApi.getTransactions({
         address: this.walletInfo.keys.moneroAddress,
         privateViewKey: this.walletInfo.keys.moneroViewKeyPrivate,
@@ -334,12 +339,19 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       // Iterate over transactions in address
       for (let i = 0; i < transactions.length; i++) {
         const tx = transactions[i]
-        this.processMoneroTransaction(tx)
+        const blockHeight = this.processMoneroTransaction(tx)
+        seenTxCheckpoint = Math.max(seenTxCheckpoint, blockHeight)
         if (i % 10 === 0) {
           this.updateOnAddressesChecked(i, transactions.length)
         }
       }
+
       this.updateOnAddressesChecked(transactions.length, transactions.length)
+      // Update the seenTxCheckpoint state:
+      this.seenTxCheckpoint = seenTxCheckpoint
+      this.edgeTxLibCallbacks.onSeenTxCheckpoint(
+        wasSeenTxCheckpoint(this.seenTxCheckpoint)
+      )
     } catch (e) {
       this.log.error('checkTransactionsInnerLoop', e)
     }
@@ -382,7 +394,18 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       // Sort
       txs.sort(this.sortTxByDate)
       this.walletLocalDataDirty = true
-      this.transactionsChangedArray.push(edgeTransaction)
+      const txCheckpoint = edgeTransaction.blockHeight
+      const isNew =
+        // New if unconfirmed
+        txCheckpoint === 0 ||
+        // No checkpoint means initial sync
+        (this.seenTxCheckpoint != null &&
+          // New if txCheckpoint exceeds the last seen checkpoint
+          txCheckpoint >= this.seenTxCheckpoint)
+      this.transactionEventArray.push({
+        isNew,
+        transaction: edgeTransaction
+      })
     } else {
       this.updateTransaction(tokenId, edgeTransaction, idx)
     }
@@ -397,7 +420,10 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     const txs = this.getTxs(tokenId)
     txs[idx] = edgeTransaction
     this.walletLocalDataDirty = true
-    this.transactionsChangedArray.push(edgeTransaction)
+    this.transactionEventArray.push({
+      isNew: false,
+      transaction: edgeTransaction
+    })
     this.log.warn(
       'updateTransaction' + edgeTransaction.txid + edgeTransaction.nativeAmount
     )
@@ -718,8 +744,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
   async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
     await this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
-
-    this.edgeTxLibCallbacks.onTransactionsChanged([edgeTransaction])
   }
 
   getDisplayPrivateSeed(privateKeys: JsonObject): string {
