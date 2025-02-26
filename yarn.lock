@@ -1539,7 +1539,7 @@ base64-js@^1.0.2:
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.3.0.tgz#cab1e6118f051095e58b5281aea8c1cd22bfc0e3"
   integrity sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==
 
-biggystring@^4.0.0, biggystring@^4.2.3:
+biggystring@^4.2.3:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/biggystring/-/biggystring-4.2.3.tgz#30486cf09657038b332e44717fe54a78ed043cf8"
   integrity sha512-VsbLBLrL5RJDjEb5j5UEs9zrLsW332BFxVMy+DPF7K+UWOHXGydG6amrl1eDE88s+DVOoal05JUy1G9BT/YSww==
@@ -1694,7 +1694,12 @@ clean-stack@^2.0.0:
   resolved "https://registry.yarnpkg.com/clean-stack/-/clean-stack-2.2.0.tgz#ee8472dbb129e727b31e8a10a427dee9dfe4008b"
   integrity sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==
 
-cleaners@^0.3.14, cleaners@^0.3.9:
+cleaners@^0.3.17:
+  version "0.3.17"
+  resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.17.tgz#dae498f3d49b7e9364050402d2f4ad09abcd31ba"
+  integrity sha512-X5acjsLwJK+JEK5hv0Rve7G78+E6iYh1TzJZ40z7Yjrba0WhW6spTq28WgG9w+AK+YQIOHtQTrzaiuntMBBIwQ==
+
+cleaners@^0.3.9:
   version "0.3.16"
   resolved "https://registry.yarnpkg.com/cleaners/-/cleaners-0.3.16.tgz#d3a7ab936cb78b0d6ac19ba87b2d28ec41f30502"
   integrity sha512-Ecu8Fwv3wT7GV44K4Zas2CQJI11ZV/yPwoh8Gg9BSV6rAmhNsqFeWceA1RII1czbarFSG3XClUePrpI806OvRw==
@@ -1954,15 +1959,15 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-edge-core-js@^1.14.0:
-  version "1.14.0"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-1.14.0.tgz#16569cf6a24b50e26e0105eca554bd041ce15a01"
-  integrity sha512-P2yGTyu4eqoFUHFnrmkemxJrFFezql+cL2ZZ01JDyRJFgeAwy9zlEmg1Aj4IgOq8hzoNUFTd68fKTVPZZRDKEA==
+edge-core-js@^2.26.0:
+  version "2.26.0"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-2.26.0.tgz#8314e2b15c1aaaac81c4e5600a0c70319b03965c"
+  integrity sha512-RziSARvBIKNtM9+7i8mmSBT2Q4h851pD+rJka+fWV+x8aCGXnaYJl4PAahlXn12ImCXcJXeF5m0Jt0uVp0P7/Q==
   dependencies:
     aes-js "^3.1.0"
     base-x "^4.0.0"
-    biggystring "^4.0.0"
-    cleaners "^0.3.14"
+    biggystring "^4.2.3"
+    cleaners "^0.3.17"
     currency-codes "^1.5.1"
     disklet "^0.5.2"
     edge-sync-client "^0.2.8"

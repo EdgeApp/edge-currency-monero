@@ -6,7 +6,6 @@ import { div, eq, gte, lt, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   EdgeCorePluginOptions,
-  EdgeCurrencyCodeOptions,
   EdgeCurrencyEngine,
   EdgeCurrencyEngineCallbacks,
   EdgeCurrencyEngineOptions,
@@ -18,9 +17,10 @@ import {
   EdgeIo,
   EdgeLog,
   EdgeMemo,
-  EdgeMetaToken,
   EdgeSpendInfo,
   EdgeToken,
+  EdgeTokenId,
+  EdgeTokenIdOptions,
   EdgeTransaction,
   EdgeWalletInfo,
   InsufficientFundsError,
@@ -60,7 +60,7 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = '8' // ~ 2 minutes
 // const ADDRESS_QUERY_LOOKBACK_BLOCKS = (4 * 60 * 24 * 7) // ~ one week
 
-const PRIMARY_CURRENCY = currencyInfo.currencyCode
+const PRIMARY_CURRENCY_TOKEN_ID = null
 
 export class MoneroEngine implements EdgeCurrencyEngine {
   apiKey: string
@@ -74,7 +74,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   walletLocalDataDirty: boolean
   transactionsChangedArray: EdgeTransaction[]
   currencyInfo: EdgeCurrencyInfo
-  allTokens: EdgeMetaToken[]
   myMoneroApi: MyMoneroApi
   currentSettings: MoneroUserSettings
   timers: any
@@ -112,7 +111,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       nettype: networkInfo.nettype
     })
 
-    this.allTokens = currencyInfo.metaTokens.slice(0)
     // this.customTokens = []
     this.timers = {}
 
@@ -211,9 +209,18 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
       const nativeBalance = sub(addrResult.totalReceived, addrResult.totalSent)
 
-      if (this.walletLocalData.totalBalances.XMR !== nativeBalance) {
-        this.walletLocalData.totalBalances.XMR = nativeBalance
-        this.edgeTxLibCallbacks.onBalanceChanged('XMR', nativeBalance)
+      if (
+        this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) !==
+        nativeBalance
+      ) {
+        this.walletLocalData.totalBalances.set(
+          PRIMARY_CURRENCY_TOKEN_ID,
+          nativeBalance
+        )
+        this.edgeTxLibCallbacks.onTokenBalanceChanged(
+          PRIMARY_CURRENCY_TOKEN_ID,
+          nativeBalance
+        )
       }
       this.walletLocalData.lockedXmrBalance = addrResult.lockedBalance
     } catch (e) {
@@ -262,6 +269,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       memos,
       nativeAmount: netNativeAmount,
       networkFee: nativeNetworkFee,
+      networkFees: [{ tokenId: null, nativeAmount: nativeNetworkFee }],
       otherParams: {},
       ourReceiveAddresses,
       signedTx: '',
@@ -270,12 +278,12 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       walletId: this.walletId
     }
 
-    const idx = this.findTransaction(PRIMARY_CURRENCY, tx.hash)
+    const idx = this.findTransaction(PRIMARY_CURRENCY_TOKEN_ID, tx.hash)
     if (idx === -1) {
       this.log(`New transaction: ${tx.hash}`)
 
       // New transaction not in database
-      this.addTransaction(PRIMARY_CURRENCY, edgeTransaction)
+      this.addTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction)
 
       this.edgeTxLibCallbacks.onTransactionsChanged(
         this.transactionsChangedArray
@@ -283,9 +291,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray = this.walletLocalData.transactionsObj[
-        PRIMARY_CURRENCY
-      ] as EdgeTransaction[]
+      const transactionsArray = this.getTxs(PRIMARY_CURRENCY_TOKEN_ID)
       const edgeTx = transactionsArray[idx]
 
       if (edgeTx.blockHeight !== edgeTransaction.blockHeight) {
@@ -296,7 +302,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
         }
 
         this.log(`Update transaction: ${tx.hash} height:${tx.height}`)
-        this.updateTransaction(PRIMARY_CURRENCY, edgeTransaction, idx)
+        this.updateTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction, idx)
         this.edgeTxLibCallbacks.onTransactionsChanged(
           this.transactionsChangedArray
         )
@@ -339,17 +345,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     }
   }
 
-  findTransaction(currencyCode: string, txid: string): any {
-    if (
-      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
-    ) {
-      return -1
-    }
-
-    const currency = this.walletLocalData.transactionsObj[
-      currencyCode
-    ] as EdgeTransaction[]
-    return currency.findIndex(element => {
+  findTransaction(tokenId: EdgeTokenId, txid: string): any {
+    const txs = this.getTxs(tokenId)
+    return txs.findIndex(element => {
       return normalizeAddress(element.txid) === normalizeAddress(txid)
     })
   }
@@ -358,12 +356,19 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     return b.date - a.date
   }
 
-  addTransaction(currencyCode: string, edgeTransaction: EdgeTransaction): void {
-    const transactions = this.walletLocalData.transactionsObj[
-      currencyCode
-    ] as EdgeTransaction[]
+  getTxs(tokenId: EdgeTokenId): EdgeTransaction[] {
+    const txs = this.walletLocalData.transactionsObj.get(tokenId)
+    if (txs == null) {
+      const txs: EdgeTransaction[] = []
+      this.walletLocalData.transactionsObj.set(tokenId, txs)
+      return txs
+    }
+    return txs as EdgeTransaction[]
+  }
+
+  addTransaction(tokenId: EdgeTokenId, edgeTransaction: EdgeTransaction): void {
     // Add or update tx in transactionsObj
-    const idx = this.findTransaction(currencyCode, edgeTransaction.txid)
+    const idx = this.findTransaction(tokenId, edgeTransaction.txid)
 
     if (idx === -1) {
       this.log.warn(
@@ -371,27 +376,26 @@ export class MoneroEngine implements EdgeCurrencyEngine {
           edgeTransaction.txid +
           edgeTransaction.nativeAmount
       )
-      if (typeof transactions === 'undefined') {
-        this.walletLocalData.transactionsObj[currencyCode] = []
-      }
-      transactions.push(edgeTransaction)
+      const txs = this.getTxs(tokenId)
+      txs.push(edgeTransaction)
 
       // Sort
-      transactions.sort(this.sortTxByDate)
+      txs.sort(this.sortTxByDate)
       this.walletLocalDataDirty = true
       this.transactionsChangedArray.push(edgeTransaction)
     } else {
-      this.updateTransaction(currencyCode, edgeTransaction, idx)
+      this.updateTransaction(tokenId, edgeTransaction, idx)
     }
   }
 
   updateTransaction(
-    currencyCode: string,
+    tokenId: EdgeTokenId,
     edgeTransaction: EdgeTransaction,
     idx: number
   ): void {
     // Update the transaction
-    this.walletLocalData.transactionsObj[currencyCode][idx] = edgeTransaction
+    const txs = this.getTxs(tokenId)
+    txs[idx] = edgeTransaction
     this.walletLocalDataDirty = true
     this.transactionsChangedArray.push(edgeTransaction)
     this.log.warn(
@@ -416,14 +420,14 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   }
 
   doInitialCallbacks(): void {
-    for (const currencyCode of this.walletLocalData.enabledTokens) {
+    for (const tokenId of this.walletLocalData.enabledTokens) {
       try {
-        this.edgeTxLibCallbacks.onBalanceChanged(
-          currencyCode,
-          this.walletLocalData.totalBalances[currencyCode]
+        this.edgeTxLibCallbacks.onTokenBalanceChanged(
+          tokenId,
+          this.walletLocalData.totalBalances.get(tokenId) ?? '0'
         )
       } catch (e) {
-        this.log.error('Error for currencyCode', currencyCode, e)
+        this.log.error('Error for currencyCode', tokenId, e)
       }
     }
   }
@@ -534,43 +538,25 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     return false
   }
 
-  getBalance(options: EdgeCurrencyCodeOptions = {}): string {
-    const { currencyCode = PRIMARY_CURRENCY } = options
+  getBalance(options: EdgeTokenIdOptions): string {
+    const { tokenId = PRIMARY_CURRENCY_TOKEN_ID } = options
 
-    if (
-      typeof this.walletLocalData.totalBalances[currencyCode] === 'undefined'
-    ) {
-      return '0'
-    } else {
-      const nativeBalance = this.walletLocalData.totalBalances[currencyCode]
-      return nativeBalance
-    }
+    return this.walletLocalData.totalBalances.get(tokenId) ?? '0'
   }
 
-  getNumTransactions(options: EdgeCurrencyCodeOptions = {}): number {
-    const { currencyCode = PRIMARY_CURRENCY } = options
+  getNumTransactions(options: EdgeTokenIdOptions): number {
+    const { tokenId = PRIMARY_CURRENCY_TOKEN_ID } = options
 
-    if (
-      typeof this.walletLocalData.transactionsObj[currencyCode] === 'undefined'
-    ) {
-      return 0
-    } else {
-      return this.walletLocalData.transactionsObj[currencyCode].length
-    }
+    return this.walletLocalData.transactionsObj.get(tokenId)?.length ?? 0
   }
 
   async getTransactions(
-    options: EdgeCurrencyCodeOptions = {}
+    options: EdgeTokenIdOptions
   ): Promise<EdgeTransaction[]> {
-    const { currencyCode = PRIMARY_CURRENCY } = options
+    const { tokenId = PRIMARY_CURRENCY_TOKEN_ID } = options
 
-    if (this.walletLocalData.transactionsObj[currencyCode] == null) {
-      return []
-    }
-
-    return (
-      this.walletLocalData.transactionsObj[currencyCode] as EdgeTransaction[]
-    ).slice(0)
+    return (this.walletLocalData.transactionsObj.get(tokenId) ??
+      []) as EdgeTransaction[]
   }
 
   async getFreshAddress(
@@ -653,11 +639,16 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       throw new NoAmountSpecifiedError()
     }
 
-    if (gte(nativeAmount, this.walletLocalData.totalBalances.XMR)) {
+    if (
+      gte(
+        nativeAmount,
+        this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) ?? '0'
+      )
+    ) {
       if (gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
         throw new PendingFundsError()
       } else {
-        throw new InsufficientFundsError()
+        throw new InsufficientFundsError({ tokenId: PRIMARY_CURRENCY_TOKEN_ID })
       }
     }
 
@@ -685,6 +676,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       memos,
       nativeAmount: '-' + result.total_sent,
       networkFee: result.used_fee,
+      networkFees: [{ tokenId: null, nativeAmount: result.used_fee }],
       ourReceiveAddresses: [], // ourReceiveAddresses
       signedTx: result.serialized_signed_tx,
       tokenId: null,

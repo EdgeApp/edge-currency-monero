@@ -32,5 +32,7 @@ export const currencyInfo: EdgeCurrencyInfo = {
   metaTokens: [],
 
   unsafeMakeSpend: true,
-  unsafeSyncNetwork: true
+  unsafeSyncNetwork: true,
+  chainDisplayName: 'Monero',
+  assetDisplayName: 'Monero'
 }
