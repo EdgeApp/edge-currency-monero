@@ -2,6 +2,7 @@
 
 # Unreleased
 
+- fixed: Remove race condition causing missing transaction between showing address and initial login.
 - fixed: Upgrade edge-core-js to 2.26.0 to implemented new Seen Tx Checkpoint API
 
 # 1.3.2 (2024-11-19)
