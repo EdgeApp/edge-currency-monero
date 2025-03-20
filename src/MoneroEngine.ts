@@ -31,7 +31,12 @@ import {
 import type { CreatedTransaction, Priority } from 'react-native-mymonero-core'
 
 import { currencyInfo } from './moneroInfo'
-import { DATA_STORE_FILE, MoneroLocalData } from './MoneroLocalData'
+import {
+  asMoneroLocalData,
+  DATA_STORE_FILE,
+  MoneroLocalData,
+  wasMoneroLocalData
+} from './MoneroLocalData'
 import { MoneroTools } from './MoneroTools'
 import {
   asMoneroInitOptions,
@@ -278,8 +283,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       this.transactionsChangedArray = []
     } else {
       // Already have this tx in the database. See if anything changed
-      const transactionsArray: EdgeTransaction[] =
-        this.walletLocalData.transactionsObj[PRIMARY_CURRENCY]
+      const transactionsArray = this.walletLocalData.transactionsObj[
+        PRIMARY_CURRENCY
+      ] as EdgeTransaction[]
       const edgeTx = transactionsArray[idx]
 
       if (edgeTx.blockHeight !== edgeTransaction.blockHeight) {
@@ -340,7 +346,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       return -1
     }
 
-    const currency = this.walletLocalData.transactionsObj[currencyCode]
+    const currency = this.walletLocalData.transactionsObj[
+      currencyCode
+    ] as EdgeTransaction[]
     return currency.findIndex(element => {
       return normalizeAddress(element.txid) === normalizeAddress(txid)
     })
@@ -351,6 +359,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   }
 
   addTransaction(currencyCode: string, edgeTransaction: EdgeTransaction): void {
+    const transactions = this.walletLocalData.transactionsObj[
+      currencyCode
+    ] as EdgeTransaction[]
     // Add or update tx in transactionsObj
     const idx = this.findTransaction(currencyCode, edgeTransaction.txid)
 
@@ -360,16 +371,13 @@ export class MoneroEngine implements EdgeCurrencyEngine {
           edgeTransaction.txid +
           edgeTransaction.nativeAmount
       )
-      if (
-        typeof this.walletLocalData.transactionsObj[currencyCode] ===
-        'undefined'
-      ) {
+      if (typeof transactions === 'undefined') {
         this.walletLocalData.transactionsObj[currencyCode] = []
       }
-      this.walletLocalData.transactionsObj[currencyCode].push(edgeTransaction)
+      transactions.push(edgeTransaction)
 
       // Sort
-      this.walletLocalData.transactionsObj[currencyCode].sort(this.sortTxByDate)
+      transactions.sort(this.sortTxByDate)
       this.walletLocalDataDirty = true
       this.transactionsChangedArray.push(edgeTransaction)
     } else {
@@ -398,7 +406,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     if (this.walletLocalDataDirty) {
       try {
         this.log('walletLocalDataDirty. Saving...')
-        const walletJson = JSON.stringify(this.walletLocalData)
+        const walletJson = wasMoneroLocalData(this.walletLocalData)
         await this.walletLocalDisklet.setText(DATA_STORE_FILE, walletJson)
         this.walletLocalDataDirty = false
       } catch (err) {
@@ -481,13 +489,11 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   async resyncBlockchain(): Promise<void> {
     await this.killEngine()
     this.myMoneroApi.keyImageCache = {}
-    const temp = JSON.stringify({
-      enabledTokens: this.walletLocalData.enabledTokens,
-      // networkFees: this.walletLocalData.networkFees,
-      moneroAddress: this.walletInfo.keys.moneroAddress,
-      moneroViewKeyPrivate: this.walletInfo.keys.moneroViewKeyPrivate
-    })
-    this.walletLocalData = new MoneroLocalData(temp)
+    this.walletLocalData = asMoneroLocalData(
+      JSON.stringify({
+        enabledTokens: this.walletLocalData.enabledTokens
+      })
+    )
     this.walletLocalDataDirty = true
     this.addressesChecked = false
     await this.saveWalletLoop()
@@ -562,7 +568,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       return []
     }
 
-    return this.walletLocalData.transactionsObj[currencyCode].slice(0)
+    return (
+      this.walletLocalData.transactionsObj[currencyCode] as EdgeTransaction[]
+    ).slice(0)
   }
 
   async getFreshAddress(
@@ -766,15 +774,15 @@ export async function makeCurrencyEngine(
   await engine.init()
   try {
     const result = await engine.walletLocalDisklet.getText(DATA_STORE_FILE)
-    engine.walletLocalData = new MoneroLocalData(result)
+    engine.walletLocalData = asMoneroLocalData(result)
   } catch (err) {
     try {
       opts.log(err)
       opts.log('No walletLocalData setup yet: Failure is ok')
-      engine.walletLocalData = new MoneroLocalData(null)
+      engine.walletLocalData = asMoneroLocalData('{}')
       await engine.walletLocalDisklet.setText(
         DATA_STORE_FILE,
-        JSON.stringify(engine.walletLocalData)
+        wasMoneroLocalData(engine.walletLocalData)
       )
     } catch (e) {
       opts.log.error(
