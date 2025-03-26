@@ -186,6 +186,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
         this.walletLocalData.hasLoggedIn = true
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.addToLoop('saveWalletLoop', SAVE_DATASTORE_MILLISECONDS)
+        this.edgeTxLibCallbacks.onAddressChanged()
       }
     } catch (e) {
       this.log.error('Error logging into mymonero', e)
@@ -588,6 +589,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   async getFreshAddress(
     options: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
+    // Do not show the address before logging into my monero...
+    if (!this.walletLocalData.hasLoggedIn) return { publicAddress: '' }
     return { publicAddress: this.walletInfo.keys.moneroAddress }
   }
 
