@@ -58,7 +58,8 @@ for (const fixture of fixtures) {
     io: fakeIo,
     log: fakeLog,
     nativeIo,
-    pluginDisklet: fakeIo.disklet
+    pluginDisklet: fakeIo.disklet,
+    infoPayload: {} // TODO: Implement
   }
   const factory = edgeCorePlugins[fixture.pluginName as 'monero']
   const plugin: EdgeCurrencyPlugin = factory(opts)

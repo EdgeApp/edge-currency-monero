@@ -9,6 +9,7 @@ import {
   EdgeCurrencyTools,
   EdgeIo,
   EdgeTokenId,
+  EdgeTransactionEvent,
   EdgeWalletInfo,
   makeFakeIo
 } from 'edge-core-js'
@@ -40,7 +41,8 @@ for (const fixture of fixtures) {
     io: fakeIo,
     log: fakeLog,
     nativeIo,
-    pluginDisklet: fakeIo.disklet
+    pluginDisklet: fakeIo.disklet,
+    infoPayload: {}
   }
   const factory = edgeCorePlugins[fixture.pluginName as 'monero']
   const plugin: EdgeCurrencyPlugin = factory(opts)
@@ -73,7 +75,11 @@ for (const fixture of fixtures) {
     onStakingStatusChanged() {},
     onWcNewContractCall(payload) {
       emitter.emit('wcNewContractCall', payload)
-    }
+    },
+    onSeenTxCheckpoint: function (checkpoint: string): void {},
+    onTransactions: function (
+      transactionEvents: EdgeTransactionEvent[]
+    ): void {}
   }
 
   const walletLocalDisklet = fakeIo.disklet

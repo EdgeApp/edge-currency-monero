@@ -2,7 +2,16 @@
  * Created by paul on 8/26/17.
  */
 
-import { asBoolean, asMaybe, asObject, asOptional, asString } from 'cleaners'
+import {
+  asBoolean,
+  asCodec,
+  asMaybe,
+  asObject,
+  asOptional,
+  asString,
+  Cleaner,
+  uncleaner
+} from 'cleaners'
 import type { EdgeCurrencyTools, EdgeWalletInfo } from 'edge-core-js'
 import type { Nettype } from 'react-native-mymonero-core'
 
@@ -70,3 +79,9 @@ export const makeSafeWalletInfo = async (
 
   return safeWalletInfo
 }
+
+export const asSeenTxCheckpoint: Cleaner<number | undefined> = asCodec(
+  v => (v == null ? undefined : parseInt(asString(v))),
+  v => (v == null ? undefined : v.toString())
+)
+export const wasSeenTxCheckpoint = uncleaner(asSeenTxCheckpoint)
