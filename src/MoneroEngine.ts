@@ -746,7 +746,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   }
 
   async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
-    await this.addTransaction(edgeTransaction.currencyCode, edgeTransaction)
+    await this.addTransaction(edgeTransaction.tokenId, edgeTransaction)
   }
 
   getDisplayPrivateSeed(privateKeys: JsonObject): string {
