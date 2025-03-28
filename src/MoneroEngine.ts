@@ -284,20 +284,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       walletId: this.walletId
     }
 
-    const idx = this.findTransaction(PRIMARY_CURRENCY_TOKEN_ID, tx.hash)
-    if (idx === -1) {
-      this.log(`New transaction: ${tx.hash}`)
-
-      // New transaction not in database
-      this.addTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction)
-
-      this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
-      this.transactionEventArray = []
-    } else {
-      this.updateTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction, idx)
-      this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
-      this.transactionEventArray = []
-    }
+    this.saveTransactionState(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction)
+    this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
+    this.transactionEventArray = []
 
     return blockHeight
   }
@@ -366,11 +355,15 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     return txs as EdgeTransaction[]
   }
 
-  addTransaction(tokenId: EdgeTokenId, edgeTransaction: EdgeTransaction): void {
+  saveTransactionState(
+    tokenId: EdgeTokenId,
+    edgeTransaction: EdgeTransaction
+  ): void {
     // Add or update tx in transactionsObj
     const idx = this.findTransaction(tokenId, edgeTransaction.txid)
 
     if (idx === -1) {
+      this.log(`New transaction: ${edgeTransaction.txid}`)
       this.log.warn(
         'addTransaction: adding and sorting:' +
           edgeTransaction.txid +
@@ -395,41 +388,35 @@ export class MoneroEngine implements EdgeCurrencyEngine {
         transaction: edgeTransaction
       })
     } else {
-      this.updateTransaction(tokenId, edgeTransaction, idx)
+      const txs = this.getTxs(tokenId)
+      const edgeTx = txs[idx]
+
+      // Already have this tx in the database. Consider a change if blockHeight changed
+      if (edgeTx.blockHeight === edgeTransaction.blockHeight) return
+      this.log(
+        `Update transaction: ${edgeTransaction.txid} height:${edgeTransaction.blockHeight}`
+      )
+
+      // The native amounts returned from the API take some time before they're
+      // accurate. We can trust the amounts we saved instead.
+      edgeTransaction = {
+        ...edgeTransaction,
+        nativeAmount: edgeTx.nativeAmount
+      }
+
+      // Update the transaction
+      txs[idx] = edgeTransaction
+      this.walletLocalDataDirty = true
+      this.transactionEventArray.push({
+        isNew: false,
+        transaction: edgeTransaction
+      })
+      this.log.warn(
+        'updateTransaction' +
+          edgeTransaction.txid +
+          edgeTransaction.nativeAmount
+      )
     }
-  }
-
-  updateTransaction(
-    tokenId: EdgeTokenId,
-    edgeTransaction: EdgeTransaction,
-    idx: number
-  ): void {
-    // Already have this tx in the database. See if anything changed
-    const txs = this.getTxs(tokenId)
-    const edgeTx = txs[idx]
-
-    // Already have this tx in the database. Consider a change if blockHeight changed
-    if (edgeTx.blockHeight === edgeTransaction.blockHeight) return
-    this.log(
-      `Update transaction: ${edgeTransaction.txid} height:${edgeTransaction.blockHeight}`
-    )
-    // The native amounts returned from the API take some time before they're
-    // accurate. We can trust the amounts we saved instead.
-    edgeTransaction = {
-      ...edgeTransaction,
-      nativeAmount: edgeTx.nativeAmount
-    }
-
-    // Update the transaction
-    txs[idx] = edgeTransaction
-    this.walletLocalDataDirty = true
-    this.transactionEventArray.push({
-      isNew: false,
-      transaction: edgeTransaction
-    })
-    this.log.warn(
-      'updateTransaction' + edgeTransaction.txid + edgeTransaction.nativeAmount
-    )
   }
 
   // *************************************
@@ -748,7 +735,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   }
 
   async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
-    await this.addTransaction(edgeTransaction.tokenId, edgeTransaction)
+    await this.saveTransactionState(edgeTransaction.tokenId, edgeTransaction)
   }
 
   getDisplayPrivateSeed(privateKeys: JsonObject): string {
