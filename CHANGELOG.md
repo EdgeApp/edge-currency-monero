@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fixed `saveTx` regression. Transaction sends are properly saved.
+
 ## 1.4.0 (2025-03-25)
 
 - fixed: Remove race condition causing missing transaction between showing address and initial login.
