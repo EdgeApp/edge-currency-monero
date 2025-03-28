@@ -267,7 +267,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       })
     }
 
-    let edgeTransaction: EdgeTransaction = {
+    const edgeTransaction: EdgeTransaction = {
       blockHeight,
       currencyCode: 'XMR',
       date,
@@ -294,22 +294,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
       this.transactionEventArray = []
     } else {
-      // Already have this tx in the database. See if anything changed
-      const transactionsArray = this.getTxs(PRIMARY_CURRENCY_TOKEN_ID)
-      const edgeTx = transactionsArray[idx]
-
-      if (edgeTx.blockHeight !== edgeTransaction.blockHeight) {
-        // The native amounts returned from the API take some time before they're accurate. We can trust the amounts we saved instead.
-        edgeTransaction = {
-          ...edgeTransaction,
-          nativeAmount: edgeTx.nativeAmount
-        }
-
-        this.log(`Update transaction: ${tx.hash} height:${tx.height}`)
-        this.updateTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction, idx)
-        this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
-        this.transactionEventArray = []
-      }
+      this.updateTransaction(PRIMARY_CURRENCY_TOKEN_ID, edgeTransaction, idx)
+      this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
+      this.transactionEventArray = []
     }
 
     return blockHeight
@@ -417,8 +404,23 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     edgeTransaction: EdgeTransaction,
     idx: number
   ): void {
-    // Update the transaction
+    // Already have this tx in the database. See if anything changed
     const txs = this.getTxs(tokenId)
+    const edgeTx = txs[idx]
+
+    // Already have this tx in the database. Consider a change if blockHeight changed
+    if (edgeTx.blockHeight === edgeTransaction.blockHeight) return
+    this.log(
+      `Update transaction: ${edgeTransaction.txid} height:${edgeTransaction.blockHeight}`
+    )
+    // The native amounts returned from the API take some time before they're
+    // accurate. We can trust the amounts we saved instead.
+    edgeTransaction = {
+      ...edgeTransaction,
+      nativeAmount: edgeTx.nativeAmount
+    }
+
+    // Update the transaction
     txs[idx] = edgeTransaction
     this.walletLocalDataDirty = true
     this.transactionEventArray.push({
