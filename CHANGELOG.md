@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.4.1 (2025-03-28)
+
 - fixed: Fixed `saveTx` regression. Transaction sends are properly saved.
 
 ## 1.4.0 (2025-03-25)
