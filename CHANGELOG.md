@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.4.2 (2025-04-01)
+
+- fixed: Small internal implementation cleanup on how transactions are saved.
+
 ## 1.4.1 (2025-03-28)
 
 - fixed: Fixed `saveTx` regression. Transaction sends are properly saved.
