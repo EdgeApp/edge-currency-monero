@@ -44,11 +44,13 @@ export interface BalanceResults {
 }
 
 export interface CreateTransactionOptions {
-  amount: string
+  targets: Array<{
+    amount: string
+    targetAddress: string
+  }>
   isSweepTx?: boolean
   paymentId?: string
   priority?: Priority
-  targetAddress: string
 }
 
 const asNumberBoolean: Cleaner<boolean> = raw => {
@@ -238,13 +240,7 @@ export class MyMoneroApi {
     opts: CreateTransactionOptions
   ): Promise<CreatedTransaction> {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
-    const {
-      amount,
-      isSweepTx = false,
-      paymentId,
-      priority = 1,
-      targetAddress
-    } = opts
+    const { isSweepTx = false, paymentId, priority = 1, targets } = opts
 
     // Grab the UTXO set:
     const unspentOuts = await this.fetchPostMyMonero('get_unspent_outs', {
@@ -268,14 +264,14 @@ export class MyMoneroApi {
       })
     }
 
+    const destinations = targets.map(t => ({
+      send_amount: t.amount,
+      to_address: t.targetAddress
+    }))
+
     // Make the transaction:
     return await this.cppBridge.createTransaction({
-      destinations: [
-        {
-          send_amount: amount,
-          to_address: targetAddress
-        }
-      ],
+      destinations,
       priority,
       address,
       paymentId,
