@@ -2,7 +2,7 @@
  * Created by paul on 7/7/17.
  */
 
-import { div, eq, gte, lt, sub } from 'biggystring'
+import { add, div, eq, gte, lt, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   EdgeCorePluginOptions,
@@ -600,11 +600,15 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       throw new TypeError('Missing destination address')
     }
 
-    const options = {
-      amount: '0',
+    const options: CreateTransactionOptions = {
       isSweepTx: true,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
-      targetAddress: publicAddress
+      targets: [
+        {
+          amount: '0',
+          targetAddress: publicAddress
+        }
+      ]
     }
 
     const result = await this.createMyMoneroTransaction(options, privateKeys)
@@ -642,39 +646,45 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     const { memos = [] } = edgeSpendInfo
     const privateKeys = asPrivateKeys(opts?.privateKeys)
 
-    // Monero can only have one output
-    // TODO: The new SDK fixes this!
-    if (edgeSpendInfo.spendTargets.length !== 1) {
-      throw new Error('Error: only one output allowed')
-    }
+    const { spendTargets } = edgeSpendInfo
 
-    const [spendTarget] = edgeSpendInfo.spendTargets
-    const { publicAddress, nativeAmount } = spendTarget
-    if (publicAddress == null) {
-      throw new TypeError('Missing destination address')
-    }
-    if (nativeAmount == null || eq(nativeAmount, '0')) {
-      throw new NoAmountSpecifiedError()
-    }
+    let totalAmount = '0'
+    const targets: CreateTransactionOptions['targets'] = []
 
-    if (
-      gte(
-        nativeAmount,
-        this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) ?? '0'
-      )
-    ) {
-      if (gte(this.walletLocalData.lockedXmrBalance, nativeAmount)) {
-        throw new PendingFundsError()
-      } else {
-        throw new InsufficientFundsError({ tokenId: PRIMARY_CURRENCY_TOKEN_ID })
+    for (const spendTarget of spendTargets) {
+      const { publicAddress, nativeAmount } = spendTarget
+      if (publicAddress == null) {
+        throw new TypeError('Missing destination address')
       }
+      if (nativeAmount == null || eq(nativeAmount, '0')) {
+        throw new NoAmountSpecifiedError()
+      }
+      totalAmount = add(totalAmount, nativeAmount)
+      if (
+        gte(
+          totalAmount,
+          this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) ??
+            '0'
+        )
+      ) {
+        if (gte(this.walletLocalData.lockedXmrBalance, totalAmount)) {
+          throw new PendingFundsError()
+        } else {
+          throw new InsufficientFundsError({
+            tokenId: PRIMARY_CURRENCY_TOKEN_ID
+          })
+        }
+      }
+      targets.push({
+        amount: div(nativeAmount, '1000000000000', 12),
+        targetAddress: publicAddress
+      })
     }
 
     const options: CreateTransactionOptions = {
-      amount: div(nativeAmount, '1000000000000', 12),
       isSweepTx: false,
       priority: translateFee(edgeSpendInfo.networkFeeOption),
-      targetAddress: publicAddress
+      targets
     }
     this.log(`Creating transaction: ${JSON.stringify(options, null, 1)}`)
 

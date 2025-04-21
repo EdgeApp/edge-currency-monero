@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- added: Support for multiple spend targets.
+
 ## 1.4.2 (2025-04-01)
 
 - fixed: Small internal implementation cleanup on how transactions are saved.
