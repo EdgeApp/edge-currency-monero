@@ -1,6 +1,6 @@
 # edge-currency-monero
 
-## Unreleased
+## 1.5.0 (2025-04-21)
 
 - added: Support for multiple spend targets.
 
