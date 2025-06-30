@@ -1,5 +1,9 @@
 # edge-currency-monero
 
+# Unreleased
+
+- fixed: Handle insufficient funds errors from native library into `InsufficientFundsError`.
+
 ## 1.5.0 (2025-04-21)
 
 - added: Support for multiple spend targets.
