@@ -85,6 +85,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   log: EdgeLog
   currencyTools: MoneroTools
   seenTxCheckpoint: number | undefined
+  loginPromise: Promise<void> | null = null
 
   constructor(
     env: EdgeCorePluginOptions,
@@ -174,6 +175,20 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   // Login to mymonero.com server
   // **********************************************
   async loginIfNewAddress(privateKeys: PrivateKeys): Promise<void> {
+    if (this.loginPromise != null) {
+      return await this.loginPromise
+    }
+    this.loginPromise = this.performLogin(privateKeys)
+
+    try {
+      await this.loginPromise
+    } finally {
+      // Clear the promise once completed (success OR failure)
+      this.loginPromise = null
+    }
+  }
+
+  private async performLogin(privateKeys: PrivateKeys): Promise<void> {
     try {
       const result = await this.myMoneroApi.login({
         address: this.walletInfo.keys.moneroAddress,
@@ -578,8 +593,18 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   async getFreshAddress(
     options: EdgeGetReceiveAddressOptions
   ): Promise<EdgeFreshAddress> {
+    // Wait for login to complete if it's in progress
+    if (this.loginPromise != null) {
+      await this.loginPromise
+    }
+
     // Do not show the address before logging into my monero...
-    if (!this.walletLocalData.hasLoggedIn) return { publicAddress: '' }
+    if (!this.walletLocalData.hasLoggedIn) {
+      this.log.warn(
+        'Attempted to retrieve `publicAddress` before successfully logging in'
+      )
+      return { publicAddress: '' }
+    }
     return { publicAddress: this.walletInfo.keys.moneroAddress }
   }
 
