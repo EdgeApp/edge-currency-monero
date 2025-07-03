@@ -629,12 +629,20 @@ export class MoneroEngine implements EdgeCurrencyEngine {
         },
         options
       )
-    } catch (e: any) {
+    } catch (error: unknown) {
+      if (!(error instanceof Error)) {
+        throw new Error(String(error))
+      }
+      if (error.message === 'Not enough spendables') {
+        throw new InsufficientFundsError({
+          tokenId: PRIMARY_CURRENCY_TOKEN_ID
+        })
+      }
       // This error is specific to mymonero-core-js: github.com/mymonero/mymonero-core-cpp/blob/a53e57f2a376b05bb0f4d851713321c749e5d8d9/src/monero_transfer_utils.hpp#L112-L162
-      this.log.error(e.message)
+      this.log.error(error.message)
       const regex = / Have (\d*\.?\d+) XMR; need (\d*\.?\d+) XMR./gm
       const subst = `\nHave: $1 XMR.\nNeed: $2 XMR.`
-      const msgFormatted = e.message.replace(regex, subst)
+      const msgFormatted = error.message.replace(regex, subst)
       throw new Error(msgFormatted)
     }
   }
