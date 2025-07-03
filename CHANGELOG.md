@@ -1,6 +1,6 @@
 # edge-currency-monero
 
-# Unreleased
+## Unreleased
 
 - fixed: Fix `getFreshAddress` to return a non-empty `publicAddress` when calling immediately after creating a wallet.
 - fixed: Handle insufficient funds errors from native library into `InsufficientFundsError`.
