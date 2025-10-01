@@ -16,11 +16,12 @@ import type { EdgeCurrencyTools, EdgeWalletInfo } from 'edge-core-js'
 import type { Nettype } from 'react-native-mymonero-core'
 
 export const asMoneroInitOptions = asObject({
-  apiKey: asOptional(asString, '')
+  myMoneroApiKey: asOptional(asString, ''),
+  edgeLwsApiKey: asOptional(asString, '')
 })
 
 export interface MoneroNetworkInfo {
-  defaultServer: string
+  defaultServers: string[]
   nettype: Nettype
 }
 

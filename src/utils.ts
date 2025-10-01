@@ -27,3 +27,30 @@ const asCleanTxLogs = asObject({
 export function cleanTxLogs(tx: EdgeTransaction): string {
   return JSON.stringify(asCleanTxLogs(tx))
 }
+
+/**
+ * A ponyfill for `Promise.any`.
+ * Once we upgrade our browser environment,
+ * we can just use the built-in one instead.
+ */
+export async function promiseAny<T>(promises: Array<Promise<T>>): Promise<T> {
+  const errors: unknown[] = []
+
+  return await new Promise((resolve: Function, reject: Function) => {
+    let pending = promises.length
+    for (const promise of promises) {
+      promise.then(
+        value => {
+          resolve(value)
+        },
+        error => {
+          errors.push(error)
+          if (--pending === 0) {
+            // Match what the Node.js Promise.any does:
+            reject(errors)
+          }
+        }
+      )
+    }
+  })
+}

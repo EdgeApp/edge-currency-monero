@@ -54,6 +54,7 @@ import {
 import {
   CreateTransactionOptions,
   MyMoneroApi,
+  MyMoneroApiKey,
   ParsedTransaction
 } from './MyMoneroApi'
 import { cleanTxLogs, normalizeAddress } from './utils'
@@ -66,7 +67,8 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 const PRIMARY_CURRENCY_TOKEN_ID = null
 
 export class MoneroEngine implements EdgeCurrencyEngine {
-  apiKey: string
+  apiKeys: MyMoneroApiKey[]
+
   walletInfo: SafeWalletInfo
   edgeTxLibCallbacks: EdgeCurrencyEngineCallbacks
   walletLocalDisklet: Disklet
@@ -97,7 +99,18 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     const initOptions = asMoneroInitOptions(env.initOptions ?? {})
     const { networkInfo } = tools
 
-    this.apiKey = initOptions.apiKey
+    this.apiKeys = [
+      {
+        // Regex for anything matching mymonero.com at the end of the url but can be followed by a : and a number for the port
+        urlRegex: '.*.mymonero.com(:[0-9]{2,5})?$',
+        apiKey: initOptions.myMoneroApiKey
+      },
+      {
+        // Regex for anything matching edge.app at the end of the url or http://localhost:[port]
+        urlRegex: '.*.edge.app$|.*:localhost:[0-9]{2,5}$',
+        apiKey: initOptions.edgeLwsApiKey
+      }
+    ]
     this.io = env.io
     this.log = opts.log
     this.engineOn = false
@@ -110,8 +123,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     this.currencyInfo = currencyInfo
     this.currencyTools = tools
     this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
-      apiKey: initOptions.apiKey,
-      apiServer: networkInfo.defaultServer,
+      apiKeys: this.apiKeys,
+      apiServers: networkInfo.defaultServers,
       fetch: env.io.fetch,
       nettype: networkInfo.nettype
     })
@@ -129,8 +142,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       this.currentSettings.moneroLightwalletServer != null
     ) {
       this.myMoneroApi.changeServer(
-        this.currentSettings.moneroLightwalletServer,
-        ''
+        [this.currentSettings.moneroLightwalletServer],
+        []
       )
     }
 
@@ -494,13 +507,13 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       this.currentSettings.moneroLightwalletServer != null
     ) {
       this.myMoneroApi.changeServer(
-        this.currentSettings.moneroLightwalletServer,
-        ''
+        [this.currentSettings.moneroLightwalletServer],
+        []
       )
     } else {
       this.myMoneroApi.changeServer(
-        this.currencyTools.networkInfo.defaultServer,
-        this.apiKey
+        this.currencyTools.networkInfo.defaultServers,
+        this.apiKeys
       )
     }
   }

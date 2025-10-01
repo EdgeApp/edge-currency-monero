@@ -18,10 +18,16 @@ import type {
 } from 'react-native-mymonero-core'
 
 import parserUtils from './mymonero-utils/ResponseParser'
+import { promiseAny } from './utils'
+
+export interface MyMoneroApiKey {
+  urlRegex: string
+  apiKey: string
+}
 
 export interface MyMoneroApiOptions {
-  apiKey: string
-  apiServer: string
+  apiKeys: MyMoneroApiKey[]
+  apiServers: string[]
   fetch: EdgeFetchFunction
   nettype?: Nettype
 }
@@ -147,8 +153,8 @@ const asGetAddressTxsResponse = asObject({
  */
 export class MyMoneroApi {
   // Network options:
-  apiKey: string
-  apiUrl: string
+  apiKeys: MyMoneroApiKey[]
+  apiUrls: string[]
   nettype: Nettype
 
   // Dependency injection:
@@ -159,8 +165,8 @@ export class MyMoneroApi {
   keyImageCache: { [keyId: string]: string }
 
   constructor(cppBridge: CppBridge, options: MyMoneroApiOptions) {
-    this.apiKey = options.apiKey
-    this.apiUrl = options.apiServer
+    this.apiKeys = options.apiKeys
+    this.apiUrls = options.apiServers
     this.nettype = options.nettype ?? 'MAINNET'
 
     this.fetch = options.fetch
@@ -169,9 +175,9 @@ export class MyMoneroApi {
     this.keyImageCache = {}
   }
 
-  changeServer(apiUrl: string, apiKey: string): void {
-    this.apiKey = apiKey
-    this.apiUrl = apiUrl
+  changeServer(apiUrls: string[], apiKeys: MyMoneroApiKey[]): void {
+    this.apiKeys = apiKeys
+    this.apiUrls = apiUrls
   }
 
   /**
@@ -181,7 +187,6 @@ export class MyMoneroApi {
     const { address, privateViewKey } = keys
     const response = await this.fetchPostMyMonero('login', {
       address: address,
-      api_key: this.apiKey,
       create_account: true,
       generated_locally: true,
       view_key: privateViewKey
@@ -194,7 +199,6 @@ export class MyMoneroApi {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
     const response = await this.fetchPostMyMonero('get_address_txs', {
       address,
-      api_key: this.apiKey,
       view_key: privateViewKey
     })
 
@@ -214,7 +218,6 @@ export class MyMoneroApi {
     const { address, privateSpendKey, privateViewKey, publicSpendKey } = keys
     const response = await this.fetchPostMyMonero('get_address_info', {
       address,
-      api_key: this.apiKey,
       view_key: privateViewKey
     })
 
@@ -246,7 +249,6 @@ export class MyMoneroApi {
     const unspentOuts = await this.fetchPostMyMonero('get_unspent_outs', {
       address,
       amount: '0',
-      api_key: this.apiKey,
       dust_threshold: '2000000000',
       mixin: 15,
       use_dust: true,
@@ -259,7 +261,6 @@ export class MyMoneroApi {
       for (let i = 0; i < count; ++i) amounts.push('0')
       return await this.fetchPostMyMonero('get_random_outs', {
         amounts,
-        api_key: this.apiKey,
         count: 16
       })
     }
@@ -287,7 +288,6 @@ export class MyMoneroApi {
 
   async broadcastTransaction(tx: string): Promise<void> {
     await this.fetchPostMyMonero('submit_raw_tx', {
-      api_key: this.apiKey,
       tx
     })
   }
@@ -296,20 +296,27 @@ export class MyMoneroApi {
   // ----------------
 
   async fetchPostMyMonero(cmd: string, params: any): Promise<any> {
-    const url = `${this.apiUrl}/${cmd}`
-    const response = await this.fetch(url, {
-      body: JSON.stringify(params),
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      method: 'POST'
+    const promises = this.apiUrls.map(async apiUrl => {
+      const apiKey = this.apiKeys.find(key => url.match(key.urlRegex))?.apiKey
+      const url = `${apiUrl}/${cmd}`
+      if (apiKey != null) {
+        params.api_key = apiKey
+      }
+      const response = await this.fetch(url, {
+        body: JSON.stringify(params),
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        method: 'POST'
+      })
+      if (!response.ok) {
+        throw new Error(
+          `The server returned error code ${response.status} for ${url}`
+        )
+      }
+      return await response.json()
     })
-    if (!response.ok) {
-      throw new Error(
-        `The server returned error code ${response.status} for ${url}`
-      )
-    }
-    return await response.json()
+    return await promiseAny(promises)
   }
 }

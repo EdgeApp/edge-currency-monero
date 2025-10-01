@@ -37,7 +37,11 @@ export class MoneroTools {
   io: EdgeIo
   log: EdgeLog
   networkInfo: MoneroNetworkInfo = {
-    defaultServer: 'https://edge.mymonero.com:8443',
+    defaultServers: [
+      'https://edge.mymonero.com:8443',
+      'https://monerolws1.edge.app',
+      'https://monerolws2.edge.app'
+    ],
     nettype: 'MAINNET'
   }
 
