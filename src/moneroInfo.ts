@@ -2,9 +2,11 @@ import type { EdgeCurrencyInfo } from 'edge-core-js/types'
 
 import type { MoneroUserSettings } from './moneroTypes.js'
 
+export const MONERO_LWS_SERVER = 'https://monerolws1.edge.app'
+
 const defaultSettings: MoneroUserSettings = {
   enableCustomServers: false,
-  moneroLightwalletServer: 'https://edge.mymonero.com:8443'
+  moneroLightwalletServer: MONERO_LWS_SERVER
 }
 
 export const currencyInfo: EdgeCurrencyInfo = {

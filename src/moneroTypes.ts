@@ -16,7 +16,7 @@ import type { EdgeCurrencyTools, EdgeWalletInfo } from 'edge-core-js'
 import type { Nettype } from 'react-native-mymonero-core'
 
 export const asMoneroInitOptions = asObject({
-  apiKey: asOptional(asString, '')
+  edgeApiKey: asOptional(asString, '')
 })
 
 export interface MoneroNetworkInfo {
