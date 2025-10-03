@@ -15,7 +15,7 @@ import type {
 import CppBridge from 'react-native-mymonero-core/src/CppBridge'
 import { parse, serialize } from 'uri-js'
 
-import { currencyInfo } from './moneroInfo'
+import { currencyInfo, MONERO_LWS_SERVER } from './moneroInfo'
 import type { MoneroNetworkInfo, PrivateKeys, PublicKeys } from './moneroTypes'
 
 function getDenomInfo(denom: string): EdgeDenomination | undefined {
@@ -37,7 +37,7 @@ export class MoneroTools {
   io: EdgeIo
   log: EdgeLog
   networkInfo: MoneroNetworkInfo = {
-    defaultServer: 'https://edge.mymonero.com:8443',
+    defaultServer: MONERO_LWS_SERVER,
     nettype: 'MAINNET'
   }
 

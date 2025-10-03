@@ -97,7 +97,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     const initOptions = asMoneroInitOptions(env.initOptions ?? {})
     const { networkInfo } = tools
 
-    this.apiKey = initOptions.apiKey
+    this.apiKey = initOptions.edgeApiKey
     this.io = env.io
     this.log = opts.log
     this.engineOn = false
@@ -110,7 +110,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     this.currencyInfo = currencyInfo
     this.currencyTools = tools
     this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
-      apiKey: initOptions.apiKey,
+      apiKey: initOptions.edgeApiKey,
       apiServer: networkInfo.defaultServer,
       fetch: env.io.fetch,
       nettype: networkInfo.nettype
@@ -134,9 +134,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       )
     }
 
-    // Hard coded for testing
-    // this.walletInfo.keys.moneroKey = '389b07b3466eed587d6bdae09a3613611de9add2635432d6cd1521af7bbc3757'
-    // this.walletInfo.keys.moneroAddress = '0x9fa817e5A48DD1adcA7BEc59aa6E3B1F5C4BeA9a'
     this.edgeTxLibCallbacks = callbacks
     this.walletLocalDisklet = walletLocalDisklet
 

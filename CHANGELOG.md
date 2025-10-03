@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: *Breaking change* Change to use Edge LWS servers. Must specify edgeApiKey in plugin options, instead of apiKey
+
 ## 1.5.1 (2025-07-03)
 
 - fixed: Fix `getFreshAddress` to return a non-empty `publicAddress` when calling immediately after creating a wallet.
