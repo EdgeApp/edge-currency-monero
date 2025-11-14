@@ -76,13 +76,13 @@ export interface ParsedTransaction {
   // See asGetAddressTxsResponse for these fields:
   coinbase: boolean
   hash: string
-  height: number
+  height?: number
   id: number
   mempool: boolean
   mixin: number
   payment_id?: string
   spent_outputs?: SpentOutput[]
-  timestamp: string
+  timestamp?: string
   total_received: string
   total_sent: string
   unlock_time: number
@@ -125,13 +125,13 @@ const asGetAddressTxsResponse = asObject({
       asObject({
         coinbase: asNumberBoolean, // True if tx is coinbase
         hash: asString, // Bytes of tx hash
-        height: asNumber, // Block height
+        height: asOptional(asNumber), // Block height
         id: asNumber, // Index of tx in blockchain
         mempool: asNumberBoolean, // True if tx is in mempool
         mixin: asNumber, // Mixin of the receive
         payment_id: asOptional(asString), // Bytes of tx payment id
         spent_outputs: asOptional(asArray(asSpentOutput)), // List of possible spends
-        timestamp: asString, // Timestamp of block
+        timestamp: asOptional(asString), // Timestamp of block
         total_received: asString, // Total XMR received
         total_sent: asString, // XMR possibly being spent
         unlock_time: asNumber // Tx unlock time field
