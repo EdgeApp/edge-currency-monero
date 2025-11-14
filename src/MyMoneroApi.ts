@@ -252,6 +252,9 @@ export class MyMoneroApi {
       use_dust: true,
       view_key: privateViewKey
     })
+    for (const out of unspentOuts.outputs) {
+      if (out.spend_key_images == null) out.spend_key_images = []
+    }
 
     // Grab some random outputs to mix in:
     const randomOutsCb = async (count: number): Promise<any> => {
