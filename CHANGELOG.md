@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Handle REST responses from monero-lws.
+
 ## 2.0.0 (2025-10-02)
 
 - changed: *Breaking change* Change to use Edge LWS servers. Must specify edgeApiKey in plugin options, instead of apiKey

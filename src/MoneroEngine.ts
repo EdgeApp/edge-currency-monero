@@ -261,12 +261,8 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       ourReceiveAddresses.push(this.walletInfo.keys.moneroAddress.toLowerCase())
     }
 
-    let blockHeight = tx.height
-    if (tx.mempool) {
-      blockHeight = 0
-    }
-
-    const date = Date.parse(tx.timestamp) / 1000
+    const blockHeight = tx.height == null || tx.mempool ? 0 : tx.height
+    const date = tx.timestamp == null ? new Date() : new Date(tx.timestamp)
 
     // Expose legacy payment ID's to the GUI. This only applies
     // to really old transactions, before integrated addresses:
@@ -282,7 +278,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     const edgeTransaction: EdgeTransaction = {
       blockHeight,
       currencyCode: 'XMR',
-      date,
+      date: date.valueOf() / 1000,
       isSend: lt(netNativeAmount, '0'),
       memos,
       nativeAmount: netNativeAmount,
@@ -401,20 +397,20 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       })
     } else {
       const txs = this.getTxs(tokenId)
-      const edgeTx = txs[idx]
+      const oldTx = txs[idx]
+
+      // Keep the first-seen date for unconfirmed transactions:
+      if (edgeTransaction.blockHeight === 0) edgeTransaction.date = oldTx.date
 
       // Already have this tx in the database. Consider a change if blockHeight changed
-      if (edgeTx.blockHeight === edgeTransaction.blockHeight) return
+      if (oldTx.blockHeight === edgeTransaction.blockHeight) return
       this.log(
         `Update transaction: ${edgeTransaction.txid} height:${edgeTransaction.blockHeight}`
       )
 
       // The native amounts returned from the API take some time before they're
       // accurate. We can trust the amounts we saved instead.
-      edgeTransaction = {
-        ...edgeTransaction,
-        nativeAmount: edgeTx.nativeAmount
-      }
+      edgeTransaction.nativeAmount = oldTx.nativeAmount
 
       // Update the transaction
       txs[idx] = edgeTransaction
