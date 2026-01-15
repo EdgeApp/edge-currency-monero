@@ -802,7 +802,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
 function translateFee(fee?: string): Priority {
   if (fee === 'low') return 1
-  if (fee === 'high') return 4
+  if (fee === 'high') return 3
   return 2
 }
 
