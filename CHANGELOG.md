@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- changed: Reduce "high" fee level mapping from priority 4 to 3.
+
 ## 2.0.1 (2025-11-17)
 
 - fixed: Handle REST responses from monero-lws.
