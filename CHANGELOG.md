@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.1.0 (2026-01-15)
+
 - changed: Reduce "high" fee level mapping from priority 4 to 3.
 
 ## 2.0.1 (2025-11-17)
