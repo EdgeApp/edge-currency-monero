@@ -6,7 +6,8 @@ export const MONERO_LWS_SERVER = 'https://monerolws1.edge.app'
 
 const defaultSettings: MoneroUserSettings = {
   enableCustomServers: false,
-  moneroLightwalletServer: MONERO_LWS_SERVER
+  moneroLightwalletServer: MONERO_LWS_SERVER,
+  networkPrivacy: 'none'
 }
 
 export const currencyInfo: EdgeCurrencyInfo = {

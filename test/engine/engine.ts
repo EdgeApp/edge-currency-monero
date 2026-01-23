@@ -78,6 +78,7 @@ for (const fixture of fixtures) {
       emitter.emit('wcNewContractCall', payload)
     },
     onSeenTxCheckpoint: function (checkpoint: string): void {},
+    onSubscribeAddresses() {},
     onTransactions: function (
       transactionEvents: EdgeTransactionEvent[]
     ): void {}

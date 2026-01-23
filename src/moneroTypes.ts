@@ -9,6 +9,7 @@ import {
   asObject,
   asOptional,
   asString,
+  asValue,
   Cleaner,
   uncleaner
 } from 'cleaners'
@@ -26,7 +27,8 @@ export interface MoneroNetworkInfo {
 
 export const asMoneroUserSettings = asObject({
   enableCustomServers: asMaybe(asBoolean, false),
-  moneroLightwalletServer: asMaybe(asString)
+  moneroLightwalletServer: asMaybe(asString),
+  networkPrivacy: asOptional(asValue('none', 'nym'), 'none')
 })
 export type MoneroUserSettings = ReturnType<typeof asMoneroUserSettings>
 
