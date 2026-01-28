@@ -73,10 +73,12 @@ for (const fixture of fixtures) {
     },
     onUnactivatedTokenIdsChanged() {},
     onStakingStatusChanged() {},
+    onSubscribeAddresses() {},
     onWcNewContractCall(payload) {
       emitter.emit('wcNewContractCall', payload)
     },
     onSeenTxCheckpoint: function (checkpoint: string): void {},
+    onSubscribeAddresses() {},
     onTransactions: function (
       transactionEvents: EdgeTransactionEvent[]
     ): void {}

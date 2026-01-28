@@ -1015,6 +1015,11 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@nymproject/mix-fetch@^1.4.1":
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/@nymproject/mix-fetch/-/mix-fetch-1.4.1.tgz#6a923b40e09c4a571fb947297a3afd41cd2d5ea6"
+  integrity sha512-FN5UeCkje6fauCt2pd8kFGFYXj2kaNewEJVKRLWzI2/suxD+J2bmg/YvXBGLWMWglXNA3+YFHA/1Vjh6OGtgig==
+
 "@types/chai@^4.3.4":
   version "4.3.12"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.3.12.tgz#b192fe1c553b54f45d20543adc2ab88455a07d5e"
@@ -1959,11 +1964,12 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
-edge-core-js@^2.26.0:
-  version "2.26.0"
-  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-2.26.0.tgz#8314e2b15c1aaaac81c4e5600a0c70319b03965c"
-  integrity sha512-RziSARvBIKNtM9+7i8mmSBT2Q4h851pD+rJka+fWV+x8aCGXnaYJl4PAahlXn12ImCXcJXeF5m0Jt0uVp0P7/Q==
+edge-core-js@^2.41.0:
+  version "2.41.0"
+  resolved "https://registry.yarnpkg.com/edge-core-js/-/edge-core-js-2.41.0.tgz#4262701cc0719a263b4132e72e7e1299ab363817"
+  integrity sha512-ntTT0yEtr6xF6+u4KbfLK7LX2kmXBvpwD8LU26B9+k3L3o1UsVZ36OjY8B6w1Wvo+jSNldxNyhTqyQYgX0ysoQ==
   dependencies:
+    "@nymproject/mix-fetch" "^1.4.1"
     aes-js "^3.1.0"
     base-x "^4.0.0"
     biggystring "^4.2.3"
@@ -1982,7 +1988,7 @@ edge-core-js@^2.26.0:
     scrypt-js "^2.0.3"
     serverlet "^0.1.2"
     yaob "^0.3.12"
-    yavent "^0.1.3"
+    yavent "^0.1.5"
 
 edge-sync-client@^0.2.8:
   version "0.2.9"
@@ -4429,10 +4435,10 @@ yarn-deduplicate@^6.0.1:
     semver "^7.3.8"
     tslib "^2.4.1"
 
-yavent@^0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/yavent/-/yavent-0.1.3.tgz#c86a5e1d013721eda9c732e820fb7d6aaf2ab4db"
-  integrity sha512-O6ZngnMCkiM1Bg/zP2XKgprjXUuHS0tSQjHxWhMc53avgNu6AT5zcmDm+oYxQLRXQ9ajlEQwQ+Rf7CghKt1u1A==
+yavent@^0.1.5:
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/yavent/-/yavent-0.1.5.tgz#caf32af73c59a18142533fddfefd2c0fc8f99b0f"
+  integrity sha512-VgHZ8Q19exDqdg+sQ4ax3cKfsUvCmeua/nGGPsHeQTfqefQfAMfEk4qwnLE4ABVJhlJOQCfGhxWA3llW6eFk1w==
 
 yocto-queue@^0.1.0:
   version "0.1.0"

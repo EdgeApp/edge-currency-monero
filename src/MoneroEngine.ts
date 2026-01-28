@@ -12,6 +12,7 @@ import {
   EdgeCurrencyInfo,
   EdgeDataDump,
   EdgeEnginePrivateKeyOptions,
+  EdgeFetchFunction,
   EdgeFreshAddress,
   EdgeGetReceiveAddressOptions,
   EdgeIo,
@@ -84,6 +85,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   io: EdgeIo
   log: EdgeLog
   currencyTools: MoneroTools
+  engineFetch: EdgeFetchFunction
   seenTxCheckpoint: number | undefined
   loginPromise: Promise<void> | null = null
 
@@ -109,13 +111,6 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     this.walletId = walletInfo.id
     this.currencyInfo = currencyInfo
     this.currencyTools = tools
-    this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
-      apiKey: initOptions.edgeApiKey,
-      apiServer: networkInfo.defaultServer,
-      fetch: env.io.fetch,
-      nettype: networkInfo.nettype
-    })
-    this.seenTxCheckpoint = asSeenTxCheckpoint(opts.seenTxCheckpoint)
 
     // this.customTokens = []
     this.timers = {}
@@ -124,6 +119,22 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       ...currencyInfo.defaultSettings,
       ...asMoneroUserSettings(userSettings)
     }
+
+    this.engineFetch = async (uri, init) => {
+      const { networkPrivacy } = this.currentSettings
+      return await this.io.fetch(uri, {
+        ...(networkPrivacy === 'nym' ? { privacy: 'nym' } : {}),
+        ...init
+      })
+    }
+
+    this.myMoneroApi = new MyMoneroApi(tools.cppBridge, {
+      apiKey: initOptions.edgeApiKey,
+      apiServer: networkInfo.defaultServer,
+      fetch: this.engineFetch,
+      nettype: networkInfo.nettype
+    })
+    this.seenTxCheckpoint = asSeenTxCheckpoint(opts.seenTxCheckpoint)
     if (
       this.currentSettings.enableCustomServers &&
       this.currentSettings.moneroLightwalletServer != null
