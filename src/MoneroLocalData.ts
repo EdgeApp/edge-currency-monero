@@ -15,6 +15,8 @@ import {
 } from 'cleaners'
 import type { EdgeTokenId } from 'edge-core-js'
 
+import { asPocketChangeSetting } from './moneroTypes'
+
 export const DATA_STORE_FILE = 'txEngineFolder/walletLocalData.json'
 export const PRIMARY_CURRENCY_TOKEN_ID = null
 
@@ -68,7 +70,8 @@ export const asMoneroLocalData = asJSON(
     transactionsObj: asOptional(
       asMap(asEdgeToken, asArray(asNotNull)),
       () => new Map<EdgeTokenId, unknown[]>()
-    )
+    ),
+    pocketChangeSetting: asOptional(asPocketChangeSetting)
   })
 )
 

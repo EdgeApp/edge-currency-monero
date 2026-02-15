@@ -2,7 +2,7 @@
  * Created by paul on 7/7/17.
  */
 
-import { add, div, eq, gte, lt, sub } from 'biggystring'
+import { add, div, eq, gte, lt, lte, mul, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   EdgeCorePluginOptions,
@@ -19,6 +19,7 @@ import {
   EdgeLog,
   EdgeMemo,
   EdgeSpendInfo,
+  EdgeSpendTarget,
   EdgeToken,
   EdgeTokenId,
   EdgeTokenIdOptions,
@@ -48,6 +49,8 @@ import {
   asSeenTxCheckpoint,
   makeSafeWalletInfo,
   MoneroUserSettings,
+  POCKET_COUNT_MAX,
+  POCKET_COUNT_MIN,
   PrivateKeys,
   SafeWalletInfo,
   wasSeenTxCheckpoint
@@ -795,6 +798,64 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       return this.walletInfo.keys.moneroViewKeyPrivate
     }
     return ''
+  }
+
+  otherMethods = {
+    getPocketChangeTargetsForSpend: async (
+      spendTargets: EdgeSpendTarget[]
+    ): Promise<EdgeSpendTarget[]> => {
+      const setting = this.walletLocalData.pocketChangeSetting
+      if (setting == null || !setting.enabled) {
+        return spendTargets
+      }
+
+      // Calculate total spend amount from all targets
+      const totalSpendAmount = spendTargets.reduce(
+        (sum, t) => add(sum, t.nativeAmount ?? '0'),
+        '0'
+      )
+
+      // Calculate spendable balance for pockets
+      const totalBalance =
+        this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) ?? '0'
+      const lockedBalance = this.walletLocalData.lockedXmrBalance
+      
+      // Estimate fees pessimistically (10% of spend amount)
+      const feeBuffer = mul(totalSpendAmount, '0.1')
+      const reservedAmount = add(add(totalSpendAmount, lockedBalance), feeBuffer)
+      const spendableForPockets = sub(totalBalance, reservedAmount)
+
+      // Not enough funds for pockets
+      if (lte(spendableForPockets, '0')) {
+        return spendTargets
+      }
+
+      // Generate random pocket count (6-14)
+      const pocketCount =
+        Math.floor(
+          Math.random() * (POCKET_COUNT_MAX - POCKET_COUNT_MIN + 1)
+        ) + POCKET_COUNT_MIN
+
+      // Create pocket targets
+      const pocketTargets: EdgeSpendTarget[] = []
+      let remaining = spendableForPockets
+      const targetAmount = setting.amountPiconero
+
+      for (let i = 0; i < pocketCount; i++) {
+        if (lt(remaining, targetAmount)) break
+
+        pocketTargets.push({
+          publicAddress: this.walletInfo.keys.moneroAddress,
+          nativeAmount: targetAmount,
+          otherParams: { isPocketChange: true }
+        })
+
+        remaining = sub(remaining, targetAmount)
+      }
+
+      // Return payment targets + pocket targets
+      return [...spendTargets, ...pocketTargets]
+    }
   }
 
   async dumpData(): Promise<EdgeDataDump> {

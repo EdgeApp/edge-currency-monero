@@ -87,3 +87,19 @@ export const asSeenTxCheckpoint: Cleaner<number | undefined> = asCodec(
   v => (v == null ? undefined : v.toString())
 )
 export const wasSeenTxCheckpoint = uncleaner(asSeenTxCheckpoint)
+
+// PocketChange types
+export interface PocketChangeSetting {
+  enabled: boolean
+  amountPiconero: string  // Target amount per pocket in atomic units
+}
+
+export const asPocketChangeSetting = asObject({
+  enabled: asBoolean,
+  amountPiconero: asString
+})
+
+// PocketChange constants
+export const POCKET_AMOUNTS_XMR = [0.1, 0.2, 0.3, 0.5, 0.8, 1.3]
+export const POCKET_COUNT_MIN = 6
+export const POCKET_COUNT_MAX = 14
