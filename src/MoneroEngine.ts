@@ -2,7 +2,7 @@
  * Created by paul on 7/7/17.
  */
 
-import { add, div, eq, gte, lt, lte, mul, sub } from 'biggystring'
+import { add, div, eq, gte, lt, lte, sub } from 'biggystring'
 import type { Disklet } from 'disklet'
 import {
   EdgeCorePluginOptions,
@@ -44,13 +44,14 @@ import { MoneroTools } from './MoneroTools'
 import {
   asMoneroInitOptions,
   asMoneroUserSettings,
+  asPocketChangeSetting,
   asPrivateKeys,
   asSafeWalletInfo,
   asSeenTxCheckpoint,
   makeSafeWalletInfo,
   MoneroUserSettings,
-  POCKET_COUNT_MAX,
-  POCKET_COUNT_MIN,
+  POCKET_SLOT_MAX,
+  POCKET_SLOT_MIN,
   PrivateKeys,
   SafeWalletInfo,
   wasSeenTxCheckpoint
@@ -91,6 +92,7 @@ export class MoneroEngine implements EdgeCurrencyEngine {
   engineFetch: EdgeFetchFunction
   seenTxCheckpoint: number | undefined
   loginPromise: Promise<void> | null = null
+  pendingPocketInfo: { slotIndices: number[]; txPubKey: string } | null = null
 
   constructor(
     env: EdgeCorePluginOptions,
@@ -310,7 +312,24 @@ export class MoneroEngine implements EdgeCurrencyEngine {
     this.edgeTxLibCallbacks.onTransactions(this.transactionEventArray)
     this.transactionEventArray = []
 
+    this.syncPocketSlotStatuses(tx)
+
     return blockHeight
+  }
+
+  private syncPocketSlotStatuses(tx: ParsedTransaction): void {
+    if (tx.spent_outputs == null || tx.spent_outputs.length === 0) return
+
+    const slots = this.walletLocalData.pocketSlots
+    for (const spentOutput of tx.spent_outputs) {
+      for (const slot of slots) {
+        if (slot.txPubKey !== '' && slot.txPubKey === spentOutput.tx_pub_key) {
+          slot.amount = '0'
+          slot.txPubKey = ''
+          this.walletLocalDataDirty = true
+        }
+      }
+    }
   }
 
   async checkTransactionsInnerLoop(privateKeys: PrivateKeys): Promise<void> {
@@ -733,6 +752,18 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       privateKeys
     )
 
+    // Capture tx pub key for pending pocket slot assignments
+    const hasPocketTargets = spendTargets.some(
+      t => t.otherParams?.isPocketChange === true
+    )
+    if (
+      hasPocketTargets &&
+      this.pendingPocketInfo != null &&
+      this.pendingPocketInfo.txPubKey === ''
+    ) {
+      this.pendingPocketInfo.txPubKey = result.tx_pub_key
+    }
+
     const date = Date.now() / 1000
 
     this.log(`Total sent: ${result.total_sent}, Fee: ${result.used_fee}`)
@@ -786,6 +817,21 @@ export class MoneroEngine implements EdgeCurrencyEngine {
 
   async saveTx(edgeTransaction: EdgeTransaction): Promise<void> {
     await this.saveTransactionState(edgeTransaction.tokenId, edgeTransaction)
+
+    // Commit pending pocket slot assignments after successful broadcast
+    if (
+      this.pendingPocketInfo != null &&
+      this.pendingPocketInfo.txPubKey !== ''
+    ) {
+      const { slotIndices, txPubKey } = this.pendingPocketInfo
+      const amount =
+        this.walletLocalData.pocketChangeSetting?.amountPiconero ?? '0'
+      for (const index of slotIndices) {
+        this.walletLocalData.pocketSlots[index] = { amount, txPubKey }
+      }
+      this.pendingPocketInfo = null
+      this.walletLocalDataDirty = true
+    }
   }
 
   getDisplayPrivateSeed(privateKeys: JsonObject): string {
@@ -808,6 +854,21 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       if (setting == null || !setting.enabled) {
         return spendTargets
       }
+      if (spendTargets.length === 0) return spendTargets
+
+      // Find unfunded slots
+      const slots = this.walletLocalData.pocketSlots
+      const unfundedIndices: number[] = []
+      for (let i = 0; i < slots.length; i++) {
+        if (slots[i].txPubKey === '') {
+          unfundedIndices.push(i)
+        }
+      }
+
+      // All slots funded — no pocket targets needed
+      if (unfundedIndices.length === 0) {
+        return spendTargets
+      }
 
       // Calculate total spend amount from all targets
       const totalSpendAmount = spendTargets.reduce(
@@ -819,42 +880,63 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       const totalBalance =
         this.walletLocalData.totalBalances.get(PRIMARY_CURRENCY_TOKEN_ID) ?? '0'
       const lockedBalance = this.walletLocalData.lockedXmrBalance
-      
-      // Estimate fees pessimistically (10% of spend amount)
-      const feeBuffer = mul(totalSpendAmount, '0.1')
-      const reservedAmount = add(add(totalSpendAmount, lockedBalance), feeBuffer)
+      const feeBuffer = div(totalSpendAmount, '10')
+      const reservedAmount = add(
+        add(totalSpendAmount, lockedBalance),
+        feeBuffer
+      )
       const spendableForPockets = sub(totalBalance, reservedAmount)
 
-      // Not enough funds for pockets
       if (lte(spendableForPockets, '0')) {
         return spendTargets
       }
 
-      // Generate random pocket count (6-14)
-      const pocketCount =
-        Math.floor(
-          Math.random() * (POCKET_COUNT_MAX - POCKET_COUNT_MIN + 1)
-        ) + POCKET_COUNT_MIN
+      // Pick random target count, capped by available unfunded slots
+      const randomCount =
+        Math.floor(Math.random() * (POCKET_SLOT_MAX - POCKET_SLOT_MIN + 1)) +
+        POCKET_SLOT_MIN
+      const targetCount = Math.min(randomCount, unfundedIndices.length)
 
-      // Create pocket targets
+      // Shuffle unfunded slots and pick a subset
+      const shuffled = [...unfundedIndices].sort(() => Math.random() - 0.5)
+      const selectedIndices = shuffled.slice(0, targetCount)
+
+      // Create pocket targets, respecting available balance
       const pocketTargets: EdgeSpendTarget[] = []
+      const fundedIndices: number[] = []
       let remaining = spendableForPockets
       const targetAmount = setting.amountPiconero
 
-      for (let i = 0; i < pocketCount; i++) {
+      for (const slotIndex of selectedIndices) {
         if (lt(remaining, targetAmount)) break
 
         pocketTargets.push({
           publicAddress: this.walletInfo.keys.moneroAddress,
           nativeAmount: targetAmount,
-          otherParams: { isPocketChange: true }
+          otherParams: { isPocketChange: true, pocketSlotIndex: slotIndex }
         })
-
+        fundedIndices.push(slotIndex)
         remaining = sub(remaining, targetAmount)
       }
 
-      // Return payment targets + pocket targets
+      // Store pending info for recording after broadcast
+      if (fundedIndices.length > 0) {
+        this.pendingPocketInfo = { slotIndices: fundedIndices, txPubKey: '' }
+      }
+
       return [...spendTargets, ...pocketTargets]
+    },
+
+    setPocketChangeSetting: async (setting: unknown): Promise<void> => {
+      const validated = asPocketChangeSetting(setting)
+      this.walletLocalData.pocketChangeSetting = validated
+      if (!validated.enabled) {
+        for (const slot of this.walletLocalData.pocketSlots) {
+          slot.amount = '0'
+          slot.txPubKey = ''
+        }
+      }
+      this.walletLocalDataDirty = true
     }
   }
 

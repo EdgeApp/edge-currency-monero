@@ -89,17 +89,20 @@ export const asSeenTxCheckpoint: Cleaner<number | undefined> = asCodec(
 export const wasSeenTxCheckpoint = uncleaner(asSeenTxCheckpoint)
 
 // PocketChange types
-export interface PocketChangeSetting {
-  enabled: boolean
-  amountPiconero: string  // Target amount per pocket in atomic units
-}
-
 export const asPocketChangeSetting = asObject({
   enabled: asBoolean,
   amountPiconero: asString
 })
+export type PocketChangeSetting = ReturnType<typeof asPocketChangeSetting>
 
-// PocketChange constants
-export const POCKET_AMOUNTS_XMR = [0.1, 0.2, 0.3, 0.5, 0.8, 1.3]
-export const POCKET_COUNT_MIN = 6
-export const POCKET_COUNT_MAX = 14
+// PocketChange slot tracking: each slot represents a pocket output.
+// A slot is "funded" when txPubKey is non-empty, "empty" otherwise.
+export const asPocketSlot = asObject({
+  amount: asOptional(asString, '0'),
+  txPubKey: asOptional(asString, '')
+})
+export type PocketSlot = ReturnType<typeof asPocketSlot>
+
+export const POCKET_SLOT_COUNT = 14
+export const POCKET_SLOT_MIN = 6
+export const POCKET_SLOT_MAX = 14
