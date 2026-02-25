@@ -66,6 +66,9 @@ const SAVE_DATASTORE_MILLISECONDS = 10000
 
 const PRIMARY_CURRENCY_TOKEN_ID = null
 
+// Global throttle: max 1 onAddressesChecked per 500ms; ratio=1 always passes.
+let lastSyncEmitTime = 0
+
 export class MoneroEngine implements EdgeCurrencyEngine {
   apiKey: string
   walletInfo: SafeWalletInfo
@@ -169,6 +172,9 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       return
     }
     if (numTx !== totalTxs) {
+      const now = Date.now()
+      if (now - lastSyncEmitTime < 500) return
+      lastSyncEmitTime = now
       const progress = numTx / totalTxs
       this.edgeTxLibCallbacks.onAddressesChecked(progress)
     } else {
@@ -345,11 +351,13 @@ export class MoneroEngine implements EdgeCurrencyEngine {
       }
 
       this.updateOnAddressesChecked(transactions.length, transactions.length)
-      // Update the seenTxCheckpoint state:
-      this.seenTxCheckpoint = seenTxCheckpoint
-      this.edgeTxLibCallbacks.onSeenTxCheckpoint(
-        wasSeenTxCheckpoint(this.seenTxCheckpoint)
-      )
+      // Only update the seenTxCheckpoint if it actually advanced:
+      const newCheckpoint = wasSeenTxCheckpoint(seenTxCheckpoint)
+      const oldCheckpoint = wasSeenTxCheckpoint(this.seenTxCheckpoint)
+      if (newCheckpoint !== oldCheckpoint) {
+        this.seenTxCheckpoint = seenTxCheckpoint
+        this.edgeTxLibCallbacks.onSeenTxCheckpoint(newCheckpoint)
+      }
     } catch (e) {
       this.log.error('checkTransactionsInnerLoop', e)
     }
