@@ -2,4 +2,4 @@ language: node_js
 node_js:
   - 17.5
 script:
-  - 'yarn lint && flow && npm test'
+  - 'npm run lint && flow && npm test'

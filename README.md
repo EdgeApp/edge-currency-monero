@@ -6,7 +6,7 @@ Implements Monero send/receive functionality per the spec for crypto currency pl
 
 ## Installing
 
-    yarn add edge-currency-monero react-native-mymonero-core
+    npm install edge-currency-monero react-native-mymonero-core
 
 ```
 import { moneroCurrencyPluginFactory } from `edge-currency-monero`
@@ -29,9 +29,7 @@ To run a local version of this repo inside the full Edge Wallet app, clone this 
 
     git clone git@github.com:EdgeApp/edge-currency-monero.git`
     cd edge-currency-monero
-    yarn
-
-Run `npm run test` to run the unit tests.
+    npm run Run `npm run test` to run the unit tests.
 
 To use the local cloned version of this repo, `cd edge-react-gui` and run
 
