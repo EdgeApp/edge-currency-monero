@@ -44,7 +44,7 @@
     "@babel/core": "^7.0.0",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-typescript": "^7.23.3",
-    "@babel/runtime": "^7.0.0",
+    "@babel/runtime": "^7.26.10",
     "@mymonero/mymonero-monero-client": "^2.1.20",
     "@types/chai": "^4.3.4",
     "@types/mocha": "^10.0.1",
@@ -65,19 +65,22 @@
     "flow-bin": "^0.89.0",
     "husky": "^7.0.0",
     "lint-staged": "^10.5.3",
-    "mocha": "^10.0.0",
+    "mocha": "^10.6.0",
     "node-fetch": "^2.1.2",
     "prettier": "^2.2.0",
     "react-native-mymonero-core": "^0.3.0",
     "rimraf": "^2.6.2",
     "sucrase": "^3.9.5",
     "typescript": "~4.4.0",
-    "webpack": "^5.88.2",
+    "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
     "yarn-deduplicate": "^6.0.1"
   },
   "peerDependencies": {
     "react-native-mymonero-core": "^0.3.0"
   },
-  "react-native": "./lib/xmrIndex.js"
+  "react-native": "./lib/xmrIndex.js",
+  "overrides": {
+    "ajv": "^8.0.0"
+  }
 }
