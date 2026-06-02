@@ -81,6 +81,6 @@
   },
   "react-native": "./lib/xmrIndex.js",
   "overrides": {
-    "ajv": "^8.0.0"
+    "get-func-name": "2.0.2"
   }
 }
