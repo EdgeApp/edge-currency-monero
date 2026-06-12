@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- changed: Convert the build tooling from Yarn to npm.
+- security: Upgrade dependencies per Socket security recommendations.
+
 ## 2.2.0 (2026-01-27)
 
 - added: Add `networkPrivacy` user setting to enable privacy-enhanced fetch requests via NYM Mixfetch.
