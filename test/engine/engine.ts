@@ -73,7 +73,6 @@ for (const fixture of fixtures) {
     },
     onUnactivatedTokenIdsChanged() {},
     onStakingStatusChanged() {},
-    onSubscribeAddresses() {},
     onWcNewContractCall(payload) {
       emitter.emit('wcNewContractCall', payload)
     },
